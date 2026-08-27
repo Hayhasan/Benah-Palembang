@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useRef, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
@@ -208,4 +210,3 @@ export const TiptapEditor = ({ content, onChange, editable = true }: { content: 
     </div>
   )
 }
-

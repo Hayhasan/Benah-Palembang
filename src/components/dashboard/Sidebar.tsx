@@ -1,4 +1,6 @@
-import { useLocation } from "react-router-dom"
+"use client"
+
+import { useLocation } from "@/lib/navigation"
 import { useAuth } from "@/context/AuthContext"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { 

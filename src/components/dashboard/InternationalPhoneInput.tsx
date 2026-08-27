@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect, useRef, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -96,7 +98,7 @@ export function InternationalPhoneInput({
         }
 
         // Clean value
-        let clean = value.trim()
+        const clean = value.trim()
         
         // Match country code
         let matched = COUNTRIES.find(c => clean.startsWith(c.dialCode))

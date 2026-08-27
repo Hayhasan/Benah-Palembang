@@ -1,5 +1,7 @@
+"use client"
+
+import { useNavigate } from "@/lib/navigation"
 import { createContext, useContext, useState, type ReactNode } from "react"
-import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 export type Role = "superadmin" | "admin" | "user"

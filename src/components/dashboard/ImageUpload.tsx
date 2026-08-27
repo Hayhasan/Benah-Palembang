@@ -1,3 +1,5 @@
+"use client"
+
 import { useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { UploadCloud, X, Image as ImageIcon, Crop } from "lucide-react"
