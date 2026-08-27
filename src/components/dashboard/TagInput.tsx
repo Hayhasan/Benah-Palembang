@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import type { KeyboardEvent, ChangeEvent } from "react"
 import { X } from "lucide-react"

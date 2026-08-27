@@ -1,5 +1,7 @@
+"use client"
+
+import { useNavigate } from "@/lib/navigation"
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
 import {
     AlertDialog,
     AlertDialogContent,

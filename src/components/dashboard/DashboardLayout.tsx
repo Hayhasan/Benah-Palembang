@@ -1,10 +1,13 @@
-import { Outlet, Navigate } from "react-router-dom"
+"use client"
+
+import { Navigate } from "@/lib/navigation"
 import { useAuth } from "@/context/AuthContext"
 import { Sidebar } from "./Sidebar"
+import * as React from "react"
 import { useEffect, useState } from "react"
 import { UnsavedChangesProvider } from "@/context/UnsavedChangesContext"
 
-export function DashboardLayout() {
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user } = useAuth()
     const [isMobile, setIsMobile] = useState(false)
 
@@ -16,7 +19,7 @@ export function DashboardLayout() {
     }, [])
 
     if (!user) {
-        return <Navigate to="/login" replace />
+        return <Navigate href="/login" replace />
     }
 
     return (
@@ -25,11 +28,10 @@ export function DashboardLayout() {
                 <Sidebar />
                 <main className={`transition-all duration-300 ${isMobile ? "pt-16" : "pl-64"}`}>
                     <div className="p-6 md:p-10 max-w-7xl mx-auto">
-                        <Outlet />
+                        {children}
                     </div>
                 </main>
             </div>
         </UnsavedChangesProvider>
     )
 }
-

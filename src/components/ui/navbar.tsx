@@ -1,4 +1,7 @@
-import { Link, useLocation } from 'react-router-dom'
+"use client"
+
+import Link from "next/link"
+import { useLocation } from "@/lib/navigation"
 import { Equal, X, ChevronDown, ArrowUpRight, LogOut, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/liquid-glass-button'
 import React, { useState, useRef, useCallback } from 'react'
@@ -57,7 +60,7 @@ export const Header = () => {
                     <div className="relative flex flex-wrap items-center justify-between gap-6 lg:gap-0 py-2">
                         <div className="flex w-full justify-between lg:w-auto">
                             <Link
-                                to="/"
+                                href="/"
                                 aria-label="home"
                                 className="flex gap-2 items-center">
                                 <img src="/logo.png" alt="Benah Palembang" className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
@@ -74,7 +77,7 @@ export const Header = () => {
                         <div className="absolute inset-0 m-auto hidden size-fit lg:block">
                             <ul className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.16em]">
                                 <li>
-                                    <Link to="/" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link href="/" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
                                         Home
                                     </Link>
                                 </li>
@@ -92,7 +95,7 @@ export const Header = () => {
                                         {categories.map((category, index) => (
                                             <Link 
                                                 key={index} 
-                                                to={category.href} 
+                                                href={category.href} 
                                                 className="flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium normal-case tracking-normal transition-colors hover:bg-muted"
                                             >
                                                 <span>{category.name}</span>
@@ -102,12 +105,12 @@ export const Header = () => {
                                     </div>
                                 </li>
                                 <li>
-                                    <Link to="/agenda" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link href="/agenda" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
                                         Agenda
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link to="/kolaborasi" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link href="/kolaborasi" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
                                         Collaboration
                                     </Link>
                                 </li>
@@ -118,7 +121,7 @@ export const Header = () => {
                             <div className="lg:hidden w-full overflow-y-auto max-h-[60vh] pr-2">
                                 <ul className="space-y-4 text-base font-medium">
                                     <li>
-                                        <Link to="/" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b">
+                                        <Link href="/" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b">
                                             Home
                                         </Link>
                                     </li>
@@ -129,7 +132,7 @@ export const Header = () => {
                                         <ul className="pl-4 space-y-3 mt-3">
                                             {categories.map((category, index) => (
                                                 <li key={index}>
-                                                    <Link to={category.href} className="text-foreground hover:text-palembang-red block duration-150 text-sm">
+                                                    <Link href={category.href} className="text-foreground hover:text-palembang-red block duration-150 text-sm">
                                                         {category.name}
                                                     </Link>
                                                 </li>
@@ -137,12 +140,12 @@ export const Header = () => {
                                         </ul>
                                     </li>
                                     <li>
-                                        <Link to="/agenda" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b mt-2">
+                                        <Link href="/agenda" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b mt-2">
                                             Agenda
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link to="/kolaborasi" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b">
+                                        <Link href="/kolaborasi" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b">
                                             Collaboration
                                         </Link>
                                     </li>
@@ -162,7 +165,7 @@ export const Header = () => {
                                         {profileOpen && (
                                             <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-background p-2 text-foreground shadow-xl">
                                                 <Link 
-                                                    to="/dashboard" 
+                                                    href="/dashboard" 
                                                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
                                                     onClick={() => setProfileOpen(false)}
                                                 >
@@ -186,7 +189,7 @@ export const Header = () => {
                                             variant="outline"
                                             size="sm"
                                             className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link to="/login">
+                                            <Link href="/login">
                                                 <span>Login</span>
                                             </Link>
                                         </Button>
@@ -194,7 +197,7 @@ export const Header = () => {
                                             asChild
                                             size="sm"
                                             className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link to="/register">
+                                            <Link href="/register">
                                                 <span>Sign Up</span>
                                             </Link>
                                         </Button>
@@ -202,7 +205,7 @@ export const Header = () => {
                                             asChild
                                             size="sm"
                                             className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                            <Link to="/login">
+                                            <Link href="/login">
                                                 <span>Get Started</span>
                                             </Link>
                                         </Button>

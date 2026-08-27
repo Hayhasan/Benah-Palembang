@@ -1,4 +1,5 @@
-/* eslint-disable react-refresh/only-export-components */
+"use client"
+
 import * as React from "react"
 
 type Theme = "dark" | "light" | "system"
@@ -84,18 +85,21 @@ export function ThemeProvider({
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey)
-    if (isTheme(storedTheme)) {
-      return storedTheme
-    }
+  // Dirender juga di server saat prerender, jadi localStorage harus dijaga.
+  // Nilai tersimpan dibaca ulang di effect di bawah supaya tidak terjadi
+  // hydration mismatch.
+  const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
 
-    return defaultTheme
-  })
+  React.useEffect(() => {
+    const storedTheme = window.localStorage.getItem(storageKey)
+    if (isTheme(storedTheme)) {
+      setThemeState(storedTheme)
+    }
+  }, [storageKey])
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
-      localStorage.setItem(storageKey, nextTheme)
+      window.localStorage.setItem(storageKey, nextTheme)
       setThemeState(nextTheme)
     },
     [storageKey]
@@ -167,7 +171,7 @@ export function ThemeProvider({
                 ? "light"
                 : "dark"
 
-        localStorage.setItem(storageKey, nextTheme)
+        window.localStorage.setItem(storageKey, nextTheme)
         return nextTheme
       })
     }
@@ -181,7 +185,7 @@ export function ThemeProvider({
 
   React.useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.storageArea !== localStorage) {
+      if (event.storageArea !== window.localStorage) {
         return
       }
 
