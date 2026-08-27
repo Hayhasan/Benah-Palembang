@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum WebsiteArticleSectionTheme {
+  DEFAULT
+  RED
+  OFF_WHITE
+  DARK
+}
+
+enum WebsiteArticleSectionLayout {
+  STANDARD
+  FEATURED_FIRST
+}
+
+model WebsiteContent {
+  id                   Int                     @id @default(autoincrement())
+  key                  String                  @unique @db.VarChar(100)
+  originalKey          String?                 @db.VarChar(100)
+  aboutEyebrow         String                  @db.VarChar(160)
+  aboutEstablishedText String                  @db.VarChar(160)
+  aboutTitle           String                  @db.VarChar(255)
+  aboutDescription     String                  @db.Text
+  aboutClosingText     String                  @db.VarChar(255)
+  exploreEyebrow       String                  @db.VarChar(160)
+  exploreTitle         String                  @db.VarChar(255)
+  teamEyebrow          String                  @db.VarChar(160)
+  teamTitle            String                  @db.VarChar(255)
+  teamDescription      String                  @db.Text
+  ctaEyebrow           String                  @db.VarChar(160)
+  ctaTitle             String                  @db.VarChar(255)
+  ctaDescription       String                  @db.Text
+  ctaButtonLabel       String                  @db.VarChar(100)
+  ctaButtonUrl         String                  @db.Text
+  createdAt            DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime                @updatedAt @db.Timestamptz(6)
+  deletedAt            DateTime?               @db.Timestamptz(6)
+  heroSlides           WebsiteHeroSlide[]
+  exploreItems         WebsiteExploreItem[]
+  articleSections      WebsiteArticleSection[]
+  teamMembers          WebsiteTeamMember[]
+
+  @@index([deletedAt])
+  @@map("website_contents")
+}
+
+model WebsiteHeroSlide {
+  id               Int            @id @default(autoincrement())
+  websiteContentId Int
+  imageUrl         String         @db.Text
+  imageAlt         String         @db.VarChar(255)
+  eyebrow          String         @db.VarChar(160)
+  title            String         @db.VarChar(255)
+  description      String         @db.Text
+  buttonLabel      String         @db.VarChar(100)
+  buttonUrl        String         @db.Text
+  position         Int
+  isVisible        Boolean        @default(true)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(6)
+  deletedAt        DateTime?      @db.Timestamptz(6)
+  websiteContent   WebsiteContent @relation(fields: [websiteContentId], references: [id])
+
+  @@index([websiteContentId, deletedAt, position])
+  @@map("website_hero_slides")
+}
+
+model WebsiteExploreItem {
+  id               Int            @id @default(autoincrement())
+  websiteContentId Int
+  label            String         @db.VarChar(160)
+  linkUrl          String         @db.Text
+  storyCount       Int?
+  position         Int
+  isVisible        Boolean        @default(true)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(6)
+  deletedAt        DateTime?      @db.Timestamptz(6)
+  websiteContent   WebsiteContent @relation(fields: [websiteContentId], references: [id])
+
+  @@index([websiteContentId, deletedAt, position])
+  @@map("website_explore_items")
+}
+
+model WebsiteArticleSection {
+  id                  Int                         @id @default(autoincrement())
+  websiteContentId    Int
+  sectionKey          String                      @db.VarChar(160)
+  originalSectionKey  String?                     @db.VarChar(160)
+  articleCategorySlug String?                     @db.VarChar(160)
+  eyebrow             String                      @db.VarChar(160)
+  title               String                      @db.VarChar(255)
+  description         String                      @db.Text
+  backgroundImageUrl  String                      @db.Text
+  linkLabel           String                      @db.VarChar(100)
+  linkUrl             String                      @db.Text
+  theme               WebsiteArticleSectionTheme  @default(DEFAULT)
+  layout              WebsiteArticleSectionLayout @default(STANDARD)
+  maxItems            Int                         @default(4)
+  position            Int
+  isVisible           Boolean                     @default(true)
+  createdAt           DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime                    @updatedAt @db.Timestamptz(6)
+  deletedAt           DateTime?                   @db.Timestamptz(6)
+  websiteContent      WebsiteContent              @relation(fields: [websiteContentId], references: [id])
+
+  @@unique([websiteContentId, sectionKey])
+  @@index([websiteContentId, deletedAt, position])
+  @@map("website_article_sections")
+}
+
+model WebsiteTeamMember {
+  id               Int            @id @default(autoincrement())
+  websiteContentId Int
+  name             String         @db.VarChar(160)
+  role             String         @db.VarChar(160)
+  imageUrl         String         @db.Text
+  bio              String         @db.Text
+  position         Int
+  isVisible        Boolean        @default(true)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(6)
+  deletedAt        DateTime?      @db.Timestamptz(6)
+  websiteContent   WebsiteContent @relation(fields: [websiteContentId], references: [id])
+
+  @@index([websiteContentId, deletedAt, position])
+  @@map("website_team_members")
+}

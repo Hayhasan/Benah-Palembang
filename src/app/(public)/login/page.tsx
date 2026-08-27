@@ -1,4 +1,4 @@
-import { LoginPage } from "@/features/public/PublicSite"
+import { LoginPage } from "@/modules/auth/components/login-page"
 
 export default function Page() {
   return <LoginPage />

@@ -1,4 +1,4 @@
-import { RegisterPage } from "@/features/public/PublicSite"
+import { RegisterPage } from "@/modules/auth/components/register-page"
 
 export default function Page() {
   return <RegisterPage />
