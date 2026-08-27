@@ -1,5 +1,13 @@
 import { z } from "zod"
 
+const LANDING_ARTICLE_SECTION_KEYS = [
+  "featured",
+  "gaya-hidup",
+  "ruang-kota",
+  "industri-kreatif",
+  "kebudayaan",
+] as const
+
 const requiredText = (label: string, max: number) =>
   z
     .string()
@@ -106,7 +114,9 @@ export const landingPageEditorSchema = z
       title: requiredText("Judul jelajahi", 255),
       items: z.array(exploreItemSchema).max(20),
     }),
-    articleSections: z.array(articleSectionSchema).max(20),
+    articleSections: z
+      .array(articleSectionSchema)
+      .length(5, "Landing page harus memiliki tepat 5 section artikel."),
     team: z.object({
       eyebrow: requiredText("Eyebrow tim", 160),
       title: requiredText("Judul tim", 255),
@@ -151,4 +161,14 @@ export const landingPageEditorSchema = z
         path: ["articleSections"],
       })
     }
+
+    LANDING_ARTICLE_SECTION_KEYS.forEach((sectionKey, index) => {
+      if (data.articleSections[index]?.sectionKey !== sectionKey) {
+        context.addIssue({
+          code: "custom",
+          message: "Section artikel dan urutannya tidak dapat diubah.",
+          path: ["articleSections", index, "sectionKey"],
+        })
+      }
+    })
   })

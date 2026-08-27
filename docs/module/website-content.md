@@ -59,9 +59,9 @@ Seeder bersifat create-if-missing dan tidak menimpa content yang sudah tersedia.
 - Form Home mengelola hero carousel, about, explore, konfigurasi section
   artikel, team, dan CTA. Seluruh field yang ada pada schema Prisma bersifat
   controlled dan berasal dari data database.
-- Tab Article, Agenda, Collaboration, serta Header & Footer tetap ditampilkan
-  sebagai penanda scope module berikutnya, tetapi dinonaktifkan sampai schema
-  dan use case masing-masing tersedia.
+- Tab Article, Agenda, Collaboration, serta Header & Footer tetap dapat dibuka
+  menggunakan UI frontend original. Persistence pada tahap ini tetap hanya
+  berlaku untuk tab Home.
 - Perubahan disimpan melalui Server Action dengan validasi Zod dan transaction
   Prisma. Root scalar dan seluruh child collection disimpan sebagai satu
   aggregate.
@@ -71,12 +71,12 @@ Seeder bersifat create-if-missing dan tidak menimpa content yang sudah tersedia.
 - Item aktif yang tidak lagi dikirim form di-soft-delete. Posisi child selalu
   dihitung ulang berdasarkan urutan form dan tidak mempercayai nilai posisi
   mentah dari client.
-- `sectionKey` pada article section yang sudah tersimpan tidak dapat diubah.
-  Jika section tersebut kelak dihapus, unique key dilepaskan menggunakan format
-  soft-delete project sebelum `deletedAt` diisi.
-- Image editor menerima URL HTTP(S) saja. Upload dan crop file lokal belum
-  diaktifkan karena Cloudinary signed upload belum tersedia; `blob:` URL ditolak
-  oleh validasi server.
+- Landing page selalu mempunyai lima article section fixed: Cerita Palembang,
+  Gaya Hidup, Ruang Kota, Industri Kreatif, dan Kebudayaan. Admin dapat mengubah
+  field presentasinya, tetapi tidak menambah, menghapus, atau mengubah urutannya.
+- Image editor melakukan crop di browser, meminta signed upload parameters dari
+  server, lalu mengunggah file langsung ke Cloudinary. Database hanya menerima
+  `secure_url` hasil Cloudinary dan tidak pernah menyimpan file atau `blob:` URL.
 - Form terhubung ke `UnsavedChangesContext`, sehingga navigasi saat dirty dapat
   menjalankan save handler yang sama dengan tombol Simpan Perubahan.
 

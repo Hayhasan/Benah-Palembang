@@ -95,6 +95,10 @@ type WebsiteContentEditorRecord = Prisma.WebsiteContentGetPayload<{
 export function mapWebsiteContentToEditor(
   content: WebsiteContentEditorRecord,
 ): LandingPageEditorData {
+  const articleSectionsByKey = new Map(
+    content.articleSections.map((section) => [section.sectionKey, section]),
+  )
+
   return {
     key: "home",
     heroSlides: content.heroSlides.map((slide) => ({
@@ -116,10 +120,21 @@ export function mapWebsiteContentToEditor(
         clientKey: `explore-${item.id}`,
       })),
     },
-    articleSections: content.articleSections.map((section) => ({
-      ...section,
-      clientKey: `article-section-${section.id}`,
-    })),
+    articleSections: DEFAULT_LANDING_PAGE.articleSections.map(
+      (defaultSection, index) => {
+        const section = articleSectionsByKey.get(defaultSection.sectionKey)
+        return section
+          ? {
+              ...section,
+              clientKey: `article-section-${section.id}`,
+            }
+          : {
+              ...defaultSection,
+              id: null,
+              clientKey: `default-article-section-${index + 1}`,
+            }
+      },
+    ),
     team: {
       eyebrow: content.teamEyebrow,
       title: content.teamTitle,

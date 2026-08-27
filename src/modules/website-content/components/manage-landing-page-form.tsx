@@ -1,15 +1,14 @@
 "use client"
 
-import Link from "next/link"
 import {
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   GripVertical,
   Loader2,
   Plus,
   Save,
   Trash2,
+  Users,
 } from "lucide-react"
 import {
   useCallback,
@@ -21,9 +20,9 @@ import {
 } from "react"
 import { toast } from "sonner"
 
+import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -31,8 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
 import { updateLandingPageAction } from "../actions/update-landing-page"
@@ -43,91 +40,90 @@ import type {
   LandingPageEditorData,
   LandingTeamMemberEditorData,
 } from "../types/landing-page-editor"
+import {
+  AgendaSettings,
+  ArticleSettings,
+  CollaborationSettings,
+  HeaderFooterSettings,
+} from "./website-editor-secondary-tabs"
 
-const tabs = [
-  { label: "Home", available: true },
-  { label: "Article", available: false },
-  { label: "Agenda", available: false },
-  { label: "Collaboration", available: false },
-  { label: "Header & Footer", available: false },
+const tabs = ["Home", "Article", "Agenda", "Collaboration", "Header & Footer"]
+const articleSectionNames = [
+  "Cerita Palembang",
+  "Gaya Hidup",
+  "Ruang Kota",
+  "Industri Kreatif",
+  "Kebudayaan",
 ]
 
 function SectionCard({
   title,
-  description,
+  desc,
   children,
-  defaultOpen = false,
 }: {
   title: string
-  description: string
+  desc?: string
   children: ReactNode
-  defaultOpen?: boolean
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-background shadow-sm">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between gap-4 bg-muted/30 p-4 text-left transition-colors hover:bg-muted/50"
-        onClick={() => setIsOpen((current) => !current)}
-        aria-expanded={isOpen}
+    <div className="overflow-visible rounded-xl border bg-background shadow-sm">
+      <div
+        className={`flex cursor-pointer items-center justify-between bg-muted/30 p-4 transition-colors hover:bg-muted/50 ${
+          isExpanded ? "rounded-t-xl border-b" : "rounded-xl"
+        }`}
+        onClick={() => setIsExpanded((current) => !current)}
       >
-        <span>
-          <span className="block font-display text-lg font-semibold">{title}</span>
-          <span className="mt-1 block text-xs text-muted-foreground">
-            {description}
-          </span>
-        </span>
-        {isOpen ? (
-          <ChevronUp className="size-4 shrink-0" />
-        ) : (
-          <ChevronDown className="size-4 shrink-0" />
-        )}
-      </button>
-      {isOpen ? <div className="space-y-5 border-t p-5 sm:p-6">{children}</div> : null}
-    </section>
+        <div>
+          <h3 className="font-display text-lg font-semibold">{title}</h3>
+          {desc ? (
+            <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
+          ) : null}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="pointer-events-none shrink-0"
+        >
+          {isExpanded ? (
+            <ChevronUp className="size-4" />
+          ) : (
+            <ChevronDown className="size-4" />
+          )}
+        </Button>
+      </div>
+      {isExpanded ? <div className="space-y-5 p-6">{children}</div> : null}
+    </div>
   )
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string
-  hint?: string
-  children: ReactNode
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="space-y-0.5">
-        <Label>{label}</Label>
-        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-      </div>
+      <label className="text-sm font-medium">{label}</label>
       {children}
     </div>
   )
 }
 
-function VisibilityControl({
-  checked,
-  onCheckedChange,
+function Textarea({
+  value,
+  onChange,
+  placeholder,
 }: {
-  checked: boolean
-  onCheckedChange: (checked: boolean) => void
+  value?: string
+  onChange?: (value: string) => void
+  placeholder?: string
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5">
-      <Switch
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        aria-label="Tampilkan item"
-      />
-      <span className="text-xs font-medium">
-        {checked ? "Ditampilkan" : "Disembunyikan"}
-      </span>
-    </div>
+    <textarea
+      value={value}
+      onChange={(event) => onChange?.(event.target.value)}
+      placeholder={placeholder}
+      className="min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+    />
   )
 }
 
@@ -152,77 +148,33 @@ function clientKey(prefix: string) {
   return `${prefix}-${crypto.randomUUID()}`
 }
 
-function CollectionActions({
-  index,
-  total,
-  onMove,
-  onRemove,
-  removeDisabled = false,
-}: {
-  index: number
-  total: number
-  onMove: (direction: -1 | 1) => void
-  onRemove?: () => void
-  removeDisabled?: boolean
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-8"
-        onClick={() => onMove(-1)}
-        disabled={index === 0}
-        aria-label="Pindah ke atas"
-      >
-        <ChevronUp className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-8"
-        onClick={() => onMove(1)}
-        disabled={index === total - 1}
-        aria-label="Pindah ke bawah"
-      >
-        <ChevronDown className="size-4" />
-      </Button>
-      {onRemove ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8 text-red-500 hover:bg-red-50 hover:text-red-600"
-          onClick={onRemove}
-          disabled={removeDisabled}
-          aria-label="Hapus item"
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      ) : null}
-    </div>
-  )
-}
-
 export function ManageLandingPageForm({
   initialData,
 }: {
   initialData: LandingPageEditorData
 }) {
+  const [activeTab, setActiveTab] = useState(tabs[0])
   const [data, setData] = useState(initialData)
   const [isPending, startTransition] = useTransition()
   const dataRef = useRef(data)
+  const activeTabRef = useRef(activeTab)
   const { isDirty, setIsDirty, registerSaveHandler } = useUnsavedChanges()
 
   useEffect(() => {
     dataRef.current = data
   }, [data])
 
+  useEffect(() => {
+    activeTabRef.current = activeTab
+  }, [activeTab])
+
   const changeData = useCallback(
     (updater: (current: LandingPageEditorData) => LandingPageEditorData) => {
-      setData(updater)
+      setData((current) => {
+        const next = updater(current)
+        dataRef.current = next
+        return next
+      })
       setIsDirty(true)
     },
     [setIsDirty],
@@ -231,6 +183,14 @@ export function ManageLandingPageForm({
   const handleSave = useCallback(
     () =>
       new Promise<boolean>((resolve) => {
+        if (activeTabRef.current !== "Home" && !isDirty) {
+          toast.success(
+            `Pengaturan ${activeTabRef.current} berhasil disimpan!`,
+          )
+          resolve(true)
+          return
+        }
+
         startTransition(async () => {
           try {
             const result = await updateLandingPageAction(dataRef.current)
@@ -253,7 +213,7 @@ export function ManageLandingPageForm({
           }
         })
       }),
-    [setIsDirty, startTransition],
+    [isDirty, setIsDirty, startTransition],
   )
 
   useEffect(() => {
@@ -326,352 +286,447 @@ export function ManageLandingPageForm({
 
   return (
     <div className="space-y-8 pb-10">
-      <header className="sticky top-0 z-10 flex flex-col gap-4 border-b bg-background/90 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-0 z-10 flex flex-col gap-4 border-b bg-background/80 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Manage Website</h1>
-            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-              Home terhubung
-            </span>
-            {isDirty ? (
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
-                Belum disimpan
-              </span>
-            ) : null}
-          </div>
-          <p className="mt-1 text-muted-foreground">
-            Atur konten landing page yang tampil pada website publik.
+          <h2 className="text-3xl font-bold tracking-tight">Manage Website</h2>
+          <p className="text-muted-foreground">
+            Konfigurasi dinamis untuk elemen-elemen halaman website.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href="/" target="_blank">
-              <ExternalLink className="size-4" /> Lihat website
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={isPending || !isDirty}
-            className="bg-palembang-red text-white hover:bg-palembang-red/90"
-          >
-            {isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            {isPending ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </div>
-      </header>
+        <Button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={isPending}
+          className="w-fit bg-palembang-red text-white hover:bg-palembang-red/90"
+        >
+          {isPending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 size-4" />
+          )}
+          {isPending ? "Menyimpan..." : "Simpan Perubahan"}
+        </Button>
+      </div>
 
-      <nav className="border-b" aria-label="Bagian website">
-        <div className="flex gap-6 overflow-x-auto pb-px">
+      <div className="relative border-b">
+        <div className="flex gap-6 overflow-x-auto pb-px hide-scrollbar">
           {tabs.map((tab) => (
             <button
-              key={tab.label}
+              key={tab}
               type="button"
-              disabled={!tab.available}
+              onClick={() => {
+                activeTabRef.current = tab
+                setActiveTab(tab)
+              }}
               className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
-                tab.available
+                activeTab === tab
                   ? "border-palembang-red text-palembang-red"
-                  : "cursor-not-allowed border-transparent text-muted-foreground/60"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
               }`}
-              title={tab.available ? undefined : "Module ini belum terhubung"}
             >
-              {tab.label}
-              {!tab.available ? (
-                <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                  segera
-                </span>
-              ) : null}
+              {tab}
             </button>
           ))}
         </div>
-      </nav>
+      </div>
 
-      <div className="max-w-4xl space-y-7">
-        <SectionCard
-          title="Hero Carousel"
-          description="Kelola gambar, teks, visibilitas, dan urutan slide utama."
-          defaultOpen
-        >
-          <div className="space-y-5">
-            {data.heroSlides.map((slide, index) => (
-              <div
-                key={slide.clientKey}
-                className="space-y-4 rounded-xl border bg-muted/10 p-4 sm:p-5"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <GripVertical className="size-4 text-muted-foreground" />
-                    Slide {index + 1}
+      <div className="max-w-4xl">
+        {activeTab === "Home" ? (
+          <div className="space-y-8">
+            <SectionCard
+              title="Section Heroes (Carousel)"
+              desc="Konfigurasi gambar, teks, dan urutan carousel utama. Geser atas/bawah untuk mengubah urutan."
+            >
+              <div className="space-y-6">
+                {data.heroSlides.map((slide, index) => (
+                  <div
+                    key={slide.clientKey}
+                    className="relative space-y-4 rounded-lg border bg-muted/20 p-5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                        <GripVertical className="size-4" />
+                        Slide {index + 1}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() =>
+                            changeData((current) => ({
+                              ...current,
+                              heroSlides: moveRecord(
+                                current.heroSlides,
+                                index,
+                                -1,
+                              ),
+                            }))
+                          }
+                          disabled={index === 0}
+                        >
+                          <ChevronUp className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() =>
+                            changeData((current) => ({
+                              ...current,
+                              heroSlides: moveRecord(
+                                current.heroSlides,
+                                index,
+                                1,
+                              ),
+                            }))
+                          }
+                          disabled={index === data.heroSlides.length - 1}
+                        >
+                          <ChevronDown className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => {
+                            if (data.heroSlides.length <= 1) {
+                              toast.error("Minimal harus ada 1 carousel!")
+                              return
+                            }
+                            changeData((current) => ({
+                              ...current,
+                              heroSlides: normalizePositions(
+                                current.heroSlides.filter(
+                                  (item) => item.clientKey !== slide.clientKey,
+                                ),
+                              ),
+                            }))
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Field label="Background Carousel">
+                      <ImageUpload
+                        value={slide.imageUrl}
+                        onChange={(imageUrl) =>
+                          updateHero(slide.clientKey, { imageUrl })
+                        }
+                        placeholder="Upload gambar background..."
+                        aspect={16 / 9}
+                      />
+                    </Field>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Tagline">
+                        <Input
+                          value={slide.eyebrow}
+                          onChange={(event) =>
+                            updateHero(slide.clientKey, {
+                              eyebrow: event.target.value,
+                            })
+                          }
+                          placeholder="BUDAYA"
+                        />
+                      </Field>
+                      <Field label="URL Button">
+                        <Input
+                          value={slide.buttonUrl}
+                          onChange={(event) =>
+                            updateHero(slide.clientKey, {
+                              buttonUrl: event.target.value,
+                            })
+                          }
+                          placeholder="/cerita-warga"
+                        />
+                      </Field>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Alt Gambar">
+                        <Input
+                          value={slide.imageAlt}
+                          onChange={(event) =>
+                            updateHero(slide.clientKey, {
+                              imageAlt: event.target.value,
+                            })
+                          }
+                          placeholder="Deskripsi gambar"
+                        />
+                      </Field>
+                      <Field label="Label Button">
+                        <Input
+                          value={slide.buttonLabel}
+                          onChange={(event) =>
+                            updateHero(slide.clientKey, {
+                              buttonLabel: event.target.value,
+                            })
+                          }
+                          placeholder="Jelajahi cerita"
+                        />
+                      </Field>
+                    </div>
+                    <Field label="Judul">
+                      <Input
+                        value={slide.title}
+                        onChange={(event) =>
+                          updateHero(slide.clientKey, {
+                            title: event.target.value,
+                          })
+                        }
+                        placeholder="Judul utama carousel"
+                      />
+                    </Field>
+                    <Field label="Deskripsi Singkat">
+                      <Textarea
+                        value={slide.description}
+                        onChange={(description) =>
+                          updateHero(slide.clientKey, { description })
+                        }
+                        placeholder="Tuliskan deskripsi..."
+                      />
+                    </Field>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <VisibilityControl
-                      checked={slide.isVisible}
-                      onCheckedChange={(isVisible) =>
-                        updateHero(slide.clientKey, { isVisible })
-                      }
-                    />
-                    <CollectionActions
-                      index={index}
-                      total={data.heroSlides.length}
-                      onMove={(direction) =>
-                        changeData((current) => ({
-                          ...current,
-                          heroSlides: moveRecord(
-                            current.heroSlides,
-                            index,
-                            direction,
-                          ),
-                        }))
-                      }
-                      onRemove={() =>
-                        changeData((current) => ({
-                          ...current,
-                          heroSlides: normalizePositions(
-                            current.heroSlides.filter(
-                              (item) => item.clientKey !== slide.clientKey,
-                            ),
-                          ),
-                        }))
-                      }
-                      removeDisabled={data.heroSlides.length === 1}
-                    />
-                  </div>
-                </div>
-
-                <Field
-                  label="URL gambar"
-                  hint="Gunakan URL HTTP(S). Upload file akan ditambahkan bersama integrasi Cloudinary."
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-dashed"
+                  onClick={() =>
+                    changeData((current) => ({
+                      ...current,
+                      heroSlides: [
+                        ...current.heroSlides,
+                        {
+                          id: null,
+                          clientKey: clientKey("hero"),
+                          imageUrl: "",
+                          imageAlt: "",
+                          eyebrow: "",
+                          title: "",
+                          description: "",
+                          buttonLabel: "Jelajahi cerita",
+                          buttonUrl: "/cerita-warga",
+                          position: current.heroSlides.length + 1,
+                          isVisible: true,
+                        },
+                      ],
+                    }))
+                  }
                 >
+                  <Plus className="mr-2 size-4" /> Tambah Carousel Slide
+                </Button>
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Section About"
+              desc="Konfigurasi area tentang Benah Palembang."
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Est. & Kota">
                   <Input
-                    value={slide.imageUrl}
+                    value={data.about.establishedText}
                     onChange={(event) =>
-                      updateHero(slide.clientKey, { imageUrl: event.target.value })
+                      changeData((current) => ({
+                        ...current,
+                        about: {
+                          ...current.about,
+                          establishedText: event.target.value,
+                        },
+                      }))
                     }
-                    placeholder="https://..."
                   />
                 </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Alt gambar">
-                    <Input
-                      value={slide.imageAlt}
-                      onChange={(event) =>
-                        updateHero(slide.clientKey, { imageAlt: event.target.value })
-                      }
-                    />
-                  </Field>
-                  <Field label="Eyebrow">
-                    <Input
-                      value={slide.eyebrow}
-                      onChange={(event) =>
-                        updateHero(slide.clientKey, { eyebrow: event.target.value })
-                      }
-                    />
-                  </Field>
-                </div>
+                <Field label="Tagline">
+                  <Input
+                    value={data.about.eyebrow}
+                    onChange={(event) =>
+                      changeData((current) => ({
+                        ...current,
+                        about: {
+                          ...current.about,
+                          eyebrow: event.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+              <Field label="Judul Section">
+                <Input
+                  value={data.about.title}
+                  onChange={(event) =>
+                    changeData((current) => ({
+                      ...current,
+                      about: { ...current.about, title: event.target.value },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Deskripsi">
+                <Textarea
+                  value={data.about.description}
+                  onChange={(description) =>
+                    changeData((current) => ({
+                      ...current,
+                      about: { ...current.about, description },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Teks Penutup">
+                <Input
+                  value={data.about.closingText}
+                  onChange={(event) =>
+                    changeData((current) => ({
+                      ...current,
+                      about: {
+                        ...current.about,
+                        closingText: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </Field>
+            </SectionCard>
+
+            <SectionCard
+              title="Section Jelajahi"
+              desc="Konfigurasi judul dan card jelajahi. Geser atas/bawah untuk mengubah urutan."
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Tagline">
+                  <Input
+                    value={data.explore.eyebrow}
+                    onChange={(event) =>
+                      changeData((current) => ({
+                        ...current,
+                        explore: {
+                          ...current.explore,
+                          eyebrow: event.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Field>
                 <Field label="Judul">
-                  <Textarea
-                    value={slide.title}
+                  <Input
+                    value={data.explore.title}
                     onChange={(event) =>
-                      updateHero(slide.clientKey, { title: event.target.value })
-                    }
-                    className="min-h-20"
-                  />
-                </Field>
-                <Field label="Deskripsi">
-                  <Textarea
-                    value={slide.description}
-                    onChange={(event) =>
-                      updateHero(slide.clientKey, {
-                        description: event.target.value,
-                      })
+                      changeData((current) => ({
+                        ...current,
+                        explore: {
+                          ...current.explore,
+                          title: event.target.value,
+                        },
+                      }))
                     }
                   />
                 </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Label tombol">
+              </div>
+              <div className="mt-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Card Jelajahi
+                </p>
+                {data.explore.items.map((item, index) => (
+                  <div
+                    key={item.clientKey}
+                    className="flex items-center gap-3 rounded-lg border bg-muted/10 p-3"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-5"
+                        onClick={() =>
+                          changeData((current) => ({
+                            ...current,
+                            explore: {
+                              ...current.explore,
+                              items: moveRecord(
+                                current.explore.items,
+                                index,
+                                -1,
+                              ),
+                            },
+                          }))
+                        }
+                        disabled={index === 0}
+                      >
+                        <ChevronUp className="size-3" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-5"
+                        onClick={() =>
+                          changeData((current) => ({
+                            ...current,
+                            explore: {
+                              ...current.explore,
+                              items: moveRecord(
+                                current.explore.items,
+                                index,
+                                1,
+                              ),
+                            },
+                          }))
+                        }
+                        disabled={index === data.explore.items.length - 1}
+                      >
+                        <ChevronDown className="size-3" />
+                      </Button>
+                    </div>
                     <Input
-                      value={slide.buttonLabel}
+                      className="flex-1"
+                      value={item.label}
                       onChange={(event) =>
-                        updateHero(slide.clientKey, {
-                          buttonLabel: event.target.value,
+                        updateExploreItem(item.clientKey, {
+                          label: event.target.value,
                         })
                       }
+                      placeholder="Judul"
                     />
-                  </Field>
-                  <Field label="URL tombol">
                     <Input
-                      value={slide.buttonUrl}
+                      className="w-28"
+                      value={
+                        item.storyCount === null
+                          ? ""
+                          : `${item.storyCount} stories`
+                      }
+                      onChange={(event) => {
+                        const count = Number.parseInt(
+                          event.target.value.replace(/\D/g, ""),
+                          10,
+                        )
+                        updateExploreItem(item.clientKey, {
+                          storyCount: Number.isNaN(count) ? null : count,
+                        })
+                      }}
+                      placeholder="CTA"
+                    />
+                    <Input
+                      className="w-32"
+                      value={item.linkUrl}
                       onChange={(event) =>
-                        updateHero(slide.clientKey, { buttonUrl: event.target.value })
+                        updateExploreItem(item.clientKey, {
+                          linkUrl: event.target.value,
+                        })
                       }
+                      placeholder="Link URL"
                     />
-                  </Field>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={() =>
-                changeData((current) => ({
-                  ...current,
-                  heroSlides: [
-                    ...current.heroSlides,
-                    {
-                      id: null,
-                      clientKey: clientKey("hero"),
-                      imageUrl: "",
-                      imageAlt: "",
-                      eyebrow: "Cerita Kota",
-                      title: "",
-                      description: "",
-                      buttonLabel: "Jelajahi cerita",
-                      buttonUrl: "/cerita-warga",
-                      position: current.heroSlides.length + 1,
-                      isVisible: true,
-                    },
-                  ],
-                }))
-              }
-            >
-              <Plus className="size-4" /> Tambah slide
-            </Button>
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="About Benah Palembang"
-          description="Narasi pengenalan yang tampil setelah hero."
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Eyebrow">
-              <Input
-                value={data.about.eyebrow}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    about: { ...current.about, eyebrow: event.target.value },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Est. dan kota">
-              <Input
-                value={data.about.establishedText}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    about: {
-                      ...current.about,
-                      establishedText: event.target.value,
-                    },
-                  }))
-                }
-              />
-            </Field>
-          </div>
-          <Field label="Judul">
-            <Textarea
-              value={data.about.title}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  about: { ...current.about, title: event.target.value },
-                }))
-              }
-            />
-          </Field>
-          <Field label="Deskripsi">
-            <Textarea
-              value={data.about.description}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  about: { ...current.about, description: event.target.value },
-                }))
-              }
-              className="min-h-28"
-            />
-          </Field>
-          <Field label="Teks penutup">
-            <Input
-              value={data.about.closingText}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  about: { ...current.about, closingText: event.target.value },
-                }))
-              }
-            />
-          </Field>
-        </SectionCard>
-
-        <SectionCard
-          title="Jelajahi Perspektif"
-          description="Atur heading dan tautan kategori pada area jelajahi."
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Eyebrow">
-              <Input
-                value={data.explore.eyebrow}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    explore: { ...current.explore, eyebrow: event.target.value },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Judul">
-              <Input
-                value={data.explore.title}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    explore: { ...current.explore, title: event.target.value },
-                  }))
-                }
-              />
-            </Field>
-          </div>
-
-          <div className="space-y-3">
-            {data.explore.items.map((item, index) => (
-              <div
-                key={item.clientKey}
-                className="space-y-3 rounded-lg border bg-muted/10 p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm font-semibold">Item {index + 1}</span>
-                  <div className="flex items-center gap-2">
-                    <VisibilityControl
-                      checked={item.isVisible}
-                      onCheckedChange={(isVisible) =>
-                        updateExploreItem(item.clientKey, { isVisible })
-                      }
-                    />
-                    <CollectionActions
-                      index={index}
-                      total={data.explore.items.length}
-                      onMove={(direction) =>
-                        changeData((current) => ({
-                          ...current,
-                          explore: {
-                            ...current.explore,
-                            items: moveRecord(
-                              current.explore.items,
-                              index,
-                              direction,
-                            ),
-                          },
-                        }))
-                      }
-                      onRemove={() =>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                      onClick={() =>
                         changeData((current) => ({
                           ...current,
                           explore: {
@@ -684,487 +739,393 @@ export function ManageLandingPageForm({
                           },
                         }))
                       }
-                    />
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-[1fr_1.3fr_130px]">
-                  <Field label="Label">
-                    <Input
-                      value={item.label}
-                      onChange={(event) =>
-                        updateExploreItem(item.clientKey, {
-                          label: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field label="URL tujuan">
-                    <Input
-                      value={item.linkUrl}
-                      onChange={(event) =>
-                        updateExploreItem(item.clientKey, {
-                          linkUrl: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field label="Jumlah cerita">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={item.storyCount ?? ""}
-                      onChange={(event) =>
-                        updateExploreItem(item.clientKey, {
-                          storyCount:
-                            event.target.value === ""
-                              ? null
-                              : Number(event.target.value),
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={() =>
-                changeData((current) => ({
-                  ...current,
-                  explore: {
-                    ...current.explore,
-                    items: [
-                      ...current.explore.items,
-                      {
-                        id: null,
-                        clientKey: clientKey("explore"),
-                        label: "",
-                        linkUrl: "/",
-                        storyCount: null,
-                        position: current.explore.items.length + 1,
-                        isVisible: true,
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-dashed"
+                  onClick={() =>
+                    changeData((current) => ({
+                      ...current,
+                      explore: {
+                        ...current.explore,
+                        items: [
+                          ...current.explore.items,
+                          {
+                            id: null,
+                            clientKey: clientKey("explore"),
+                            label: "",
+                            storyCount: null,
+                            linkUrl: "/",
+                            position: current.explore.items.length + 1,
+                            isVisible: true,
+                          },
+                        ],
                       },
-                    ],
-                  },
-                }))
-              }
-            >
-              <Plus className="size-4" /> Tambah item jelajahi
-            </Button>
-          </div>
-        </SectionCard>
+                    }))
+                  }
+                >
+                  <Plus className="mr-2 size-4" /> Tambah Card Jelajahi
+                </Button>
+              </div>
+            </SectionCard>
 
-        <SectionCard
-          title="Section Artikel"
-          description="Atur presentasi section. Pin artikel menunggu module Article tersedia."
-        >
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-            Section key dikunci untuk menjaga constraint unik. Daftar artikel
-            pada tiap section belum dapat dipilih sampai module Article terhubung.
-          </div>
-          <div className="space-y-5">
-            {data.articleSections.map((section, index) => (
-              <div
-                key={section.clientKey}
-                className="space-y-4 rounded-xl border bg-muted/10 p-4 sm:p-5"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold">{section.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Key: {section.sectionKey}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <VisibilityControl
-                      checked={section.isVisible}
-                      onCheckedChange={(isVisible) =>
-                        updateArticleSection(section.clientKey, { isVisible })
-                      }
-                    />
-                    <CollectionActions
-                      index={index}
-                      total={data.articleSections.length}
-                      onMove={(direction) =>
-                        changeData((current) => ({
-                          ...current,
-                          articleSections: moveRecord(
-                            current.articleSections,
-                            index,
-                            direction,
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Section key" hint="Tidak dapat diubah.">
-                    <Input value={section.sectionKey} disabled />
-                  </Field>
-                  <Field label="Slug kategori artikel">
-                    <Input
-                      value={section.articleCategorySlug ?? ""}
-                      onChange={(event) =>
+            {data.articleSections.map((section, sectionIndex) => {
+              const sectionName = articleSectionNames[sectionIndex]
+              return (
+                <SectionCard
+                  key={section.clientKey}
+                  title={`Section: ${sectionName}`}
+                  desc={`Konfigurasi background, judul, deskripsi, dan pin artikel untuk kategori ${sectionName}.`}
+                >
+                  <Field label="Background">
+                    <ImageUpload
+                      value={section.backgroundImageUrl}
+                      onChange={(backgroundImageUrl) =>
                         updateArticleSection(section.clientKey, {
-                          articleCategorySlug: event.target.value,
+                          backgroundImageUrl,
                         })
                       }
-                      placeholder="Kosongkan untuk section umum"
+                      placeholder={`Upload background ${sectionName}...`}
+                      aspect={3 / 2}
                     />
                   </Field>
-                </div>
-                <Field label="URL background">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Tagline">
+                      <Input
+                        value={section.eyebrow}
+                        onChange={(event) =>
+                          updateArticleSection(section.clientKey, {
+                            eyebrow: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Judul">
+                      <Input
+                        value={section.title}
+                        onChange={(event) =>
+                          updateArticleSection(section.clientKey, {
+                            title: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Deskripsi">
+                    <Textarea
+                      value={section.description}
+                      onChange={(description) =>
+                        updateArticleSection(section.clientKey, { description })
+                      }
+                      placeholder={`Deskripsi mengenai ${sectionName}...`}
+                    />
+                  </Field>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Label Link (Lihat Semua)">
+                      <Input
+                        value={section.linkLabel}
+                        onChange={(event) =>
+                          updateArticleSection(section.clientKey, {
+                            linkLabel: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Link URL (Lihat Semua)">
+                      <Input
+                        value={section.linkUrl}
+                        onChange={(event) =>
+                          updateArticleSection(section.clientKey, {
+                            linkUrl: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Field label="Tema">
+                      <Select
+                        value={section.theme}
+                        onValueChange={(
+                          theme: LandingArticleSectionEditorData["theme"],
+                        ) =>
+                          updateArticleSection(section.clientKey, { theme })
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DEFAULT">Default</SelectItem>
+                          <SelectItem value="RED">Merah</SelectItem>
+                          <SelectItem value="OFF_WHITE">Off White</SelectItem>
+                          <SelectItem value="DARK">Gelap</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Layout">
+                      <Select
+                        value={section.layout}
+                        onValueChange={(
+                          layout: LandingArticleSectionEditorData["layout"],
+                        ) =>
+                          updateArticleSection(section.clientKey, { layout })
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="STANDARD">Standard</SelectItem>
+                          <SelectItem value="FEATURED_FIRST">
+                            Featured First
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Maks. Artikel">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={section.maxItems}
+                        onChange={(event) =>
+                          updateArticleSection(section.clientKey, {
+                            maxItems: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
+                  </div>
+                </SectionCard>
+              )
+            })}
+
+            <SectionCard
+              title="Section Our Team"
+              desc="Konfigurasi judul dan anggota tim yang ditampilkan di homepage."
+            >
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="Tagline">
                   <Input
-                    value={section.backgroundImageUrl}
+                    value={data.team.eyebrow}
                     onChange={(event) =>
-                      updateArticleSection(section.clientKey, {
-                        backgroundImageUrl: event.target.value,
-                      })
-                    }
-                    placeholder="https://..."
-                  />
-                </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Eyebrow">
-                    <Input
-                      value={section.eyebrow}
-                      onChange={(event) =>
-                        updateArticleSection(section.clientKey, {
+                      changeData((current) => ({
+                        ...current,
+                        team: {
+                          ...current.team,
                           eyebrow: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field label="Judul">
-                    <Input
-                      value={section.title}
-                      onChange={(event) =>
-                        updateArticleSection(section.clientKey, {
-                          title: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-                <Field label="Deskripsi">
-                  <Textarea
-                    value={section.description}
-                    onChange={(event) =>
-                      updateArticleSection(section.clientKey, {
-                        description: event.target.value,
-                      })
+                        },
+                      }))
                     }
                   />
                 </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Label link">
-                    <Input
-                      value={section.linkLabel}
-                      onChange={(event) =>
-                        updateArticleSection(section.clientKey, {
-                          linkLabel: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field label="URL link">
-                    <Input
-                      value={section.linkUrl}
-                      onChange={(event) =>
-                        updateArticleSection(section.clientKey, {
-                          linkUrl: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label="Tema">
-                    <Select
-                      value={section.theme}
-                      onValueChange={(theme: LandingArticleSectionEditorData["theme"]) =>
-                        updateArticleSection(section.clientKey, { theme })
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DEFAULT">Default</SelectItem>
-                        <SelectItem value="RED">Merah</SelectItem>
-                        <SelectItem value="OFF_WHITE">Off white</SelectItem>
-                        <SelectItem value="DARK">Gelap</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="Layout">
-                    <Select
-                      value={section.layout}
-                      onValueChange={(layout: LandingArticleSectionEditorData["layout"]) =>
-                        updateArticleSection(section.clientKey, { layout })
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="STANDARD">Standard</SelectItem>
-                        <SelectItem value="FEATURED_FIRST">
-                          Featured first
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="Maks. artikel">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={12}
-                      value={section.maxItems}
-                      onChange={(event) =>
-                        updateArticleSection(section.clientKey, {
-                          maxItems: Number(event.target.value),
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Tim"
-          description="Kelola heading dan anggota tim yang tampil di landing page."
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Eyebrow">
-              <Input
-                value={data.team.eyebrow}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    team: { ...current.team, eyebrow: event.target.value },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Judul">
-              <Input
-                value={data.team.title}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    team: { ...current.team, title: event.target.value },
-                  }))
-                }
-              />
-            </Field>
-          </div>
-          <Field label="Deskripsi">
-            <Textarea
-              value={data.team.description}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  team: { ...current.team, description: event.target.value },
-                }))
-              }
-            />
-          </Field>
-
-          <div className="space-y-4">
-            {data.team.members.map((member, index) => (
-              <div
-                key={member.clientKey}
-                className="space-y-4 rounded-xl border bg-muted/10 p-4 sm:p-5"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm font-semibold">
-                    Anggota {index + 1}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <VisibilityControl
-                      checked={member.isVisible}
-                      onCheckedChange={(isVisible) =>
-                        updateTeamMember(member.clientKey, { isVisible })
-                      }
-                    />
-                    <CollectionActions
-                      index={index}
-                      total={data.team.members.length}
-                      onMove={(direction) =>
-                        changeData((current) => ({
-                          ...current,
-                          team: {
-                            ...current.team,
-                            members: moveRecord(
-                              current.team.members,
-                              index,
-                              direction,
-                            ),
-                          },
-                        }))
-                      }
-                      onRemove={() =>
-                        changeData((current) => ({
-                          ...current,
-                          team: {
-                            ...current.team,
-                            members: normalizePositions(
-                              current.team.members.filter(
-                                (record) => record.clientKey !== member.clientKey,
-                              ),
-                            ),
-                          },
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-                <Field label="URL foto">
+                <Field label="Judul">
                   <Input
-                    value={member.imageUrl}
+                    value={data.team.title}
                     onChange={(event) =>
-                      updateTeamMember(member.clientKey, {
-                        imageUrl: event.target.value,
-                      })
-                    }
-                    placeholder="https://..."
-                  />
-                </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Nama">
-                    <Input
-                      value={member.name}
-                      onChange={(event) =>
-                        updateTeamMember(member.clientKey, {
-                          name: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field label="Jabatan">
-                    <Input
-                      value={member.role}
-                      onChange={(event) =>
-                        updateTeamMember(member.clientKey, {
-                          role: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-                <Field label="Bio">
-                  <Textarea
-                    value={member.bio}
-                    onChange={(event) =>
-                      updateTeamMember(member.clientKey, {
-                        bio: event.target.value,
-                      })
+                      changeData((current) => ({
+                        ...current,
+                        team: { ...current.team, title: event.target.value },
+                      }))
                     }
                   />
                 </Field>
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={() =>
-                changeData((current) => ({
-                  ...current,
-                  team: {
-                    ...current.team,
-                    members: [
-                      ...current.team.members,
-                      {
-                        id: null,
-                        clientKey: clientKey("team"),
-                        name: "",
-                        role: "",
-                        imageUrl: "",
-                        bio: "",
-                        position: current.team.members.length + 1,
-                        isVisible: true,
-                      },
-                    ],
-                  },
-                }))
-              }
-            >
-              <Plus className="size-4" /> Tambah anggota tim
-            </Button>
-          </div>
-        </SectionCard>
+              <Field label="Deskripsi">
+                <Textarea
+                  value={data.team.description}
+                  onChange={(description) =>
+                    changeData((current) => ({
+                      ...current,
+                      team: { ...current.team, description },
+                    }))
+                  }
+                />
+              </Field>
 
-        <SectionCard
-          title="Call to Action"
-          description="Ajakan kolaborasi pada bagian akhir landing page."
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Eyebrow">
-              <Input
-                value={data.cta.eyebrow}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    cta: { ...current.cta, eyebrow: event.target.value },
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Label tombol">
-              <Input
-                value={data.cta.buttonLabel}
-                onChange={(event) =>
-                  changeData((current) => ({
-                    ...current,
-                    cta: { ...current.cta, buttonLabel: event.target.value },
-                  }))
-                }
-              />
-            </Field>
+              <div className="mt-4 space-y-4">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Users className="size-3.5" /> Anggota Tim
+                </p>
+                {data.team.members.map((member) => (
+                  <div
+                    key={member.clientKey}
+                    className="rounded-lg border bg-muted/10 p-4"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-24 shrink-0">
+                        <ImageUpload
+                          value={member.imageUrl}
+                          onChange={(imageUrl) =>
+                            updateTeamMember(member.clientKey, { imageUrl })
+                          }
+                          placeholder="Foto"
+                          aspect={1}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-3">
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="-mr-2 -mt-2 size-7 text-red-500 hover:bg-red-50 hover:text-red-600"
+                            onClick={() =>
+                              changeData((current) => ({
+                                ...current,
+                                team: {
+                                  ...current.team,
+                                  members: normalizePositions(
+                                    current.team.members.filter(
+                                      (record) =>
+                                        record.clientKey !== member.clientKey,
+                                    ),
+                                  ),
+                                },
+                              }))
+                            }
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                        <Input
+                          value={member.name}
+                          onChange={(event) =>
+                            updateTeamMember(member.clientKey, {
+                              name: event.target.value,
+                            })
+                          }
+                          placeholder="Nama Lengkap"
+                        />
+                        <Input
+                          value={member.role}
+                          onChange={(event) =>
+                            updateTeamMember(member.clientKey, {
+                              role: event.target.value,
+                            })
+                          }
+                          placeholder="Jabatan"
+                        />
+                        <Input
+                          value={member.bio}
+                          onChange={(event) =>
+                            updateTeamMember(member.clientKey, {
+                              bio: event.target.value,
+                            })
+                          }
+                          placeholder="Deskripsi singkat"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-dashed"
+                  onClick={() =>
+                    changeData((current) => ({
+                      ...current,
+                      team: {
+                        ...current.team,
+                        members: [
+                          ...current.team.members,
+                          {
+                            id: null,
+                            clientKey: clientKey("team"),
+                            imageUrl: "",
+                            name: "",
+                            role: "",
+                            bio: "",
+                            position: current.team.members.length + 1,
+                            isVisible: true,
+                          },
+                        ],
+                      },
+                    }))
+                  }
+                >
+                  <Plus className="mr-2 size-4" /> Tambah Anggota Tim
+                </Button>
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Section CTA"
+              desc="Konfigurasi call-to-action di bagian bawah homepage."
+            >
+              <Field label="Tagline">
+                <Input
+                  value={data.cta.eyebrow}
+                  onChange={(event) =>
+                    changeData((current) => ({
+                      ...current,
+                      cta: { ...current.cta, eyebrow: event.target.value },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Judul">
+                <Input
+                  value={data.cta.title}
+                  onChange={(event) =>
+                    changeData((current) => ({
+                      ...current,
+                      cta: { ...current.cta, title: event.target.value },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Deskripsi">
+                <Textarea
+                  value={data.cta.description}
+                  onChange={(description) =>
+                    changeData((current) => ({
+                      ...current,
+                      cta: { ...current.cta, description },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Label Button CTA">
+                <Input
+                  value={data.cta.buttonLabel}
+                  onChange={(event) =>
+                    changeData((current) => ({
+                      ...current,
+                      cta: {
+                        ...current.cta,
+                        buttonLabel: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="URL Button CTA">
+                <Input
+                  value={data.cta.buttonUrl}
+                  onChange={(event) =>
+                    changeData((current) => ({
+                      ...current,
+                      cta: { ...current.cta, buttonUrl: event.target.value },
+                    }))
+                  }
+                  placeholder="/kolaborasi"
+                />
+              </Field>
+            </SectionCard>
           </div>
-          <Field label="Judul">
-            <Textarea
-              value={data.cta.title}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  cta: { ...current.cta, title: event.target.value },
-                }))
-              }
-            />
-          </Field>
-          <Field label="Deskripsi">
-            <Textarea
-              value={data.cta.description}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  cta: { ...current.cta, description: event.target.value },
-                }))
-              }
-            />
-          </Field>
-          <Field label="URL tombol">
-            <Input
-              value={data.cta.buttonUrl}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  cta: { ...current.cta, buttonUrl: event.target.value },
-                }))
-              }
-            />
-          </Field>
-        </SectionCard>
+        ) : null}
+        {activeTab === "Article" ? <ArticleSettings /> : null}
+        {activeTab === "Agenda" ? <AgendaSettings /> : null}
+        {activeTab === "Collaboration" ? <CollaborationSettings /> : null}
+        {activeTab === "Header & Footer" ? <HeaderFooterSettings /> : null}
       </div>
     </div>
   )
