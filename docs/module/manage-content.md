@@ -286,19 +286,31 @@ import repository internal secara acak atau circular dependency.
 
 Manage Content dikerjakan setelah Event dan Article selesai:
 
-1. Finalisasi DTO gabungan Article dan Event.
-2. Buat helper statistik hardcoded berdasarkan content type.
-3. Implementasikan query search, sort, count, dan pagination server-side.
-4. Ubah `/dashboard/content` menjadi route Server Component tipis.
-5. Implementasikan preview database untuk Article dan Event.
-6. Implementasikan approve dan reject untuk Request.
-7. Implementasikan takedown dan restore.
-8. Revalidate landing, category, article detail, agenda, dan event detail sesuai
+- [x] 1. Finalisasi DTO gabungan Article dan Event.
+- [x] 2. Buat helper statistik hardcoded berdasarkan content type (Article: Comments; Event: Participants).
+- [x] 3. Implementasikan query search, sort, count, dan pagination server-side.
+- [x] 4. Ubah `/dashboard/content` menjadi route Server Component tipis.
+- [x] 5. Implementasikan preview database untuk Article dan Event.
+- [x] 6. Implementasikan approve dan reject untuk Request (`PENDING_REVIEW`).
+- [x] 7. Implementasikan takedown dan restore (`PUBLISHED` <-> `TAKEN_DOWN`).
+- [x] 8. Revalidate landing, category, article detail, agenda, dan event detail sesuai
    target mutation.
-9. Pindahkan UI dari `src/features/dashboard/ManageContent.tsx` ke module.
-10. Hapus `initialContent` setelah query database aktif.
-11. Jalankan TypeScript, lint, build, dan smoke check seluruh transition.
-12. Serahkan pemasangan role-based permission kepada module Permission.
+- [x] 9. Pindahkan UI dari `src/features/dashboard/ManageContent.tsx` ke module (`src/modules/manage-content/components/manage-content-list.tsx`).
+- [x] 10. Hapus `initialContent` setelah query database aktif.
+- [x] 11. Jalankan TypeScript, lint, build, dan smoke check seluruh transition.
+- [x] 12. Serahkan pemasangan role-based permission kepada module Permission.
+
+### Status implementasi Manage Content
+
+- `/dashboard/content` membaca Article dan Event non-draft langsung dari database
+  PostgreSQL melalui DAL server-only `getManagedContent`.
+- Query mendukung pencarian case-insensitive berdasarkan judul konten, nama author/owner,
+  maupun filter eksplisit `article` / `event`.
+- Pagination berukuran 25 item per halaman dengan URL state synchronization (`page`, `q`).
+- Kolom Statistik menampilkan `MessageCircle` (Comments) khusus untuk Article dan `Users` (Participants) khusus untuk Event.
+- Aksi moderasi (`Approve`, `Reject`, `Takedown`, `Restore`) ditangani oleh Server Actions
+  terisolasi dengan validasi Zod dan revalidasi rute otomatis.
+- Tombol View membuka pratinjau canonical `/dashboard/create-article/preview/[id]` atau `/dashboard/create-event/preview/[id]`.
 
 ## 12. Urutan implementasi lintas module
 
