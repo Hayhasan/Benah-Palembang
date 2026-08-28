@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 import { eventIdSchema } from "../schemas/event.schema"
@@ -55,6 +56,20 @@ export async function archiveEventAction(
           deletedAt: now,
         },
       })
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "DELETE",
+          module: "EVENT",
+          description: `Mengarsipkan event '${event.slug}'`,
+          beforeState: { id: event.id, status: event.status, active: true },
+          afterState: { active: false, deletedAt: now.toISOString() },
+        },
+        transaction,
+      )
 
       return "archived" as const
     })

@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { moderationPayloadSchema } from "../schemas/manage-content.schema"
@@ -10,7 +11,7 @@ import { revalidateManagedContentRoutes } from "./revalidate-managed-content"
 export async function restoreContentAction(
   input: unknown,
 ): Promise<ManageContentActionResult> {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = moderationPayloadSchema.safeParse(input)
   if (!parsed.success) {
@@ -24,66 +25,112 @@ export async function restoreContentAction(
 
   try {
     if (type === "ARTICLE") {
-      const article = await prisma.article.findFirst({
-        where: { id, deletedAt: null },
+      const result = await prisma.$transaction(async (tx) => {
+        const article = await tx.article.findFirst({
+          where: { id, deletedAt: null },
+        })
+
+        if (!article) return { kind: "not-found" as const }
+        if (article.status !== "TAKEN_DOWN" && article.status !== "REJECTED") {
+          return { kind: "invalid-status" as const, status: article.status }
+        }
+
+        const updated = await tx.article.update({
+          where: { id: article.id },
+          data: {
+            status: "PUBLISHED",
+            publishedAt: article.publishedAt ?? new Date(),
+            moderationNote: null,
+          },
+        })
+
+        await recordActivityLog(
+          {
+            userId: actor.id,
+            userName: actor.name,
+            userRole: actor.role,
+            action: "RESTORE",
+            module: "CONTENT",
+            description: `Memulihkan artikel '${updated.title}' ke status Posted`,
+            beforeState: { status: article.status === "TAKEN_DOWN" ? "Takedown" : "Rejected" },
+            afterState: { status: "Posted" },
+          },
+          tx,
+        )
+
+        return { kind: "ok" as const, article: updated }
       })
 
-      if (!article) {
+      if (result.kind === "not-found") {
         return { success: false, message: "Artikel tidak ditemukan." }
       }
 
-      if (article.status !== "TAKEN_DOWN" && article.status !== "REJECTED") {
+      if (result.kind === "invalid-status") {
         return {
           success: false,
-          message: `Artikel tidak dapat dipulihkan karena berstatus ${article.status}.`,
+          message: `Artikel tidak dapat dipulihkan karena berstatus ${result.status}.`,
         }
       }
 
-      const updated = await prisma.article.update({
-        where: { id: article.id },
-        data: {
-          status: "PUBLISHED",
-          publishedAt: article.publishedAt ?? new Date(),
-          moderationNote: null,
-        },
-      })
-
-      revalidateManagedContentRoutes("ARTICLE", updated.slug)
+      revalidateManagedContentRoutes("ARTICLE", result.article.slug)
 
       return {
         success: true,
-        message: `Artikel "${updated.title}" berhasil dipulihkan (Posted)!`,
+        message: `Artikel "${result.article.title}" berhasil dipulihkan (Posted)!`,
       }
     } else {
-      const event = await prisma.event.findFirst({
-        where: { id, deletedAt: null },
+      const result = await prisma.$transaction(async (tx) => {
+        const event = await tx.event.findFirst({
+          where: { id, deletedAt: null },
+        })
+
+        if (!event) return { kind: "not-found" as const }
+        if (event.status !== "TAKEN_DOWN" && event.status !== "REJECTED") {
+          return { kind: "invalid-status" as const, status: event.status }
+        }
+
+        const updated = await tx.event.update({
+          where: { id: event.id },
+          data: {
+            status: "PUBLISHED",
+            publishedAt: event.publishedAt ?? new Date(),
+            moderationNote: null,
+          },
+        })
+
+        await recordActivityLog(
+          {
+            userId: actor.id,
+            userName: actor.name,
+            userRole: actor.role,
+            action: "RESTORE",
+            module: "CONTENT",
+            description: `Memulihkan event '${updated.title}' ke status Posted`,
+            beforeState: { status: event.status === "TAKEN_DOWN" ? "Takedown" : "Rejected" },
+            afterState: { status: "Posted" },
+          },
+          tx,
+        )
+
+        return { kind: "ok" as const, event: updated }
       })
 
-      if (!event) {
+      if (result.kind === "not-found") {
         return { success: false, message: "Event tidak ditemukan." }
       }
 
-      if (event.status !== "TAKEN_DOWN" && event.status !== "REJECTED") {
+      if (result.kind === "invalid-status") {
         return {
           success: false,
-          message: `Event tidak dapat dipulihkan karena berstatus ${event.status}.`,
+          message: `Event tidak dapat dipulihkan karena berstatus ${result.status}.`,
         }
       }
 
-      const updated = await prisma.event.update({
-        where: { id: event.id },
-        data: {
-          status: "PUBLISHED",
-          publishedAt: event.publishedAt ?? new Date(),
-          moderationNote: null,
-        },
-      })
-
-      revalidateManagedContentRoutes("EVENT", updated.id)
+      revalidateManagedContentRoutes("EVENT", result.event.id)
 
       return {
         success: true,
-        message: `Event "${updated.title}" berhasil dipulihkan (Posted)!`,
+        message: `Event "${result.event.title}" berhasil dipulihkan (Posted)!`,
       }
     }
   } catch (error) {

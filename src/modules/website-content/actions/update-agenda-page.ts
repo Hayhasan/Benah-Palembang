@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { readAgendaPageEditor } from "../data/get-agenda-page-editor"
@@ -25,7 +26,7 @@ function agendaContentData(data: AgendaPageEditorData) {
 export async function updateAgendaPageAction(
   input: unknown,
 ): Promise<UpdateAgendaPageResult> {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = agendaPageEditorSchema.safeParse(input)
   if (!parsed.success) {
@@ -57,9 +58,23 @@ export async function updateAgendaPageAction(
           },
         })
       }
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "UPDATE",
+          module: "WEBSITE",
+          description: "Memperbarui konten halaman Agenda publik",
+          afterState: { section: "agenda", title: parsed.data.hero.title },
+        },
+        transaction,
+      )
     })
 
     revalidatePath("/agenda")
+    revalidatePath("/dashboard/website")
 
     return {
       success: true,
@@ -70,10 +85,7 @@ export async function updateAgendaPageAction(
     console.error("Failed to update agenda page:", error)
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Konten Agenda gagal disimpan. Silakan coba lagi.",
+      message: "Konten Agenda gagal disimpan. Silakan coba lagi.",
     }
   }
 }

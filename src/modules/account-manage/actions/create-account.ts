@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { hashPassword } from "@/modules/auth/data/password"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
@@ -13,7 +14,7 @@ import { revalidateAccountRoutes } from "./revalidate-account-routes"
 export async function createAccountAction(
   input: unknown,
 ): Promise<AccountActionResult> {
-  await requireRole(["SUPERADMIN"])
+  const actor = await requireRole(["SUPERADMIN"])
 
   const parsed = createAccountSchema.safeParse(input)
   if (!parsed.success) {
@@ -42,13 +43,34 @@ export async function createAccountAction(
   try {
     const password = await hashPassword(data.password)
 
-    await prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password,
-        role: data.role,
-      },
+    await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password,
+          role: data.role,
+        },
+      })
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "CREATE",
+          module: "ACCOUNT",
+          description: `Menambahkan akun ${data.role === "USER" ? "user" : data.role === "ADMIN" ? "admin" : "superadmin"} baru '${data.name}'`,
+          beforeState: null,
+          afterState: {
+            id: newUser.id,
+            name: data.name,
+            email: data.email,
+            role: data.role,
+          },
+        },
+        tx,
+      )
     })
 
     revalidateAccountRoutes()

@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 import { eventEditorSchema } from "../schemas/event.schema"
@@ -141,8 +142,25 @@ export async function saveEventAction(
               })),
             },
           },
-          select: { id: true, status: true },
+          select: { id: true, title: true, status: true },
         })
+
+        await recordActivityLog(
+          {
+            userId: actor.id,
+            userName: actor.name,
+            userRole: actor.role,
+            action: "UPDATE",
+            module: "EVENT",
+            description:
+              data.intent === "POST"
+                ? `Mengajukan review agenda event '${event.title}'`
+                : `Menyimpan perubahan draf agenda event '${event.title}'`,
+            beforeState: { status: currentEvent.status },
+            afterState: { status: event.status },
+          },
+          transaction,
+        )
 
         return { kind: "saved" as const, event }
       }
@@ -171,8 +189,25 @@ export async function saveEventAction(
             })),
           },
         },
-        select: { id: true, status: true },
+        select: { id: true, title: true, status: true },
       })
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "CREATE",
+          module: "EVENT",
+          description:
+            data.intent === "POST"
+              ? `Membuat dan mengajukan review event '${event.title}'`
+              : `Membuat draft agenda event '${event.title}'`,
+          beforeState: null,
+          afterState: { id: event.id, title: event.title, status: event.status },
+        },
+        transaction,
+      )
 
       return { kind: "saved" as const, event }
     })

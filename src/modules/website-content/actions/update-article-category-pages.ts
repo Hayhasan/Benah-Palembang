@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { getDefaultArticleCategoryPage } from "../constants/default-article-category-pages"
@@ -130,7 +131,7 @@ async function updateArticleCategoryPages(
 export async function updateArticleCategoryPagesAction(
   input: unknown,
 ): Promise<UpdateArticleCategoryPagesResult> {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = articleCategoryPagesEditorSchema.safeParse(input)
   if (!parsed.success) {
@@ -160,6 +161,19 @@ export async function updateArticleCategoryPagesAction(
       } else {
         await createDefaultWebsiteContent(transaction, parsed.data)
       }
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "UPDATE",
+          module: "WEBSITE",
+          description: "Memperbarui konten halaman kategori artikel publik",
+          afterState: { totalCategories: parsed.data.categories.length },
+        },
+        transaction,
+      )
     })
 
     revalidatePath("/", "layout")

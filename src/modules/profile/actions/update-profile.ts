@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 import { mapProfile, profileSelect } from "../data/profile.mapper"
@@ -26,6 +27,17 @@ export async function updateProfileAction(
 
   try {
     const profile = await prisma.$transaction(async (transaction) => {
+      const current = await transaction.user.findFirst({
+        where: {
+          id: actor.id,
+          isBanned: false,
+          deletedAt: null,
+        },
+        select: profileSelect,
+      })
+
+      if (!current) return null
+
       const result = await transaction.user.updateMany({
         where: {
           id: actor.id,
@@ -37,7 +49,7 @@ export async function updateProfileAction(
 
       if (result.count === 0) return null
 
-      return transaction.user.findFirst({
+      const updated = await transaction.user.findFirst({
         where: {
           id: actor.id,
           isBanned: false,
@@ -45,6 +57,32 @@ export async function updateProfileAction(
         },
         select: profileSelect,
       })
+
+      if (updated) {
+        await recordActivityLog(
+          {
+            userId: actor.id,
+            userName: updated.name,
+            userRole: updated.role,
+            action: "UPDATE",
+            module: "PROFILE",
+            description: `Mengubah data personal profil akun '${updated.name}'`,
+            beforeState: {
+              name: current.name,
+              bio: current.bio,
+              whatsappNumber: current.whatsappNumber,
+            },
+            afterState: {
+              name: updated.name,
+              bio: updated.bio,
+              whatsappNumber: updated.whatsappNumber,
+            },
+          },
+          transaction,
+        )
+      }
+
+      return updated
     })
 
     if (!profile) {

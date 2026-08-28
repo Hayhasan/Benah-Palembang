@@ -47,6 +47,7 @@ model User {
   articleComments     ArticleComment[] @relation("ArticleCommentUser")
   articleLikes        ArticleLike[]    @relation("ArticleLikeUser")
   eventLikes          EventLike[]      @relation("EventLikeUser")
+  activityLogs        ActivityLog[]    @relation("UserActivityLogs")
 
   @@index([role, deletedAt, createdAt])
   @@index([isBanned, deletedAt])
@@ -464,4 +465,51 @@ model EventLike {
   @@index([userId])
   @@index([eventId])
   @@map("event_likes")
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  APPROVE
+  REJECT
+  TAKEDOWN
+  RESTORE
+  BAN
+  UNBAN
+  CHANGE_ROLE
+}
+
+enum ActivityModule {
+  AUTH
+  PROFILE
+  ACCOUNT
+  WEBSITE
+  ARTICLE
+  EVENT
+  CONTENT
+}
+
+model ActivityLog {
+  id          Int            @id @default(autoincrement())
+  userId      String?        @db.Uuid
+  userName    String         @db.VarChar(160)
+  userRole    UserRole       @default(USER)
+  action      ActivityAction
+  module      ActivityModule
+  description String         @db.Text
+  beforeState Json?          @db.JsonB
+  afterState  Json?          @db.JsonB
+  ipAddress   String?        @db.VarChar(64)
+  userAgent   String?        @db.Text
+  createdAt   DateTime       @default(now()) @db.Timestamptz(6)
+  user        User?          @relation("UserActivityLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([module, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt(sort: Desc)])
+  @@map("activity_logs")
 }

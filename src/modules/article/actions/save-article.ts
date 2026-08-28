@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 import { articleEditorSchema } from "../schemas/article.schema"
@@ -132,12 +133,30 @@ export async function saveArticleAction(
           select: {
             id: true,
             slug: true,
+            title: true,
             status: true,
             websiteArticleSection: {
               select: { articleCategorySlug: true },
             },
           },
         })
+
+        await recordActivityLog(
+          {
+            userId: actor.id,
+            userName: actor.name,
+            userRole: actor.role,
+            action: "UPDATE",
+            module: "ARTICLE",
+            description:
+              data.intent === "POST"
+                ? `Mengajukan review artikel '${article.title}'`
+                : `Menyimpan perubahan draf artikel '${article.title}'`,
+            beforeState: { status: currentArticle.status },
+            afterState: { status: article.status },
+          },
+          transaction,
+        )
 
         return { kind: "saved" as const, article }
       }
@@ -165,12 +184,30 @@ export async function saveArticleAction(
         select: {
           id: true,
           slug: true,
+          title: true,
           status: true,
           websiteArticleSection: {
             select: { articleCategorySlug: true },
           },
         },
       })
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "CREATE",
+          module: "ARTICLE",
+          description:
+            data.intent === "POST"
+              ? `Membuat dan mengajukan review artikel '${article.title}'`
+              : `Membuat draft artikel '${article.title}'`,
+          beforeState: null,
+          afterState: { id: article.id, title: article.title, status: article.status },
+        },
+        transaction,
+      )
 
       return { kind: "saved" as const, article }
     })

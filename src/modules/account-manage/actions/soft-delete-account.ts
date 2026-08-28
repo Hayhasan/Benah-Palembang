@@ -3,6 +3,7 @@
 import type { UserRole } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 import { revokeUserSessions } from "@/modules/auth/data/session"
 
@@ -14,7 +15,7 @@ import { revalidateAccountRoutes } from "./revalidate-account-routes"
 export async function softDeleteAccountAction(
   input: unknown,
 ): Promise<AccountActionResult> {
-  await requireRole(["SUPERADMIN"])
+  const actor = await requireRole(["SUPERADMIN"])
 
   const parsed = accountMutationSchema.safeParse(input)
   if (!parsed.success) {
@@ -38,6 +39,7 @@ export async function softDeleteAccountAction(
         },
         select: {
           id: true,
+          name: true,
           email: true,
           originalEmail: true,
           role: true,
@@ -61,6 +63,20 @@ export async function softDeleteAccountAction(
       })
 
       if (result.count === 0) return "not-found" as const
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "DELETE",
+          module: "ACCOUNT",
+          description: `Menghapus akun pengguna '${account.name}' (${account.email})`,
+          beforeState: { id: account.id, email: account.email, role: account.role, active: true },
+          afterState: { active: false, deletedAt: new Date().toISOString() },
+        },
+        transaction,
+      )
 
       return "deleted" as const
     })

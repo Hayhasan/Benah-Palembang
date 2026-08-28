@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import {
@@ -179,7 +180,7 @@ async function updateCollaborationPage(
 export async function updateCollaborationPageAction(
   input: unknown,
 ): Promise<UpdateCollaborationPageResult> {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = collaborationPageEditorSchema.safeParse(input)
   if (!parsed.success) {
@@ -213,6 +214,19 @@ export async function updateCollaborationPageAction(
       } else {
         await createCollaborationPage(tx, parsed.data)
       }
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "UPDATE",
+          module: "WEBSITE",
+          description: "Memperbarui konten halaman Kolaborasi publik",
+          afterState: { section: "collaboration", title: parsed.data.hero.title },
+        },
+        tx,
+      )
     })
 
     revalidatePath("/kolaborasi")

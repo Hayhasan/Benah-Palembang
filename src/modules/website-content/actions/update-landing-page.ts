@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { getDefaultArticleCategoryPage } from "../constants/default-article-category-pages"
@@ -361,7 +362,7 @@ async function updateLandingPage(
 export async function updateLandingPageAction(
   input: unknown,
 ): Promise<UpdateLandingPageResult> {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = landingPageEditorSchema.safeParse(input)
   if (!parsed.success) {
@@ -398,6 +399,19 @@ export async function updateLandingPageAction(
       } else {
         await createLandingPage(tx, parsed.data)
       }
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "UPDATE",
+          module: "WEBSITE",
+          description: "Memperbarui konten Landing Page (Home)",
+          afterState: { section: "home", title: parsed.data.about.title },
+        },
+        tx,
+      )
     })
 
     revalidatePath("/")

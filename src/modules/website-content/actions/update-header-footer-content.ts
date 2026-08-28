@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { readHeaderFooterContentEditor } from "../data/get-header-footer-content-editor"
@@ -161,7 +162,7 @@ async function updateHeaderFooterContent(
 export async function updateHeaderFooterContentAction(
   input: unknown,
 ): Promise<UpdateHeaderFooterContentResult> {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = headerFooterContentEditorSchema.safeParse(input)
   if (!parsed.success) {
@@ -195,6 +196,19 @@ export async function updateHeaderFooterContentAction(
       } else {
         await createHeaderFooterContent(tx, parsed.data)
       }
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "UPDATE",
+          module: "WEBSITE",
+          description: "Memperbarui konten Header & Footer website publik",
+          afterState: { section: "header-footer" },
+        },
+        tx,
+      )
     })
 
     revalidatePath("/", "layout")

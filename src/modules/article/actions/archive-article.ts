@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 import { articleIdSchema } from "../schemas/article.schema"
@@ -65,6 +66,20 @@ export async function archiveArticleAction(
           deletedAt: now,
         },
       })
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "DELETE",
+          module: "ARTICLE",
+          description: `Mengarsipkan artikel '${article.slug}'`,
+          beforeState: { id: article.id, status: article.status, active: true },
+          afterState: { active: false, deletedAt: now.toISOString() },
+        },
+        transaction,
+      )
 
       return { kind: "archived" as const, article }
     })

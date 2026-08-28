@@ -3,6 +3,7 @@
 import type { UserRole } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 import { revokeUserSessions } from "@/modules/auth/data/session"
 
@@ -17,7 +18,7 @@ import { revalidateAccountRoutes } from "./revalidate-account-routes"
 export async function changeAccountRoleAction(
   input: unknown,
 ): Promise<AccountActionResult> {
-  await requireRole(["SUPERADMIN"])
+  const actor = await requireRole(["SUPERADMIN"])
 
   const parsed = changeAccountRoleSchema.safeParse(input)
   if (!parsed.success) {
@@ -39,7 +40,7 @@ export async function changeAccountRoleAction(
           },
           deletedAt: null,
         },
-        select: { role: true },
+        select: { id: true, name: true, email: true, role: true },
       })
 
       if (!account) return null
@@ -54,6 +55,20 @@ export async function changeAccountRoleAction(
         where: { id },
         data: { role: targetRole },
       })
+
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "CHANGE_ROLE",
+          module: "ACCOUNT",
+          description: `Mengubah peran akun '${account.name}' (${account.email}) dari ${account.role} menjadi ${targetRole}`,
+          beforeState: { role: account.role },
+          afterState: { role: targetRole },
+        },
+        transaction,
+      )
 
       return (targetRole === "USER" ? "user" : "admin") as AccountRouteRole
     })

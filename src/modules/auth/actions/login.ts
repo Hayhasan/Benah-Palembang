@@ -1,7 +1,9 @@
 "use server"
 
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { recordLoginActivity } from "../data/activity"
 import { findLoginAccount } from "../data/auth-account"
 import { verifyPassword } from "../data/password"
@@ -81,6 +83,27 @@ export async function loginAction(
 
     try {
       await recordLoginActivity(account.id)
+
+      const requestHeaders = await headers()
+      const rawIp =
+        requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        requestHeaders.get("x-real-ip") ||
+        requestHeaders.get("cf-connecting-ip") ||
+        null
+      const ip = !rawIp && process.env.NODE_ENV === "development" ? "127.0.0.1" : rawIp
+      const userAgent = requestHeaders.get("user-agent") || null
+
+      await recordActivityLog({
+        userId: account.id,
+        userName: account.name,
+        userRole: account.role,
+        action: "LOGIN",
+        module: "AUTH",
+        description: `Pengguna '${account.name}' (${account.email}) berhasil login ke dashboard`,
+        afterState: { ip, device: userAgent },
+        ipAddress: ip,
+        userAgent,
+      })
     } catch (error) {
       console.error("Failed to record login activity:", error)
     }
