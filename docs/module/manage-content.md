@@ -172,23 +172,23 @@ memakai salah satu pendekatan berikut:
 Pendekatan pertama diprioritaskan jika implementasinya tetap jelas dan aman.
 Prisma raw query tidak boleh membangun SQL dari string input client.
 
-## 7. Preview
+## 7. Preview Admin (Moderasi)
 
-Preview memakai route yang sudah dipisahkan berdasarkan domain:
+Preview dari POV admin memakai route khusus Manage Content:
 
 ```text
-/dashboard/article/preview/[id]
-/dashboard/event/preview/[id]
+/dashboard/content/[id]/article
+/dashboard/content/[id]/event
 ```
 
-Aturan preview:
+Aturan preview admin:
 
-- Query protected membaca content berdasarkan `type` route masing-masing.
-- Preview dapat menampilkan status non-public seperti Request atau Rejected.
+- Terproteksi peran `ADMIN` dan `SUPERADMIN`.
+- Tidak menampilkan tombol "Edit" karena admin bertindak sebagai peninjau/moderator.
+- Menyediakan tombol aksi moderasi langsung pada action bar (Setujui, Tolak, Takedown, Pulihkan/Restore) sesuai status konten.
+- Preview dapat menampilkan status non-public seperti Request, Rejected, atau Takedown.
 - Record soft-deleted menghasilkan `notFound()`.
-- Public preview component menggunakan DTO yang sama dengan public page selama
-  memungkinkan agar tampilan tidak berbeda.
-- Preview tidak memakai fallback mock record pertama.
+- Public preview component menggunakan layout dan tampilan yang konsisten dengan halaman detail publik.
 
 ## 8. Moderation actions
 

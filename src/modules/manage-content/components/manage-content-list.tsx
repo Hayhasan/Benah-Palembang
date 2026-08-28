@@ -319,11 +319,11 @@ export function ManageContentList({
                             onClick={() => {
                               if (content.type === "ARTICLE") {
                                 router.push(
-                                  `/dashboard/create-article/preview/${content.id}`,
+                                  `/dashboard/content/${content.id}/article`,
                                 )
                               } else {
                                 router.push(
-                                  `/dashboard/create-event/preview/${content.id}`,
+                                  `/dashboard/content/${content.id}/event`,
                                 )
                               }
                             }}
