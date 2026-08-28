@@ -1,18 +1,19 @@
 import { redirect } from "next/navigation"
 
-import { RegisterPage } from "@/modules/auth/components/register-page"
 import { getCurrentUser } from "@/modules/auth/data/session-dal"
+import { FirstTimeSetupPage } from "@/modules/first-time-setup/components/first-time-setup-page"
 import { checkHasAnyUser } from "@/modules/first-time-setup/data/check-setup-status"
 
 export default async function Page() {
   const hasUser = await checkHasAnyUser()
-  if (!hasUser) {
-    redirect("/first-time-setup")
+
+  if (hasUser) {
+    const currentUser = await getCurrentUser()
+    if (currentUser) {
+      redirect("/dashboard")
+    }
+    redirect("/login")
   }
 
-  if (await getCurrentUser()) {
-    redirect("/dashboard")
-  }
-
-  return <RegisterPage />
+  return <FirstTimeSetupPage />
 }
