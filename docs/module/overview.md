@@ -223,22 +223,22 @@ Langkah transisi:
 
 ## 8. Implementation Plan & Checklist Validasi
 
-- [ ] **1. DTO & Query Schema:**
+- [x] **1. DTO & Query Schema:**
   - Buat `src/modules/overview/types/overview.ts`.
   - Buat `src/modules/overview/schemas/overview-query.schema.ts`.
-- [ ] **2. Data Access Layer (DAL) & Mapper:**
+- [x] **2. Data Access Layer (DAL) & Mapper:**
   - Buat `src/modules/overview/data/overview.mapper.ts` dengan helper format angka (`formatNumber`, `formatCompactNumber`, format relative time).
   - Buat `src/modules/overview/data/get-overview-data.ts` dengan agregasi paralel Prisma (Users, Articles, Events, Views, Interactions, Logs, Recent Moderation, Recent Logs).
-- [ ] **3. UI Components Modul Overview:**
+- [x] **3. UI Components Modul Overview:**
   - Buat `src/modules/overview/components/overview-metric-cards.tsx`.
   - Buat `src/modules/overview/components/overview-chart.tsx`.
   - Buat `src/modules/overview/components/overview-recent-content.tsx`.
   - Buat `src/modules/overview/components/overview-recent-logs.tsx`.
   - Buat `src/modules/overview/components/overview-page.tsx`.
-- [ ] **4. Route Integration & Cleanup:**
+- [x] **4. Route Integration & Cleanup:**
   - Perbarui `src/app/dashboard/page.tsx` untuk membaca data real dari `getOverviewData`.
   - Hapus file legacy `src/features/dashboard/Overview.tsx`.
-- [ ] **5. Validasi & Pengujian:**
+- [x] **5. Validasi & Pengujian:**
   - `npx prisma validate`
   - `npx tsc --noEmit`
   - `npm run lint`
