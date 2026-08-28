@@ -32,9 +32,14 @@ Platform terbagi menjadi dua ranah utama:
 - **Detail Artikel (`/artikel/[slug]`):** Halaman baca artikel lengkap dengan views counter 24 jam, interaksi like, dan kolom komentar real-time.
 - **Agenda Komunitas (`/agenda` & `/agenda/[id]`):** Kalender kegiatan dan detail acara dengan pendaftaran CTA eksternal serta pelacakan partisipan.
 - **Kolaborasi (`/kolaborasi`):** Informasi kemitraan media, partner logos, dan featured partner contents.
-- **Autentikasi (`/login`, `/register`, `/lupa-password`):** Pintu masuk akun, pendaftaran mandiri pengguna baru, dan alur pemulihan kata sandi.
 
-### 2.2. Dashboard Terkelola (`src/app/dashboard`)
+### 2.2. Autentikasi & Inisialisasi (`src/app/(auth)`)
+- **Login (`/login`):** Pintu masuk akun terdaftar.
+- **Register (`/register`):** Pendaftaran mandiri akun pengguna (`USER`).
+- **Lupa Password (`/lupa-password` & `/lupa-password/[token]`):** Alur pemulihan kata sandi via email reset token.
+- **First Time Setup (`/first-time-setup`):** Inisialisasi akun SuperAdmin pertama saat database masih kosong.
+
+### 2.3. Dashboard Terkelola (`src/app/dashboard`)
 - **Overview (`/dashboard`):** Ringkasan metrik eksekutif, grafik performa kunjungan & interaksi, serta pratinjau permohonan moderasi dan log audit (`ADMIN` & `SUPERADMIN`).
 - **Manage Website (`/dashboard/website`):** CMS pengelola konfigurasi landing page, hero kategori, agenda, kolaborasi, dan global header/footer (`ADMIN` & `SUPERADMIN`).
 - **Manage Content (`/dashboard/content`):** Pusat moderasi artikel dan acara (Approve, Reject, Takedown, Restore) (`ADMIN` & `SUPERADMIN`).

@@ -133,7 +133,7 @@ Alur kerja mutasi:
 ```text
 src/
 ├── app/
-│   └── (public)/
+│   └── (auth)/
 │       └── first-time-setup/
 │           └── page.tsx                 # Server Component route entry point
 └── modules/
@@ -163,11 +163,11 @@ src/
   - Buat `src/modules/first-time-setup/actions/first-time-setup.ts` dengan guard transaksional, pembuatan `SUPERADMIN`, Redis session, dan log activity.
 - [x] **4. UI Components & Route Setup:**
   - Buat `src/modules/first-time-setup/components/first-time-setup-page.tsx` menggunakan layout elegan `AuthPageShell`.
-  - Buat route `src/app/(public)/first-time-setup/page.tsx`.
+  - Buat route `src/app/(auth)/first-time-setup/page.tsx`.
 - [x] **5. Integrasi Pengalihan Dua Arah pada Halaman Auth:**
-  - Perbarui `src/app/(public)/login/page.tsx` untuk redirect ke `/first-time-setup` jika `!checkHasAnyUser()`.
-  - Perbarui `src/app/(public)/register/page.tsx` untuk redirect ke `/first-time-setup` jika `!checkHasAnyUser()`.
-  - Perbarui `src/app/(public)/lupa-password/page.tsx` untuk redirect ke `/first-time-setup` jika `!checkHasAnyUser()`.
+  - Perbarui `src/app/(auth)/login/page.tsx` untuk redirect ke `/first-time-setup` jika `!checkHasAnyUser()`.
+  - Perbarui `src/app/(auth)/register/page.tsx` untuk redirect ke `/first-time-setup` jika `!checkHasAnyUser()`.
+  - Perbarui `src/app/(auth)/lupa-password/page.tsx` untuk redirect ke `/first-time-setup` jika `!checkHasAnyUser()`.
 - [x] **6. Validasi & Pengujian:**
   - `npx prisma validate`
   - `npx tsc --noEmit`

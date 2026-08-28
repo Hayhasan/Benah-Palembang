@@ -205,7 +205,7 @@ enumeration melalui timing menjadi lebih sulit.
 Route tetap berada pada:
 
 ```text
-src/app/(public)/login/page.tsx
+src/app/(auth)/login/page.tsx
 ```
 
 Page route tetap tipis. Form dan state action dimiliki module Auth. Submit login
@@ -269,7 +269,7 @@ Presence.
 Route tetap berada pada:
 
 ```text
-src/app/(public)/register/page.tsx
+src/app/(auth)/register/page.tsx
 ```
 
 Register membuat account baru dengan role yang selalu dipaksa menjadi `USER`.
