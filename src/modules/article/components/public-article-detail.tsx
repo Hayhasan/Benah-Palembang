@@ -35,11 +35,15 @@ export function PublicArticleDetail({
   const stats = getPublicArticleMockStats(article.id)
   const router = useRouter()
   const { user, status } = useSession()
+  const isAuthenticated = status === "authenticated" && Boolean(user)
 
-  const [liked, setLiked] = useState(article.hasLiked)
-  const [likesCount, setLikesCount] = useState(article.likesCount)
+  const [optimisticLike, setOptimisticLike] = useState<boolean | null>(null)
+  const [likesCountDelta, setLikesCountDelta] = useState(0)
   const [copied, setCopied] = useState(false)
   const [, startTransition] = useTransition()
+
+  const isLiked = isAuthenticated ? (optimisticLike ?? article.hasLiked) : false
+  const likesCount = Math.max(0, article.likesCount + (isAuthenticated ? likesCountDelta : 0))
 
   async function copyLink() {
     await navigator.clipboard?.writeText(window.location.href)
@@ -56,7 +60,7 @@ export function PublicArticleDetail({
   }
 
   function handleToggleLike() {
-    if (status !== "authenticated" || !user) {
+    if (!isAuthenticated) {
       toast.info("Silakan masuk terlebih dahulu untuk menyukai artikel ini.", {
         action: {
           label: "Masuk",
@@ -69,25 +73,20 @@ export function PublicArticleDetail({
       return
     }
 
-    const nextLiked = !liked
-    const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1)
-    setLiked(nextLiked)
-    setLikesCount(nextCount)
+    const nextLiked = !isLiked
+    setOptimisticLike(nextLiked)
+    setLikesCountDelta((prev) => (nextLiked ? prev + 1 : prev - 1))
 
     startTransition(async () => {
       const result = await toggleArticleLikeAction({ articleId: article.id })
       if (!result.success) {
         toast.error(result.message)
-        setLiked(!nextLiked)
-        setLikesCount(likesCount)
+        setOptimisticLike(!nextLiked)
+        setLikesCountDelta((prev) => (nextLiked ? prev - 1 : prev + 1))
         return
       }
-      if (typeof result.likesCount === "number") {
-        setLikesCount(result.likesCount)
-      }
-      if (typeof result.hasLiked === "boolean") {
-        setLiked(result.hasLiked)
-      }
+      setOptimisticLike(result.hasLiked ?? nextLiked)
+      setLikesCountDelta(0)
     })
   }
 
@@ -145,7 +144,7 @@ export function PublicArticleDetail({
                     {article.readingTime} min read
                   </span>
                   <span className="flex items-center gap-2">
-                    <Heart className={`size-4 ${liked ? "fill-palembang-red text-palembang-red" : ""}`} />
+                    <Heart className={`size-4 ${isLiked ? "fill-palembang-red text-palembang-red" : ""}`} />
                     {likesCount.toLocaleString("id-ID")} likes
                   </span>
                   <span className="flex items-center gap-2">
@@ -164,9 +163,9 @@ export function PublicArticleDetail({
                   type="button"
                   aria-label="Sukai artikel"
                   onClick={handleToggleLike}
-                  className={`rounded-full border p-3 transition-colors ${liked ? "border-palembang-red bg-palembang-red text-white" : "border-border hover:border-palembang-red hover:text-palembang-red"}`}
+                  className={`rounded-full border p-3 transition-colors ${isLiked ? "border-palembang-red bg-palembang-red text-white" : "border-border hover:border-palembang-red hover:text-palembang-red"}`}
                 >
-                  <Heart className={`size-4 ${liked ? "fill-current" : ""}`} />
+                  <Heart className={`size-4 ${isLiked ? "fill-current" : ""}`} />
                 </button>
                 <button
                   type="button"
@@ -215,12 +214,12 @@ export function PublicArticleDetail({
                   variant="outline"
                   size="sm"
                   onClick={handleToggleLike}
-                  className={liked ? "border-palembang-red text-palembang-red" : ""}
+                  className={isLiked ? "border-palembang-red text-palembang-red" : ""}
                 >
                   <Heart
-                    className={`size-4 ${liked ? "fill-palembang-red text-palembang-red" : ""}`}
+                    className={`size-4 ${isLiked ? "fill-palembang-red text-palembang-red" : ""}`}
                   />
-                  {liked ? "Disukai" : "Suka"} ({likesCount})
+                  {isLiked ? "Disukai" : "Suka"} ({likesCount})
                 </Button>
                 <Button
                   variant="outline"

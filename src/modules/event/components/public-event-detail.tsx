@@ -32,13 +32,17 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
   const stats = getPublicEventMockStats(event.id)
   const router = useRouter()
   const { user, status } = useSession()
+  const isAuthenticated = status === "authenticated" && Boolean(user)
 
-  const [liked, setLiked] = useState(event.hasLiked)
-  const [likesCount, setLikesCount] = useState(event.likesCount)
+  const [optimisticLike, setOptimisticLike] = useState<boolean | null>(null)
+  const [likesCountDelta, setLikesCountDelta] = useState(0)
   const [, startTransition] = useTransition()
 
+  const isLiked = isAuthenticated ? (optimisticLike ?? event.hasLiked) : false
+  const likesCount = Math.max(0, event.likesCount + (isAuthenticated ? likesCountDelta : 0))
+
   function handleToggleLike() {
-    if (status !== "authenticated" || !user) {
+    if (!isAuthenticated) {
       toast.info("Silakan masuk terlebih dahulu untuk menyukai acara ini.", {
         action: {
           label: "Masuk",
@@ -51,25 +55,20 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
       return
     }
 
-    const nextLiked = !liked
-    const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1)
-    setLiked(nextLiked)
-    setLikesCount(nextCount)
+    const nextLiked = !isLiked
+    setOptimisticLike(nextLiked)
+    setLikesCountDelta((prev) => (nextLiked ? prev + 1 : prev - 1))
 
     startTransition(async () => {
       const result = await toggleEventLikeAction({ eventId: event.id })
       if (!result.success) {
         toast.error(result.message)
-        setLiked(!nextLiked)
-        setLikesCount(likesCount)
+        setOptimisticLike(!nextLiked)
+        setLikesCountDelta((prev) => (nextLiked ? prev - 1 : prev + 1))
         return
       }
-      if (typeof result.likesCount === "number") {
-        setLikesCount(result.likesCount)
-      }
-      if (typeof result.hasLiked === "boolean") {
-        setLiked(result.hasLiked)
-      }
+      setOptimisticLike(result.hasLiked ?? nextLiked)
+      setLikesCountDelta(0)
     })
   }
 
@@ -115,7 +114,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
             <span className="flex items-center gap-2">
               <Heart
                 className={`size-4 ${
-                  liked ? "fill-palembang-red text-palembang-red" : ""
+                  isLiked ? "fill-palembang-red text-palembang-red" : ""
                 }`}
               />
               {likesCount.toLocaleString("id-ID")} likes
@@ -214,17 +213,17 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                         variant="outline"
                         onClick={handleToggleLike}
                         className={`h-11 w-full font-semibold ${
-                          liked
+                          isLiked
                             ? "border-palembang-red text-palembang-red hover:bg-red-50 hover:text-palembang-red"
                             : "hover:border-palembang-red hover:text-palembang-red"
                         }`}
                       >
                         <Heart
                           className={`size-4 ${
-                            liked ? "fill-palembang-red text-palembang-red" : ""
+                            isLiked ? "fill-palembang-red text-palembang-red" : ""
                           }`}
                         />
-                        <span>{liked ? "Disukai" : "Suka"}</span>
+                        <span>{isLiked ? "Disukai" : "Suka"}</span>
                       </Button>
 
                       <EventShareButton title={event.title} />
