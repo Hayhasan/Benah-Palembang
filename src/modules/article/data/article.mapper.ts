@@ -24,6 +24,7 @@ export const publicArticleCardSelect = {
   coverImageUrl: true,
   readingTime: true,
   isFeatured: true,
+  views: true,
   publishedAt: true,
   websiteArticleSection: {
     select: {
@@ -135,6 +136,7 @@ export function mapPublicArticleCard(
     publishedAtLabel: publishedAtFormatter.format(article.publishedAt),
     readingTime: article.readingTime,
     isFeatured: article.isFeatured,
+    views: article.views,
   }
 }
 

@@ -47,6 +47,7 @@ export const ownedEventListSelect = {
   description: true,
   bannerUrl: true,
   startsAt: true,
+  views: true,
   status: true,
   _count: {
     select: {
@@ -67,6 +68,7 @@ export const ownedEventEditorSelect = {
   location: true,
   organizer: true,
   registrationUrl: true,
+  views: true,
   status: true,
   tags: {
     where: { deletedAt: null },
@@ -118,7 +120,7 @@ export function mapOwnedEventListItem(
     startsAtLabel: `${listDateFormatter.format(event.startsAt)} WIB`,
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
-    views: stats.views,
+    views: event.views,
     likes: event._count.likes,
     participants: stats.participants,
   }
@@ -145,6 +147,7 @@ export function mapOwnedEventEditor(
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
     tags: event.tags.map((tag) => tag.label),
+    views: event.views,
     likesCount: event._count.likes,
   }
 }

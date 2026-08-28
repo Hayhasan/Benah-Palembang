@@ -74,7 +74,7 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
             <div className="mt-8 flex flex-wrap gap-5 border-t border-white/15 pt-5 text-xs text-white/65">
               <span className="flex items-center gap-2">
                 <Eye className="size-4" />
-                {stats.views.toLocaleString("id-ID")} views
+                {event.views.toLocaleString("id-ID")} views
               </span>
               <span className="flex items-center gap-2">
                 <Heart className="size-4 text-palembang-red" />

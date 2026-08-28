@@ -349,6 +349,7 @@ model Event {
   location        String        @db.VarChar(255)
   organizer       String        @db.VarChar(255)
   registrationUrl String?       @db.Text
+  views           Int           @default(0)
   status          ContentStatus @default(DRAFT)
   moderationNote  String?       @db.Text
   submittedAt     DateTime?     @db.Timestamptz(6)
@@ -391,6 +392,7 @@ model Article {
   coverImageUrl           String                @db.Text
   readingTime             Int
   isFeatured              Boolean               @default(false)
+  views                   Int                   @default(0)
   status                  ContentStatus         @default(DRAFT)
   moderationNote          String?               @db.Text
   submittedAt             DateTime?             @db.Timestamptz(6)

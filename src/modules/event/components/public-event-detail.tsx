@@ -109,7 +109,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/15 pt-5 text-xs text-white/65">
             <span className="flex items-center gap-2">
               <Eye className="size-4" />
-              {stats.views.toLocaleString("id-ID")} views
+              {event.views.toLocaleString("id-ID")} views
             </span>
             <span className="flex items-center gap-2">
               <Heart

@@ -2,7 +2,6 @@ import "server-only"
 
 import type { ContentStatus, Prisma } from "@prisma/client"
 
-import { getPublicArticleMockStats } from "../constants/public-article-stats"
 import type {
   OwnedArticleEditorData,
   OwnedArticleListItem,
@@ -35,6 +34,7 @@ export const ownedArticleListSelect = {
   excerpt: true,
   coverImageUrl: true,
   status: true,
+  views: true,
   updatedAt: true,
   websiteArticleSection: {
     select: {
@@ -60,6 +60,7 @@ export const ownedArticleEditorSelect = {
   coverImageUrl: true,
   websiteArticleSectionId: true,
   readingTime: true,
+  views: true,
   status: true,
   publishedAt: true,
   updatedAt: true,
@@ -110,8 +111,6 @@ export function ownedArticleStatusLabel(status: ContentStatus) {
 export function mapOwnedArticleListItem(
   article: OwnedArticleListRecord,
 ): OwnedArticleListItem {
-  const stats = getPublicArticleMockStats(article.id)
-
   return {
     id: article.id,
     title: article.title,
@@ -123,7 +122,7 @@ export function mapOwnedArticleListItem(
     updatedAtLabel: `${listDateFormatter.format(article.updatedAt)} WIB`,
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
-    views: stats.views,
+    views: article.views,
     likes: article._count.likes,
     comments: article._count.comments,
   }
@@ -157,6 +156,7 @@ export function mapOwnedArticleEditor(
     publishedAtLabel: article.publishedAt
       ? publishedAtFormatter.format(article.publishedAt)
       : "Draf belum dipublikasikan",
+    views: article.views,
     commentsCount: article._count.comments,
     likesCount: article._count.likes,
   }

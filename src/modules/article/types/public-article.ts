@@ -11,6 +11,7 @@ export interface PublicArticleCardData {
   publishedAtLabel: string
   readingTime: number
   isFeatured: boolean
+  views: number
 }
 
 export interface PublicArticleAuthorData {

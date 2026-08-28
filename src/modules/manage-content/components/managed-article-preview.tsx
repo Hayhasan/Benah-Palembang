@@ -22,7 +22,6 @@ import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
-import { getPublicArticleMockStats } from "@/modules/article/constants/public-article-stats"
 import type { OwnedArticleEditorData } from "@/modules/article/types/article"
 
 import { approveContentAction } from "../actions/approve-content"
@@ -36,7 +35,6 @@ export function ManagedArticlePreview({
   article: OwnedArticleEditorData
 }) {
   const router = useRouter()
-  const stats = getPublicArticleMockStats(article.id)
   const [liked, setLiked] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -255,7 +253,7 @@ export function ManagedArticlePreview({
                   <MessageCircle className="size-4 text-emerald-400" />
                   {article.commentsCount.toLocaleString("id-ID")} comments
                 </span>
-                <span>{stats.views.toLocaleString("id-ID")} views</span>
+                <span>{article.views.toLocaleString("id-ID")} views</span>
               </div>
             </div>
           </div>

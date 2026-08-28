@@ -18,7 +18,6 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 
-import { getPublicArticleMockStats } from "../constants/public-article-stats"
 import type { OwnedArticleEditorData } from "../types/article"
 
 export function OwnedArticlePreview({
@@ -26,7 +25,6 @@ export function OwnedArticlePreview({
 }: {
   article: OwnedArticleEditorData
 }) {
-  const stats = getPublicArticleMockStats(article.id)
   const [liked, setLiked] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -143,7 +141,7 @@ export function OwnedArticlePreview({
                   <MessageCircle className="size-4 text-emerald-400" />
                   {article.commentsCount.toLocaleString("id-ID")} comments
                 </span>
-                <span>{stats.views.toLocaleString("id-ID")} views</span>
+                <span>{article.views.toLocaleString("id-ID")} views</span>
               </div>
             </div>
           </div>

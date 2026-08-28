@@ -41,6 +41,7 @@ export interface OwnedEventEditorData {
   status: ContentStatus
   statusLabel: string
   tags: string[]
+  views: number
   likesCount: number
 }
 

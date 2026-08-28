@@ -21,7 +21,6 @@ import { SectionHeading } from "@/features/public/components/SectionHeading"
 import { useSession } from "@/modules/auth/hooks/use-session"
 
 import { toggleArticleLikeAction } from "../actions/toggle-article-like"
-import { getPublicArticleMockStats } from "../constants/public-article-stats"
 import type { PublicArticlePageData } from "../types/public-article"
 import { ArticleComments } from "./article-comments"
 import { PublicArticleCard } from "./public-article-card"
@@ -32,7 +31,6 @@ export function PublicArticleDetail({
   data: PublicArticlePageData
 }) {
   const { article, relatedArticles } = data
-  const stats = getPublicArticleMockStats(article.id)
   const router = useRouter()
   const { user, status } = useSession()
   const isAuthenticated = status === "authenticated" && Boolean(user)
@@ -149,7 +147,7 @@ export function PublicArticleDetail({
                   </span>
                   <span className="flex items-center gap-2">
                     <Eye className="size-4" />
-                    {stats.views.toLocaleString("id-ID")} views
+                    {article.views.toLocaleString("id-ID")} views
                   </span>
                 </div>
               </div>

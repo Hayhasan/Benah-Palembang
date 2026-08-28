@@ -49,6 +49,14 @@ export interface EventModerationRecord extends Event {
   }
 }
 
+function formatCompactNumber(num: number): string {
+  if (num >= 1000) {
+    const compact = (num / 1000).toFixed(1).replace(/\.0$/, "")
+    return `${compact}K`
+  }
+  return num.toString()
+}
+
 export function mapArticleToManagedContent(
   article: ArticleModerationRecord,
 ): ManagedContentListItem {
@@ -77,6 +85,7 @@ export function mapArticleToManagedContent(
     dateLabel: formatManagedDate(displayDate),
     stats: {
       ...baseStats,
+      views: formatCompactNumber(article.views),
       likes: (article._count?.likes ?? 0).toString(),
       comments: article._count?.comments ?? 0,
     },
@@ -111,6 +120,7 @@ export function mapEventToManagedContent(
     dateLabel: formatManagedDate(displayDate),
     stats: {
       ...baseStats,
+      views: formatCompactNumber(event.views),
       likes: (event._count?.likes ?? 0).toString(),
     },
   }

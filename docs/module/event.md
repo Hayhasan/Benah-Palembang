@@ -479,3 +479,20 @@ Event like diimplementasikan menggunakan table relasional `EventLike`:
   - `/dashboard/content/[id]/event` menampilkan jumlah like riil pada metadata hero event.
   - `/dashboard/create-event` menampilkan jumlah like riil pada tabel event milik author.
   - `/dashboard/create-event/preview/[id]` menampilkan jumlah like riil pada metadata preview owner.
+
+## 14. Sistem View Event
+
+Sistem view agenda/event mencatat pembacaan riil secara atomic dengan proteksi deduplikasi Redis:
+
+- **Database Column:** `views Int @default(0)` pada model `Event`.
+- **Deduplikasi Redis (24 Jam / 86400 Detik):**
+  - Menggunakan command Redis atomic `SET key "1" EX 86400 NX`.
+  - Key format authenticated user: `<REDIS_PREFIX>:view:event:<eventId>:user:<userId>`.
+  - Key format guest / unauthenticated: `<REDIS_PREFIX>:view:event:<eventId>:device:<deviceId>`.
+  - `deviceId` digenerate otomatis melalui Next.js Middleware dalam bentuk cookie HTTP `benah_device_id` (durasi 1 tahun).
+- **Trigger Penambahan View:**
+  - Hanya bertambah pada halaman publik detail `/agenda/[id]` (`src/app/(public)/agenda/[id]/page.tsx`).
+  - Tidak bertambah pada halaman preview author, dashboard, atau manage content.
+- **Sinkronisasi UI:**
+  - Halaman detail publik `/agenda/[id]`, dashboard author `/dashboard/create-event`, author preview, dan manage content membaca angka `views` riil dari database.
+

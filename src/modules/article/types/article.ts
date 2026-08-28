@@ -53,6 +53,7 @@ export interface OwnedArticleEditorData {
   }
   publishedAt: string | null
   publishedAtLabel: string
+  views: number
   commentsCount: number
   likesCount: number
 }

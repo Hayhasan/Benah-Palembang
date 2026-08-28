@@ -509,5 +509,20 @@ Article like diimplementasikan menggunakan table relasional `ArticleLike`:
   - `/dashboard/content/[id]/article` menampilkan jumlah like riil pada metadata hero artikel.
   - `/dashboard/create-article` menampilkan jumlah like riil pada tabel artikel author.
   - `/dashboard/create-article/preview/[id]` menampilkan jumlah like riil pada metadata preview author.
-- **Rencana Event Like:**
-  - Model `EventLike` (`eventId`, `userId`) dirancang dengan pola yang sama dan akan diimplementasikan pada tahap terpisah.
+
+## 15. Sistem View Artikel
+
+Sistem view artikel mencatat pembacaan riil secara atomic dengan proteksi deduplikasi Redis:
+
+- **Database Column:** `views Int @default(0)` pada model `Article`.
+- **Deduplikasi Redis (24 Jam / 86400 Detik):**
+  - Menggunakan command Redis atomic `SET key "1" EX 86400 NX`.
+  - Key format authenticated user: `<REDIS_PREFIX>:view:article:<articleId>:user:<userId>`.
+  - Key format guest / unauthenticated: `<REDIS_PREFIX>:view:article:<articleId>:device:<deviceId>`.
+  - `deviceId` digenerate otomatis melalui Next.js Middleware dalam bentuk cookie HTTP `benah_device_id` (durasi 1 tahun).
+- **Trigger Penambahan View:**
+  - Hanya bertambah pada halaman publik detail `/artikel/[slug]` (`src/app/(public)/artikel/[slug]/page.tsx`).
+  - Tidak bertambah pada halaman preview author, dashboard, atau manage content.
+- **Sinkronisasi UI:**
+  - Halaman detail publik `/artikel/[slug]`, dashboard author `/dashboard/create-article`, author preview, dan manage content membaca angka `views` riil dari database.
+

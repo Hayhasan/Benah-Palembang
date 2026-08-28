@@ -11,6 +11,7 @@ export interface PublicEventListItem {
   timeLabel: string
   location: string
   organizer: string
+  views: number
 }
 
 export interface PublicEventDetail extends PublicEventListItem {

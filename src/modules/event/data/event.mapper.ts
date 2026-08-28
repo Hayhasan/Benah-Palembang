@@ -39,6 +39,7 @@ export const publicEventListSelect = {
   endsAt: true,
   location: true,
   organizer: true,
+  views: true,
 } satisfies Prisma.EventSelect
 
 export const publicEventDetailSelect = {
@@ -103,6 +104,7 @@ export function mapPublicEventListItem(
     timeLabel: formatTimeLabel(event.startsAt, event.endsAt),
     location: event.location,
     organizer: event.organizer,
+    views: event.views,
   }
 }
 

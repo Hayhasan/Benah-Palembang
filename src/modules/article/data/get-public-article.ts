@@ -3,6 +3,7 @@ import "server-only"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordArticleView } from "@/lib/views/view-tracker"
 import { getCurrentUser } from "@/modules/auth/data/session-dal"
 
 import type { PublicArticlePageData } from "../types/public-article"
@@ -35,6 +36,12 @@ export async function getPublicArticle(
 
   if (!article) return null
 
+  const incremented = await recordArticleView(article.id, currentUser?.id)
+  const articleDetail = mapPublicArticleDetail(article, currentUser?.id)
+  if (incremented) {
+    articleDetail.views += 1
+  }
+
   const relatedArticles = await prisma.article.findMany({
     where: {
       id: { not: article.id },
@@ -53,7 +60,7 @@ export async function getPublicArticle(
   })
 
   return {
-    article: mapPublicArticleDetail(article, currentUser?.id),
+    article: articleDetail,
     relatedArticles: relatedArticles.map(mapPublicArticleCard),
   }
 }
