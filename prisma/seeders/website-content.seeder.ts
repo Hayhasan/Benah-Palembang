@@ -1,25 +1,55 @@
-import type { PrismaClient } from "@prisma/client"
+import type {
+  PrismaClient,
+  WebsiteCollaborationAspectRatio,
+  WebsiteCollaborationPlatform,
+} from "@prisma/client"
 
+import { DEFAULT_COLLABORATION_PAGE } from "../../src/modules/website-content/constants/default-collaboration-page"
 import { DEFAULT_LANDING_PAGE } from "../../src/modules/website-content/constants/default-landing-page"
+import type {
+  CollaborationAspectRatio,
+  CollaborationPlatform,
+} from "../../src/modules/website-content/types/collaboration-page"
 
-export async function seedWebsiteContent(prisma: PrismaClient) {
+const collaborationPlatformToDatabase: Record<
+  CollaborationPlatform,
+  WebsiteCollaborationPlatform
+> = {
+  youtube: "YOUTUBE",
+  instagram: "INSTAGRAM",
+  tiktok: "TIKTOK",
+  facebook: "FACEBOOK",
+  x: "X",
+}
+
+const collaborationAspectRatioToDatabase: Record<
+  CollaborationAspectRatio,
+  WebsiteCollaborationAspectRatio
+> = {
+  "9:16": "PORTRAIT_9_16",
+  "4:5": "PORTRAIT_4_5",
+  "16:9": "LANDSCAPE_16_9",
+  "1:1": "SQUARE_1_1",
+}
+
+async function seedLandingPage(prisma: PrismaClient) {
   const existing = await prisma.websiteContent.findUnique({
     where: { key: DEFAULT_LANDING_PAGE.key },
     select: { deletedAt: true },
   })
 
   if (existing?.deletedAt === null) {
-    console.log("[website-content] skipped: canonical content already exists")
+    console.log("[website-content:home] skipped: canonical content already exists")
     return
   }
 
   if (existing) {
     throw new Error(
-      "[website-content] canonical key is still occupied by a soft-deleted record",
+      "[website-content:home] canonical key is still occupied by a soft-deleted record",
     )
   }
 
-  console.log("[website-content] creating default content")
+  console.log("[website-content:home] creating default content")
 
   await prisma.$transaction(async (transaction) => {
     await transaction.websiteContent.create({
@@ -56,5 +86,64 @@ export async function seedWebsiteContent(prisma: PrismaClient) {
     })
   })
 
-  console.log("[website-content] created")
+  console.log("[website-content:home] created")
+}
+
+async function seedCollaborationPage(prisma: PrismaClient) {
+  const existing = await prisma.websiteCollaborationContent.findUnique({
+    where: { key: DEFAULT_COLLABORATION_PAGE.key },
+    select: { deletedAt: true },
+  })
+
+  if (existing?.deletedAt === null) {
+    console.log(
+      "[website-content:collaboration] skipped: canonical content already exists",
+    )
+    return
+  }
+
+  if (existing) {
+    throw new Error(
+      "[website-content:collaboration] canonical key is still occupied by a soft-deleted record",
+    )
+  }
+
+  console.log("[website-content:collaboration] creating default content")
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.websiteCollaborationContent.create({
+      data: {
+        key: DEFAULT_COLLABORATION_PAGE.key,
+        heroImageUrl: DEFAULT_COLLABORATION_PAGE.hero.imageUrl,
+        heroImageAlt: DEFAULT_COLLABORATION_PAGE.hero.imageAlt,
+        heroEyebrow: DEFAULT_COLLABORATION_PAGE.hero.eyebrow,
+        heroTitle: DEFAULT_COLLABORATION_PAGE.hero.title,
+        heroDescription: DEFAULT_COLLABORATION_PAGE.hero.description,
+        contactEmail: DEFAULT_COLLABORATION_PAGE.contact.email,
+        contactPhone: DEFAULT_COLLABORATION_PAGE.contact.phone,
+        emailUrl: DEFAULT_COLLABORATION_PAGE.contact.emailUrl,
+        whatsappUrl: DEFAULT_COLLABORATION_PAGE.contact.whatsappUrl,
+        formTitle: DEFAULT_COLLABORATION_PAGE.form.title,
+        formDescription: DEFAULT_COLLABORATION_PAGE.form.description,
+        partnerLogos: {
+          create: DEFAULT_COLLABORATION_PAGE.partnerLogos,
+        },
+        partnerContents: {
+          create: DEFAULT_COLLABORATION_PAGE.partnerContents.map((item) => ({
+            ...item,
+            platform: collaborationPlatformToDatabase[item.platform],
+            aspectRatio:
+              collaborationAspectRatioToDatabase[item.aspectRatio],
+          })),
+        },
+      },
+    })
+  })
+
+  console.log("[website-content:collaboration] created")
+}
+
+export async function seedWebsiteContent(prisma: PrismaClient) {
+  await seedLandingPage(prisma)
+  await seedCollaborationPage(prisma)
 }

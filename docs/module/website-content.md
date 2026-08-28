@@ -1,7 +1,8 @@
 # Website Content Module
 
-Module ini mengelola content presentasional website. Implementasi pertama
-berfokus pada landing page dengan satu root content canonical bernama `home`.
+Module ini mengelola content presentasional website. Implementasi saat ini
+mencakup landing page dengan root canonical `home` dan halaman kolaborasi dengan
+root canonical `collaboration`.
 
 ## Scope awal
 
@@ -11,6 +12,8 @@ berfokus pada landing page dengan satu root content canonical bernama `home`.
 - Presentation configuration untuk featured/category article sections.
 - Team section dan anggota tim.
 - CTA section.
+- Hero, kontak, dan konfigurasi form halaman kolaborasi.
+- Partner logo dan partner content pada halaman kolaborasi.
 
 Data artikel belum menjadi bagian dari module ini. Article card tetap menjadi
 tanggung jawab module Article, sedangkan website content hanya menyimpan
@@ -25,6 +28,11 @@ konfigurasi tampilan section.
 - `website_article_sections`: ordered presentation configuration untuk article
   sections.
 - `website_team_members`: ordered team members.
+- `website_collaboration_contents`: root halaman kolaborasi, expected satu
+  active row dengan key `collaboration`.
+- `website_collaboration_partner_logos`: ordered partner logos.
+- `website_collaboration_partner_contents`: ordered partner content beserta
+  platform, thumbnail, link, dan aspect ratio.
 
 Semua table menggunakan ID `Int`, timestamps, dan soft delete melalui
 `deletedAt`.
@@ -35,8 +43,10 @@ Semua table menggunakan ID `Int`, timestamps, dan soft delete melalui
 npm run seed:website-content
 ```
 
-Seeder memakai dummy content yang sama dengan landing page publik saat ini.
-Seeder bersifat create-if-missing dan tidak menimpa content yang sudah tersedia.
+Seeder memakai dummy content yang sama dengan landing page dan halaman
+kolaborasi publik saat ini. Aggregate `home` dan `collaboration` diperiksa secara
+independen, bersifat create-if-missing, dan tidak menimpa content yang sudah
+tersedia.
 
 ## Public landing page
 
@@ -52,6 +62,17 @@ Seeder bersifat create-if-missing dan tidak menimpa content yang sudah tersedia.
   berupa Server Component agar JavaScript client tidak membesar tanpa kebutuhan.
 - Data artikel masih menggunakan mock Article sampai module Article tersedia.
 
+## Public collaboration page
+
+- Route `/kolaborasi` membaca root aktif `collaboration` melalui Server
+  Component pada setiap request.
+- Logo dan partner content yang diambil hanya record aktif dan visible, lalu
+  diurutkan berdasarkan `position`.
+- Jika root aktif tidak ditemukan, halaman memakai
+  `DEFAULT_COLLABORATION_PAGE`. Error database tetap diteruskan.
+- Interaksi menampilkan seluruh partner content berada pada Client Component,
+  sedangkan initial data tetap berasal dari SSR.
+
 ## Dashboard editor
 
 - Route `/dashboard/website` membaca aggregate aktif `home` pada Server
@@ -59,9 +80,9 @@ Seeder bersifat create-if-missing dan tidak menimpa content yang sudah tersedia.
 - Form Home mengelola hero carousel, about, explore, konfigurasi section
   artikel, team, dan CTA. Seluruh field yang ada pada schema Prisma bersifat
   controlled dan berasal dari data database.
-- Tab Article, Agenda, Collaboration, serta Header & Footer tetap dapat dibuka
-  menggunakan UI frontend original. Persistence pada tahap ini tetap hanya
-  berlaku untuk tab Home.
+- Tab Home dan Collaboration memakai persistence database. Tab Article, Agenda,
+  serta Header & Footer tetap dapat dibuka menggunakan UI frontend original dan
+  belum mempunyai persistence.
 - Perubahan disimpan melalui Server Action dengan validasi Zod dan transaction
   Prisma. Root scalar dan seluruh child collection disimpan sebagai satu
   aggregate.
@@ -71,6 +92,9 @@ Seeder bersifat create-if-missing dan tidak menimpa content yang sudah tersedia.
 - Item aktif yang tidak lagi dikirim form di-soft-delete. Posisi child selalu
   dihitung ulang berdasarkan urutan form dan tidak mempercayai nilai posisi
   mentah dari client.
+- Save handler melacak perubahan Home dan Collaboration secara terpisah. Tombol
+  Simpan Perubahan maupun save dari guard navigasi menyimpan seluruh module
+  nyata yang masih dirty.
 - Landing page selalu mempunyai lima article section fixed: Cerita Palembang,
   Gaya Hidup, Ruang Kota, Industri Kreatif, dan Kebudayaan. Admin dapat mengubah
   field presentasinya, tetapi tidak menambah, menghapus, atau mengubah urutannya.

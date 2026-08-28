@@ -20,6 +20,21 @@ enum WebsiteArticleSectionLayout {
   FEATURED_FIRST
 }
 
+enum WebsiteCollaborationPlatform {
+  YOUTUBE
+  INSTAGRAM
+  TIKTOK
+  FACEBOOK
+  X
+}
+
+enum WebsiteCollaborationAspectRatio {
+  PORTRAIT_9_16
+  PORTRAIT_4_5
+  LANDSCAPE_16_9
+  SQUARE_1_1
+}
+
 model WebsiteContent {
   id                   Int                     @id @default(autoincrement())
   key                  String                  @unique @db.VarChar(100)
@@ -132,4 +147,64 @@ model WebsiteTeamMember {
 
   @@index([websiteContentId, deletedAt, position])
   @@map("website_team_members")
+}
+
+model WebsiteCollaborationContent {
+  id              Int                                  @id @default(autoincrement())
+  key             String                               @unique @db.VarChar(100)
+  originalKey     String?                              @db.VarChar(100)
+  heroImageUrl    String                               @db.Text
+  heroImageAlt    String                               @db.VarChar(255)
+  heroEyebrow     String                               @db.VarChar(160)
+  heroTitle       String                               @db.VarChar(255)
+  heroDescription String                               @db.Text
+  contactEmail    String                               @db.VarChar(255)
+  contactPhone    String                               @db.VarChar(50)
+  emailUrl        String                               @db.Text
+  whatsappUrl     String                               @db.Text
+  formTitle       String                               @db.VarChar(255)
+  formDescription String                               @db.Text
+  createdAt       DateTime                             @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime                             @updatedAt @db.Timestamptz(6)
+  deletedAt       DateTime?                            @db.Timestamptz(6)
+  partnerLogos    WebsiteCollaborationPartnerLogo[]
+  partnerContents WebsiteCollaborationPartnerContent[]
+
+  @@index([deletedAt])
+  @@map("website_collaboration_contents")
+}
+
+model WebsiteCollaborationPartnerLogo {
+  id                     Int                         @id @default(autoincrement())
+  collaborationContentId Int
+  name                   String                      @db.VarChar(160)
+  imageUrl               String                      @db.Text
+  position               Int
+  isVisible              Boolean                     @default(true)
+  createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime                    @updatedAt @db.Timestamptz(6)
+  deletedAt              DateTime?                   @db.Timestamptz(6)
+  collaborationContent   WebsiteCollaborationContent @relation(fields: [collaborationContentId], references: [id])
+
+  @@index([collaborationContentId, deletedAt, position])
+  @@map("website_collaboration_partner_logos")
+}
+
+model WebsiteCollaborationPartnerContent {
+  id                     Int                             @id @default(autoincrement())
+  collaborationContentId Int
+  platform               WebsiteCollaborationPlatform
+  title                  String                          @db.VarChar(255)
+  thumbnailUrl           String                          @db.Text
+  contentUrl             String                          @db.Text
+  aspectRatio            WebsiteCollaborationAspectRatio
+  position               Int
+  isVisible              Boolean                         @default(true)
+  createdAt              DateTime                        @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime                        @updatedAt @db.Timestamptz(6)
+  deletedAt              DateTime?                       @db.Timestamptz(6)
+  collaborationContent   WebsiteCollaborationContent     @relation(fields: [collaborationContentId], references: [id])
+
+  @@index([collaborationContentId, deletedAt, position])
+  @@map("website_collaboration_partner_contents")
 }

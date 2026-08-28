@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/select"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
+import { updateCollaborationPageAction } from "../actions/update-collaboration-page"
 import { updateLandingPageAction } from "../actions/update-landing-page"
+import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
 import type {
   LandingArticleSectionEditorData,
   LandingExploreItemEditorData,
@@ -43,11 +45,12 @@ import type {
 import {
   AgendaSettings,
   ArticleSettings,
-  CollaborationSettings,
   HeaderFooterSettings,
 } from "./website-editor-secondary-tabs"
+import { ManageCollaborationSettings } from "./manage-collaboration-settings"
 
 const tabs = ["Home", "Article", "Agenda", "Collaboration", "Header & Footer"]
+type EditableModule = "Home" | "Collaboration"
 const articleSectionNames = [
   "Cerita Palembang",
   "Gaya Hidup",
@@ -150,23 +153,42 @@ function clientKey(prefix: string) {
 
 export function ManageLandingPageForm({
   initialData,
+  initialCollaborationData,
 }: {
   initialData: LandingPageEditorData
+  initialCollaborationData: CollaborationPageEditorData
 }) {
   const [activeTab, setActiveTab] = useState(tabs[0])
   const [data, setData] = useState(initialData)
+  const [collaborationData, setCollaborationData] = useState(
+    initialCollaborationData,
+  )
   const [isPending, startTransition] = useTransition()
   const dataRef = useRef(data)
+  const collaborationDataRef = useRef(collaborationData)
   const activeTabRef = useRef(activeTab)
-  const { isDirty, setIsDirty, registerSaveHandler } = useUnsavedChanges()
+  const dirtyModulesRef = useRef<Set<EditableModule>>(new Set())
+  const { setIsDirty, registerSaveHandler } = useUnsavedChanges()
 
   useEffect(() => {
     dataRef.current = data
   }, [data])
 
   useEffect(() => {
+    collaborationDataRef.current = collaborationData
+  }, [collaborationData])
+
+  useEffect(() => {
     activeTabRef.current = activeTab
   }, [activeTab])
+
+  const markDirty = useCallback(
+    (module: EditableModule) => {
+      dirtyModulesRef.current.add(module)
+      setIsDirty(true)
+    },
+    [setIsDirty],
+  )
 
   const changeData = useCallback(
     (updater: (current: LandingPageEditorData) => LandingPageEditorData) => {
@@ -175,15 +197,31 @@ export function ManageLandingPageForm({
         dataRef.current = next
         return next
       })
-      setIsDirty(true)
+      markDirty("Home")
     },
-    [setIsDirty],
+    [markDirty],
+  )
+
+  const changeCollaborationData = useCallback(
+    (
+      updater: (
+        current: CollaborationPageEditorData,
+      ) => CollaborationPageEditorData,
+    ) => {
+      const next = updater(collaborationDataRef.current)
+      collaborationDataRef.current = next
+      setCollaborationData(next)
+      markDirty("Collaboration")
+    },
+    [markDirty],
   )
 
   const handleSave = useCallback(
     () =>
       new Promise<boolean>((resolve) => {
-        if (activeTabRef.current !== "Home" && !isDirty) {
+        const dirtyModules = [...dirtyModulesRef.current]
+
+        if (dirtyModules.length === 0) {
           toast.success(
             `Pengaturan ${activeTabRef.current} berhasil disimpan!`,
           )
@@ -192,28 +230,54 @@ export function ManageLandingPageForm({
         }
 
         startTransition(async () => {
+          let allSucceeded = true
+          const successMessages: string[] = []
+
           try {
-            const result = await updateLandingPageAction(dataRef.current)
-            if (!result.success) {
-              const field = result.field ? ` (${result.field})` : ""
-              toast.error(`${result.message}${field}`)
-              resolve(false)
-              return
+            if (dirtyModules.includes("Home")) {
+              const result = await updateLandingPageAction(dataRef.current)
+              if (result.success) {
+                setData(result.data)
+                dataRef.current = result.data
+                dirtyModulesRef.current.delete("Home")
+                successMessages.push(result.message)
+              } else {
+                const field = result.field ? ` (${result.field})` : ""
+                toast.error(`${result.message}${field}`)
+                allSucceeded = false
+              }
             }
 
-            setData(result.data)
-            dataRef.current = result.data
-            setIsDirty(false)
-            toast.success(result.message)
-            resolve(true)
+            if (dirtyModules.includes("Collaboration")) {
+              const result = await updateCollaborationPageAction(
+                collaborationDataRef.current,
+              )
+              if (result.success) {
+                setCollaborationData(result.data)
+                collaborationDataRef.current = result.data
+                dirtyModulesRef.current.delete("Collaboration")
+                successMessages.push(result.message)
+              } else {
+                const field = result.field ? ` (${result.field})` : ""
+                toast.error(`${result.message}${field}`)
+                allSucceeded = false
+              }
+            }
+
+            setIsDirty(dirtyModulesRef.current.size > 0)
+            if (successMessages.length > 0) {
+              toast.success(successMessages.join(" "))
+            }
+            resolve(allSucceeded)
           } catch (error) {
             console.error("Failed to save website content:", error)
-            toast.error("Konten Home gagal disimpan. Silakan coba lagi.")
+            setIsDirty(dirtyModulesRef.current.size > 0)
+            toast.error("Konten website gagal disimpan. Silakan coba lagi.")
             resolve(false)
           }
         })
       }),
-    [isDirty, setIsDirty, startTransition],
+    [setIsDirty, startTransition],
   )
 
   useEffect(() => {
@@ -223,6 +287,7 @@ export function ManageLandingPageForm({
 
   useEffect(
     () => () => {
+      dirtyModulesRef.current.clear()
       setIsDirty(false)
     },
     [setIsDirty],
@@ -1124,7 +1189,12 @@ export function ManageLandingPageForm({
         ) : null}
         {activeTab === "Article" ? <ArticleSettings /> : null}
         {activeTab === "Agenda" ? <AgendaSettings /> : null}
-        {activeTab === "Collaboration" ? <CollaborationSettings /> : null}
+        {activeTab === "Collaboration" ? (
+          <ManageCollaborationSettings
+            data={collaborationData}
+            onChange={changeCollaborationData}
+          />
+        ) : null}
         {activeTab === "Header & Footer" ? <HeaderFooterSettings /> : null}
       </div>
     </div>

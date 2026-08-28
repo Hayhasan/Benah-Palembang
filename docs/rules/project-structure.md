@@ -95,19 +95,25 @@ Struktur awal yang disarankan:
 ```text
 src/modules/website-content/
   actions/
+    update-collaboration-page.ts
     update-landing-page.ts
   components/
+    collaboration-page.tsx
     landing-page.tsx
+    manage-collaboration-settings.tsx
     manage-landing-page-form.tsx
   constants/
+    default-collaboration-page.ts
     default-landing-page.ts
   data/
+    get-collaboration-page.ts
     get-landing-page.ts
-    website-content.repository.ts
     website-content.mapper.ts
   schemas/
+    collaboration-page.schema.ts
     landing-page.schema.ts
   types/
+    collaboration-page.ts
     landing-page.ts
 ```
 
@@ -155,7 +161,7 @@ Satu module boleh memiliki beberapa table selama masih berada dalam satu domain.
 - Jangan menggunakan database cascade delete untuk flow aplikasi normal. Soft
   delete parent dan child dilakukan secara eksplisit dalam satu transaction.
 
-## 7. Singleton landing page dan fallback
+## 7. Singleton website page dan fallback
 
 - Table root landing page mempunyai satu logical row dengan key tetap `home`.
 - Seeder, query, dan mutation selalu menargetkan key canonical tersebut.
@@ -168,6 +174,11 @@ Satu module boleh memiliki beberapa table selama masih berada dalam satu domain.
   kosong.
 - Default content yang sama dipakai sebagai sumber seed dan fallback agar tidak
   ada duplikasi nilai antara public page, dashboard, dan seeder.
+- Halaman kolaborasi memakai root terpisah dengan key tetap `collaboration`,
+  child partner logo, dan child partner content.
+- Jika root `collaboration` belum ada, route `/kolaborasi` menggunakan
+  `default-collaboration-page.ts` sebagai fallback dengan aturan error yang sama
+  seperti landing page.
 - Artikel yang tampil pada landing page tetap menjadi tanggung jawab module
   `article`. Relasi pin artikel dibuat setelah model Article tersedia; jangan
   menyimpan judul artikel sebagai pengganti foreign key permanen.
@@ -239,8 +250,8 @@ Aturan penerapannya:
 - Auth client-side atau state React tidak boleh dipercaya untuk melindungi
   mutation.
 - Server Action dianggap sebagai endpoint yang dapat dipanggil secara langsung.
-- Setelah mutation berhasil, cache landing page harus diinvalidasi agar halaman
-  publik dan dashboard membaca data terbaru.
+- Setelah mutation berhasil, route publik terkait dan dashboard website harus
+  diinvalidasi agar membaca data terbaru.
 
 ## 11. SSR dan cache Next.js 16
 
@@ -280,8 +291,8 @@ Aturan penerapannya:
 ## 14. Migration bertahap
 
 - Jangan menghapus mock data yang masih digunakan module lain.
-- Landing page dapat berpindah ke database sementara Article dan Event masih
-  menggunakan mock data.
+- Landing page dan Collaboration dapat berpindah ke database sementara Article
+  dan Event masih menggunakan mock data.
 - Setelah suatu data resmi dimiliki database, hapus duplikasi default dari
   komponen dan gunakan DTO/default canonical milik module.
 - Perubahan struktur tidak boleh mengubah tampilan frontend kecuali memang

@@ -16,7 +16,8 @@ npm run seed:website-content
 
 - `npm run seed` menjalankan seluruh seeder aplikasi melalui runner utama.
 - `npm run seed:website-content` hanya menjalankan seeder module website
-  content, termasuk landing page dan child table terkait.
+  content, termasuk aggregate `home`, aggregate `collaboration`, dan seluruh
+  child table terkait.
 - Seeder berikutnya mengikuti pola `npm run seed:<module-name>`, misalnya
   `seed:article` atau `seed:event`.
 - Jangan membuat command terpisah untuk setiap child table jika table-table
@@ -40,7 +41,7 @@ prisma/
 ## 3. Sumber data canonical
 
 - Seed website content menggunakan default content yang sama dengan fallback
-  landing page.
+  landing page dan halaman kolaborasi.
 - Nilai awal mengikuti tampilan public landing page yang aktif, bukan nilai form
   dashboard yang berbeda atau sudah tertinggal.
 - Default content tidak boleh diduplikasi di public component, dashboard form,
@@ -52,10 +53,12 @@ prisma/
 ## 4. Idempotency
 
 - Semua seeder wajib aman dijalankan lebih dari sekali.
-- Seeder website content mencari root row aktif dengan key canonical `home` dan
-  `deletedAt = null`.
-- Jika aggregate `home` sudah lengkap tersedia, seeder melewati data tersebut
-  dan tidak menimpa perubahan yang dibuat admin.
+- Seeder website content mencari root row dengan key canonical `home` dan
+  `collaboration` secara independen.
+- Jika salah satu aggregate sudah aktif, seeder melewati aggregate tersebut
+  tanpa menghalangi pembuatan aggregate lain yang belum ada.
+- Seeder tidak menimpa perubahan yang dibuat admin pada aggregate yang sudah
+  tersedia.
 - Seed default menggunakan pola create-if-missing, bukan update seluruh content
   setiap kali command dijalankan.
 - Seeder tidak boleh memakai ID sementara seperti `Date.now()` untuk data yang
@@ -69,8 +72,8 @@ prisma/
 
 ## 5. Transaction dan urutan data
 
-- Root website content dan seluruh child landing page dibuat dalam satu
-  transaction.
+- Setiap root website content dan seluruh child miliknya dibuat dalam satu
+  transaction per aggregate.
 - Jika satu child gagal dibuat, seluruh aggregate harus rollback.
 - Child collection menyimpan `position` secara eksplisit agar urutan tidak
   bergantung pada ID atau waktu pembuatan.
@@ -104,9 +107,9 @@ prisma/
 Log seeder harus ringkas dan menjelaskan hasil yang penting:
 
 ```text
-[website-content] creating default content
-[website-content] created
-[website-content] skipped: canonical content already exists
+[website-content:home] creating default content
+[website-content:home] created
+[website-content:collaboration] skipped: canonical content already exists
 ```
 
 - Jangan mencetak seluruh content atau payload yang panjang.
@@ -136,10 +139,13 @@ Ketentuan validasi:
   website content dan pastikan aggregate berhasil dibuat.
 - Jalankan command yang sama untuk kedua kali dan pastikan hasilnya `skipped`,
   bukan membuat duplicate atau menimpa data.
-- Pastikan hanya terdapat satu root row dengan key `home`.
+- Pastikan hanya terdapat satu root row aktif untuk key `home` dan satu untuk
+  key `collaboration`.
 - Pastikan child collection terbaca sesuai `position`.
-- Pastikan public landing page dapat membaca hasil seed melalui Server Component.
-- Pastikan fallback tetap tampil ketika root row tidak ditemukan.
+- Pastikan public landing page dan `/kolaborasi` dapat membaca hasil seed melalui
+  Server Component.
+- Pastikan fallback masing-masing halaman tetap tampil ketika root row terkait
+  tidak ditemukan.
 - Minimal jalankan typecheck/lint atau build sesuai luas perubahan. Untuk
   perubahan backend yang memengaruhi render Next.js, `npm run build` menjadi
   validasi akhir yang diutamakan.

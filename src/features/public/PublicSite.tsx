@@ -11,7 +11,6 @@ import {
   Clock3,
   Copy,
   Heart,
-  Mail,
   MapPin,
   MessageCircle,
   Search,
@@ -116,110 +115,6 @@ export function AgendaDetailPage() {
   const waMessage = `Halo Benah Palembang, saya ingin mendaftar untuk acara:\n*${item.title}*\nTanggal: ${item.date}\nLokasi: ${item.location}`
   
   return <><div className="relative overflow-hidden bg-palembang-charcoal px-6 pb-20 pt-40 text-white sm:px-10 lg:px-16"><div className="pointer-events-none absolute right-0 top-0 h-full w-full sm:w-2/3 lg:w-1/2 overflow-hidden opacity-30 lg:opacity-45"><img src={item.image} alt={item.title} className="size-full object-cover object-right" /><div className="absolute inset-0 bg-gradient-to-r from-palembang-charcoal via-palembang-charcoal/60 to-transparent" /><div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" /></div><div className="relative z-10 mx-auto max-w-[1240px]"><Link href="/agenda" className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold hover:underline"><ArrowRight className="size-3 rotate-180" /> Kembali ke Agenda</Link><div className="mt-6"><span className="inline-block rounded-full border border-palembang-gold/40 bg-palembang-gold/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-gold">{item.category}</span></div><h1 className="mt-4 max-w-4xl font-display text-5xl font-black leading-[0.92] tracking-[-0.06em] sm:text-7xl lg:text-8xl">{item.title}</h1><p className="mt-8 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">{item.description}</p></div></div><main className="px-6 py-16 sm:px-10 lg:px-16 lg:py-24"><div className="mx-auto max-w-[1240px]"><div className="grid gap-12 lg:grid-cols-[1fr_380px]"><div><div className="overflow-hidden rounded-[1.5rem]"><img src={item.image} alt={item.title} className="aspect-[16/9] w-full object-cover" /></div><div className="mt-10"><h2 className="font-display text-2xl font-bold tracking-[-0.03em]">Tentang Acara</h2><p className="mt-4 text-base leading-8 text-muted-foreground">{item.description}</p><p className="mt-4 text-base leading-8 text-muted-foreground">Acara ini terbuka untuk umum dan dirancang untuk mempertemukan berbagai elemen masyarakat Palembang — dari akademisi, pelaku kreatif, hingga warga biasa yang peduli dengan masa depan kota. Hadir dan rasakan energi kolaboratif yang mendorong perubahan nyata.</p><p className="mt-4 text-base leading-8 text-muted-foreground">Peserta diharapkan datang tepat waktu. Registrasi dibuka 30 menit sebelum acara dimulai. Tersedia sertifikat kehadiran bagi peserta yang mendaftar.</p></div><div className="mt-10"><h2 className="font-display text-2xl font-bold tracking-[-0.03em]">Yang Akan Kamu Dapatkan</h2><ul className="mt-4 space-y-3">{["Insight dan perspektif baru dari para narasumber berpengalaman", "Networking dengan komunitas dan pelaku kreatif Palembang", "Sertifikat kehadiran resmi dari penyelenggara", "Konsumsi dan goodie bag untuk peserta terdaftar"].map(benefit => <li key={benefit} className="flex items-start gap-3 text-sm leading-6 text-muted-foreground"><Check className="mt-0.5 size-4 flex-shrink-0 text-palembang-red" />{benefit}</li>)}</ul></div></div><div><div className="sticky top-28 space-y-6"><div className="rounded-[1.5rem] border border-border bg-background p-6 shadow-sm"><h3 className="font-display text-lg font-bold">Detail Acara</h3><div className="mt-6 space-y-5"><div className="flex items-start gap-3"><CalendarDays className="mt-0.5 size-5 text-palembang-red" /><div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Tanggal</p><p className="mt-1 text-sm font-semibold">{item.date}</p></div></div><div className="flex items-start gap-3"><Clock3 className="mt-0.5 size-5 text-palembang-red" /><div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Waktu</p><p className="mt-1 text-sm font-semibold">{item.time}</p></div></div><div className="flex items-start gap-3"><MapPin className="mt-0.5 size-5 text-palembang-red" /><div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Lokasi</p><p className="mt-1 text-sm font-semibold">{item.location}</p></div></div><div className="flex items-start gap-3"><Sparkles className="mt-0.5 size-5 text-palembang-red" /><div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Penyelenggara</p><p className="mt-1 text-sm font-semibold">{item.organizer}</p></div></div></div><div className="mt-8 grid gap-3"><a href={`https://wa.me/628551241878?text=${encodeURIComponent(waMessage)}`} target="_blank" rel="noopener noreferrer" className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white transition-colors hover:bg-palembang-red/90"><Ticket className="size-4" /> Daftar Sekarang</a><Button type="button" variant="outline" onClick={handleShare} className="h-11 w-full font-semibold">{copied ? <><Check className="size-4 text-emerald-600" /><span className="text-emerald-600">Tautan Disalin!</span></> : <><Share2 className="size-4" /><span>Bagikan Acara</span></>}</Button></div></div><div className="rounded-[1.5rem] border border-border bg-muted/40 p-6"><div className="inline-flex items-center gap-2 rounded-full bg-palembang-charcoal px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-palembang-gold"><Sparkles className="size-3" /> {item.category}</div><h4 className="mt-3 font-display text-base font-bold text-foreground">Kategori: {item.category}</h4><p className="mt-2 text-xs leading-5 text-muted-foreground">Acara ini juga terbuka untuk kolaborasi komunitas dan publik. Hubungi penyelenggara untuk informasi lebih lanjut.</p></div></div></div></div></div></main><section className="bg-palembang-off-white px-6 py-20 sm:px-10 lg:px-16 lg:py-28 text-palembang-charcoal"><div className="mx-auto max-w-[1240px]"><SectionHeading eyebrow="Jangan lewatkan" title="Agenda Lainnya" /><div className="mt-12 grid gap-8 md:grid-cols-3">{otherAgenda.map(a => <Link key={a.id} href={`/agenda/${a.id}`} className="group"><div className="img-zoom aspect-[4/3] overflow-hidden rounded-[1.25rem]"><img src={a.image} alt={a.title} className="size-full object-cover" loading="lazy" /></div><p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-palembang-red">{a.category}</p><h3 className="mt-2 font-display text-xl font-bold leading-tight tracking-[-0.03em] transition-colors group-hover:text-palembang-red">{a.title}</h3><div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" />{a.date}</span><span className="flex items-center gap-1.5"><MapPin className="size-3.5" />{a.location.split(",")[0]}</span></div></Link>)}</div></div></section><Footer /></>
-}
-
-export function CollaborationPage() {
-
-  const [showAllContent, setShowAllContent] = useState(false)
-
-  const partnerLogos = [
-    { name: "Grab", src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Grab_Logo.svg/200px-Grab_Logo.svg.png" },
-    { name: "Tokopedia", src: "https://images.tokopedia.net/img/toppicks/social-share-tokopedia.jpg" },
-    { name: "Bank Sumsel", src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Logo_Bank_SumselBabel.svg/200px-Logo_Bank_SumselBabel.svg.png" },
-    { name: "Telkomsel", src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Logo_of_Telkomsel_%282021%29.svg/200px-Logo_of_Telkomsel_%282021%29.svg.png" },
-    { name: "Sriwijaya FC", src: "https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Sriwijaya_FC_logo.svg/200px-Sriwijaya_FC_logo.svg.png" },
-    { name: "Kompas", src: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Kompas_Logo.svg/200px-Kompas_Logo.svg.png" },
-    { name: "Gojek", src: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Gojek_logo_2019.svg/200px-Gojek_logo_2019.svg.png" },
-    { name: "Pertamina", src: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Logo_Pertamina.svg/200px-Logo_Pertamina.svg.png" },
-  ]
-  const doubledLogos = [...partnerLogos, ...partnerLogos]
-
-  const partnerContents = [
-    { id: 1, platform: "youtube", title: "Kolaborasi Benah x Grab Palembang", thumbnail: "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[9/16]" },
-    { id: 2, platform: "instagram", title: "Kampanye Budaya Bersama Tokopedia", thumbnail: "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[4/5]" },
-    { id: 3, platform: "tiktok", title: "Cerita Lorong — Viral Series", thumbnail: "https://images.pexels.com/photos/3321521/pexels-photo-3321521.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[9/16]" },
-    { id: 4, platform: "youtube", title: "Documentary: Sriwijaya Heritage", thumbnail: "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[16/9]" },
-    { id: 5, platform: "instagram", title: "Reels — Kuliner Khas Palembang", thumbnail: "https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[4/5]" },
-    { id: 6, platform: "tiktok", title: "Palembang Hidden Gems Challenge", thumbnail: "https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[9/16]" },
-    { id: 7, platform: "youtube", title: "Pertamina x Benah — CSR Kota Hijau", thumbnail: "https://images.pexels.com/photos/3052361/pexels-photo-3052361.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[16/9]" },
-    { id: 8, platform: "instagram", title: "Behind the Scenes — Tim Benah", thumbnail: "https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[1/1]" },
-    { id: 9, platform: "tiktok", title: "Makeover Lorong Seni Palembang", thumbnail: "https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[9/16]" },
-    { id: 10, platform: "youtube", title: "Talk Show: Masa Depan Kota Kreatif", thumbnail: "https://images.pexels.com/photos/3184416/pexels-photo-3184416.jpeg?auto=compress&cs=tinysrgb&w=400", ratio: "aspect-[4/5]" },
-  ]
-
-  const platformIcon = (p: string) => {
-    if (p === "youtube") return <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">YT</span>
-    if (p === "instagram") return <span className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">IG</span>
-    if (p === "tiktok") return <span className="bg-black text-white text-[9px] font-bold px-1.5 py-0.5 rounded border border-white/20">TK</span>
-    return <span className="bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">FB</span>
-  }
-
-  const visibleContents = showAllContent ? partnerContents : partnerContents.slice(0, 6)
-
-  return <><div className="relative bg-palembang-charcoal"><div className="absolute inset-x-0 top-0 h-[600px] overflow-hidden"><img src="https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop" alt="Background Kolaborasi" className="size-full object-cover opacity-40" /><div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/30 via-palembang-charcoal/80 to-palembang-charcoal" /></div><main className="relative z-10 px-6 pb-24 pt-40 text-white sm:px-10 lg:px-16 lg:pb-36"><div className="mx-auto max-w-[1240px]"><p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">Collaboration</p><h1 className="mt-6 max-w-5xl font-display text-6xl font-black leading-[0.88] tracking-[-0.065em] sm:text-8xl lg:text-9xl">Mari Benahi<br /><span className="text-palembang-red">Palembang</span><br />bersama.</h1><div className="mt-16"><div><p className="max-w-lg text-lg leading-8 text-white/65">Kami terbuka untuk berkolaborasi dengan komunitas, brand, creative worker, organisasi, media, dan siapa pun yang ingin ikut membuat Palembang lebih hidup.</p><div className="mt-10 flex flex-col gap-4"><div className="flex items-center gap-3 text-palembang-gold"><Mail className="size-5" /><a href="mailto:kolaborasi@benahpalembang.id" className="text-sm underline underline-offset-4 text-white hover:text-palembang-gold transition-colors">kolaborasi@benahpalembang.id</a></div><div className="flex items-center gap-3 text-palembang-gold"><MessageCircle className="size-5" /><a href="https://wa.me/628551241878" target="_blank" rel="noopener noreferrer" className="text-sm underline underline-offset-4 text-white hover:text-palembang-gold transition-colors">08551241878</a></div></div></div></div></div></main></div>
-
-  {/* ── Partners Logo Slider ── */}
-  <section className="bg-palembang-off-white py-16 sm:py-20 overflow-hidden">
-    <div className="mx-auto max-w-[1240px] px-6 sm:px-10 lg:px-16 mb-10">
-      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">Trusted By</p>
-      <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] text-palembang-charcoal sm:text-4xl">Our Partners</h2>
-      <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">Brand, komunitas, dan organisasi yang telah berkolaborasi bersama Benah Palembang.</p>
-    </div>
-    <div className="relative">
-      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-palembang-off-white to-transparent" />
-      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-palembang-off-white to-transparent" />
-      <div className="flex animate-marquee gap-12 items-center">
-        {doubledLogos.map((logo, i) => (
-          <div key={`${logo.name}-${i}`} className="flex-shrink-0 group cursor-pointer px-4">
-            <img src={logo.src} alt={logo.name} className="h-12 w-auto object-contain opacity-50 grayscale transition-all duration-500 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110" />
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  {/* ── Partner Content — Pinterest Masonry Grid ── */}
-  <section className="bg-palembang-charcoal px-6 py-16 sm:px-10 sm:py-24 lg:px-16">
-    <div className="mx-auto max-w-[1240px]">
-      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">Partner Content</p>
-      <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] text-white sm:text-4xl">Konten Kolaborasi</h2>
-      <p className="mt-3 max-w-lg text-sm leading-6 text-white/60">Konten promosi dan cerita dari partner-partner kami di berbagai platform.</p>
-
-      <div className="relative mt-12">
-        <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
-          {visibleContents.map(item => (
-            <div key={item.id} className="break-inside-avoid group cursor-pointer">
-              <div className={`relative overflow-hidden rounded-2xl ${item.ratio}`}>
-                <img src={item.thumbnail} alt={item.title} className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                <div className="absolute top-3 left-3">{platformIcon(item.platform)}</div>
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <h3 className="text-sm font-bold text-white leading-tight">{item.title}</h3>
-                  <p className="mt-1 text-[10px] uppercase tracking-widest text-white/60 font-semibold">{item.platform}</p>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="size-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Show More Blur Overlay */}
-        {!showAllContent && (
-          <div className="absolute inset-x-0 bottom-0 h-64 flex items-end justify-center bg-gradient-to-t from-palembang-charcoal via-palembang-charcoal/90 to-transparent">
-            <button onClick={() => setShowAllContent(true)} className="mb-8 rounded-full border border-white/20 bg-white/10 px-8 py-3 text-sm font-semibold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:border-white/40 hover:scale-105">
-              Tampilkan Semua Konten
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  </section>
-
-  <Footer /></>
 }
 
 export function NotFound() {
