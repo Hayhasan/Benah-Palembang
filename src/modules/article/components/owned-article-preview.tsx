@@ -8,6 +8,7 @@ import {
   Edit2,
   Eye,
   Heart,
+  MessageCircle,
   Share2,
 } from "lucide-react"
 import Image from "next/image"
@@ -137,6 +138,10 @@ export function OwnedArticlePreview({
                 <span className="flex items-center gap-1.5">
                   <Heart className="size-4 text-palembang-red" />
                   {stats.likes.toLocaleString("id-ID")} likes
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <MessageCircle className="size-4 text-emerald-400" />
+                  {article.commentsCount.toLocaleString("id-ID")} comments
                 </span>
                 <span>{stats.views.toLocaleString("id-ID")} views</span>
               </div>

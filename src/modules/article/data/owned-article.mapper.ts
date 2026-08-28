@@ -42,6 +42,13 @@ export const ownedArticleListSelect = {
       articleCategorySlug: true,
     },
   },
+  _count: {
+    select: {
+      comments: {
+        where: { deletedAt: null },
+      },
+    },
+  },
 } satisfies Prisma.ArticleSelect
 
 export const ownedArticleEditorSelect = {
@@ -72,6 +79,13 @@ export const ownedArticleEditorSelect = {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
     select: { label: true },
+  },
+  _count: {
+    select: {
+      comments: {
+        where: { deletedAt: null },
+      },
+    },
   },
 } satisfies Prisma.ArticleSelect
 
@@ -107,7 +121,9 @@ export function mapOwnedArticleListItem(
     updatedAtLabel: `${listDateFormatter.format(article.updatedAt)} WIB`,
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
-    ...stats,
+    views: stats.views,
+    likes: stats.likes,
+    comments: article._count.comments,
   }
 }
 
@@ -139,5 +155,6 @@ export function mapOwnedArticleEditor(
     publishedAtLabel: article.publishedAt
       ? publishedAtFormatter.format(article.publishedAt)
       : "Draf belum dipublikasikan",
+    commentsCount: article._count.comments,
   }
 }

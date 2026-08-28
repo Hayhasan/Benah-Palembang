@@ -60,6 +60,13 @@ export async function getManagedContent(input: {
             author: {
               select: { id: true, name: true, avatarUrl: true },
             },
+            _count: {
+              select: {
+                comments: {
+                  where: { deletedAt: null },
+                },
+              },
+            },
           },
         }),
     isTypeArticle

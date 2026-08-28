@@ -36,6 +36,9 @@ export function mapContentStatusLabel(
 
 export interface ArticleModerationRecord extends Article {
   author: Pick<User, "id" | "name" | "avatarUrl">
+  _count?: {
+    comments: number
+  }
 }
 
 export interface EventModerationRecord extends Event {
@@ -47,6 +50,7 @@ export function mapArticleToManagedContent(
 ): ManagedContentListItem {
   const status = article.status as ManagedContentStatus
   const displayDate = article.submittedAt ?? article.updatedAt
+  const baseStats = getManagedContentStatistics("ARTICLE", article.id)
 
   return {
     id: article.id,
@@ -67,7 +71,10 @@ export function mapArticleToManagedContent(
     createdAt: article.createdAt.toISOString(),
     updatedAt: article.updatedAt.toISOString(),
     dateLabel: formatManagedDate(displayDate),
-    stats: getManagedContentStatistics("ARTICLE", article.id),
+    stats: {
+      ...baseStats,
+      comments: article._count?.comments ?? 0,
+    },
   }
 }
 
