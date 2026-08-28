@@ -27,4 +27,16 @@ export const authRedisKey = {
     `${redisNamespace()}:rate:register:ip:${ipHash}`,
   registerRateEmail: (emailHash: string) =>
     `${redisNamespace()}:rate:register:email:${emailHash}`,
+  passwordResetToken: (tokenHash: string) =>
+    `${redisNamespace()}:password-reset:token:${tokenHash}`,
+  passwordResetActive: (userId: string) =>
+    `${redisNamespace()}:password-reset:active:${userId}`,
+  passwordResetUsed: (tokenHash: string) =>
+    `${redisNamespace()}:password-reset:used:${tokenHash}`,
+  passwordResetDiscard: (tokenHash: string) =>
+    `${redisNamespace()}:password-reset:discard:${tokenHash}`,
+  passwordResetCooldown: (emailHash: string) =>
+    `${redisNamespace()}:password-reset:cooldown:${emailHash}`,
+  passwordResetRateIp: (ipHash: string) =>
+    `${redisNamespace()}:rate:password-reset:ip:${ipHash}`,
 }

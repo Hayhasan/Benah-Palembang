@@ -2,17 +2,19 @@
 
 import { useLocation } from "@/lib/navigation"
 import { useCurrentUser } from "@/modules/auth/hooks/use-current-user"
+import { useSession } from "@/modules/auth/hooks/use-session"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { 
     LayoutDashboard, Monitor, Users, FileText, 
-    PenTool, CalendarPlus, Activity, User, 
-    ChevronLeft, ChevronRight, Menu, ChevronDown 
+    PenTool, CalendarPlus, Activity,
+    ChevronLeft, ChevronRight, Menu, ChevronDown, LogOut
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 export function Sidebar() {
     const user = useCurrentUser()
+    const { logout, isLoggingOut } = useSession()
     const { requestNavigation } = useUnsavedChanges()
     const [collapsed, setCollapsed] = useState(false)
     const location = useLocation()
@@ -135,7 +137,7 @@ export function Sidebar() {
                 </nav>
             </div>
             
-            <div className="p-4">
+            <div className="space-y-2 border-t p-3">
                 <button 
                     type="button"
                     onClick={() => handleNav("/dashboard/profile")}
@@ -145,12 +147,31 @@ export function Sidebar() {
                         collapsed && "justify-center"
                     )}
                 >
-                    <User className="size-5 text-muted-foreground shrink-0" />
+                    <img
+                        src={user.avatarUrl || "https://i.pravatar.cc/150?img=0"}
+                        alt={user.name}
+                        className="size-8 shrink-0 rounded-full bg-muted object-cover"
+                    />
                     {!collapsed && (
                         <div className="overflow-hidden">
                             <p className="truncate text-sm font-semibold">{user.name}</p>
                             <p className="truncate text-xs text-muted-foreground capitalize">{user.role}</p>
                         </div>
+                    )}
+                </button>
+                <button
+                    type="button"
+                    disabled={isLoggingOut}
+                    onClick={() => logout({ redirectTo: "/login" })}
+                    className={cn(
+                        "flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60",
+                        collapsed && "justify-center"
+                    )}
+                    title={collapsed ? "Logout" : undefined}
+                >
+                    <LogOut className="size-5 shrink-0" />
+                    {!collapsed && (
+                        <span>{isLoggingOut ? "Memproses..." : "Logout"}</span>
                     )}
                 </button>
             </div>

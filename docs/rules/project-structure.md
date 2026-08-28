@@ -13,6 +13,8 @@ menumpuk di route Next.js atau komponen UI.
   komponen presentasional.
 - Kode yang memakai Prisma, Cloudinary secret, session server, atau environment
   variable rahasia harus berada pada server boundary.
+- Proteksi page, data function, Server Action, Route Handler, client session,
+  role guard, dan session revocation mengikuti `docs/rules/auth-rules.md`.
 - Data yang dikirim dari Server Component ke Client Component harus berupa DTO
   serializable, bukan object Prisma mentah.
 - Semua business record menggunakan soft delete dan tidak dihapus permanen dari

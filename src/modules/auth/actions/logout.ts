@@ -1,7 +1,5 @@
 "use server"
 
-import { redirect } from "next/navigation"
-
 import { clearPresence } from "../data/activity"
 import { deleteCurrentSession, readSessionFromCookie } from "../data/session"
 
@@ -28,5 +26,5 @@ export async function logoutAction() {
     }
   }
 
-  redirect("/login")
+  return { success: true as const }
 }

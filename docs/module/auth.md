@@ -5,6 +5,9 @@ password, server-side session, activity tracking, serta authorization boundary
 dashboard. Implementasi awal hanya mencakup login, register yang langsung
 membuat session, logout, session server/client, dan integrasi Last Activity.
 
+Aturan penggunaan Auth oleh module lain berada pada
+`docs/rules/auth-rules.md`.
+
 Project tidak mempunyai OAuth, mobile client, atau public API yang membutuhkan
 access token. Karena itu, implementasi awal tidak memakai Auth.js/NextAuth dan
 tidak membuat pasangan access token serta refresh token.
@@ -23,6 +26,7 @@ table session PostgreSQL kedua.
 - Login menggunakan email dan password.
 - Register account `USER` dan langsung login.
 - Logout current session.
+- Lupa password melalui email dan reset token satu kali pakai.
 - Opaque server-side session pada Upstash Redis.
 - Cookie session aman yang hanya dibuat dan dihapus pada server.
 - Session guard untuk Server Component, data access, Server Action, dan Route
@@ -31,14 +35,13 @@ table session PostgreSQL kedua.
 - Proteksi seluruh route `/dashboard` untuk user yang belum login.
 - Integrasi ban, soft delete, dan perubahan role dengan session revocation.
 - Last Login, Last Activity, dan Online Presence pada Redis.
-- Rate limit dasar untuk login dan register.
+- Rate limit dasar untuk login, register, dan lupa password.
 
 Di luar scope awal:
 
 - OAuth atau social login.
 - Access token dan refresh token untuk external client.
 - Multi-factor authentication.
-- Reset password dan pengiriman email.
 - Daftar perangkat atau UI logout seluruh perangkat.
 - Permission granular di luar role `USER`, `ADMIN`, dan `SUPERADMIN`.
 
@@ -313,10 +316,57 @@ Logout merupakan Server Action yang:
 - Menghapus cookie session.
 - Menghapus Presence current user.
 - Mempertahankan Last Login dan Last Activity.
-- Redirect ke `/login` atau halaman publik yang disepakati UI.
+- Logout dashboard redirect ke `/login`, sedangkan logout dari Header publik
+  tetap berada pada halaman aktif melalui server refresh.
 
 Logout bersifat idempotent. Cookie atau Redis session yang sudah tidak ada tidak
 menghasilkan error kepada user.
+
+## Lupa dan reset password
+
+Request dimulai dari `/lupa-password` dan reset dilakukan pada
+`/lupa-password/[token]`. Email dikirim melalui Nodemailer dan SMTP Gmail.
+
+Environment server yang digunakan:
+
+```text
+APP_URL=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_SECURE=
+SMTP_USER=
+SMTP_APP_PASSWORD=
+SMTP_FROM_NAME=
+SMTP_FROM_EMAIL=
+```
+
+Flow request:
+
+- Email divalidasi, di-trim, dan di-lowercase.
+- Response selalu generik agar keberadaan account tidak dapat ditebak.
+- Email yang tidak terdaftar, account banned, atau account deleted tidak
+  menerima email tetapi tetap memperoleh response dan countdown yang sama.
+- Cooldown per email adalah satu request setiap 60 detik.
+- Rate limit IP adalah 10 request dalam 15 menit.
+- Countdown client berasal dari TTL Redis; refresh dan submit email yang sama
+  tidak menghapus cooldown.
+- Pengiriman email dijadwalkan melalui `after()` agar SMTP tidak memperpanjang
+  response form dan mengurangi timing enumeration.
+
+Token reset berupa random 32-byte base64url. Raw token hanya berada pada URL
+email, sedangkan Redis menyimpan SHA-256 hash dengan TTL 10 menit. Satu user
+hanya mempunyai satu token aktif; request baru langsung menggantikan token
+lama.
+
+Submit password baru memvalidasi token sekali lagi, memerlukan account aktif,
+memastikan token masih menjadi token terbaru, lalu mengonsumsi token secara
+atomic. Password di-hash melalui helper bcryptjs canonical. Seluruh session
+account dicabut sebelum password database diperbarui dan user diarahkan ke
+`/login?reset=success`.
+
+Token yang sudah digunakan mempunyai marker sementara sehingga UI dapat
+membedakannya dari token yang digantikan. Token invalid atau expired tidak
+menampilkan form password.
 
 ## Session server
 
@@ -661,6 +711,10 @@ Flow berikut wajib diperiksa setelah code dibuat:
 - Register membuat `USER`, hash bcrypt, session, cookie, dan redirect Dashboard.
 - Duplicate register ditolak tanpa membuat row tambahan.
 - Logout menghapus current session, cookie, dan Presence.
+- Forgot Password memakai response generik dan cooldown 60 detik.
+- Token reset expired setelah 10 menit, hanya berlaku satu kali, dan token baru
+  membatalkan token lama.
+- Reset password mencabut seluruh session dan redirect ke Login.
 - Dashboard tanpa session redirect ke Login.
 - Fake atau expired cookie tidak membuka protected data.
 - Client hook menerima safe DTO tanpa token atau password.
@@ -683,6 +737,8 @@ npm run build
 ## Status saat ini
 
 - Login, Register automatic login, dan Logout sudah memakai Server Action.
+- Forgot Password, Nodemailer SMTP, reset token Redis, dan reset password sudah
+  terintegrasi.
 - Opaque session, cookie `HttpOnly`, token hash, dan user-version sudah aktif di
   Upstash Redis.
 - Mock `AuthContext` sudah dihapus dan digantikan `AuthSessionProvider`,

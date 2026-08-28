@@ -10,7 +10,7 @@ import { loginAction } from "../actions/login"
 import { INITIAL_AUTH_ACTION_STATE } from "../types/auth-action-state"
 import { AuthPageShell } from "./auth-page-shell"
 
-export function LoginPage() {
+export function LoginPage({ passwordResetSuccess = false }: { passwordResetSuccess?: boolean }) {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [state, formAction, isPending] = useActionState(
@@ -27,6 +27,14 @@ export function LoginPage() {
         Masuk ke ruang personalmu di Benah Palembang.
       </p>
       <form action={formAction} className="mt-8 space-y-4" noValidate>
+        {passwordResetSuccess && (
+          <p
+            role="status"
+            className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-2.5 text-xs leading-5 text-emerald-200"
+          >
+            Password berhasil diperbarui. Silakan login dengan password baru.
+          </p>
+        )}
         <label className="block text-xs font-semibold text-white/80">
           Email
           <input
