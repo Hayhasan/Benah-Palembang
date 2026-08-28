@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 const DEVICE_ID_COOKIE_NAME = "benah_device_id"
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const existingDeviceId = request.cookies.get(DEVICE_ID_COOKIE_NAME)?.value
 
   if (existingDeviceId) {
