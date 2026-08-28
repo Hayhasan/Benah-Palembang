@@ -54,7 +54,7 @@ export async function requireRole(roles: AuthRole[]) {
   const user = await getCurrentUser()
   if (!user) redirect("/login?reason=session-invalid")
   if (!roles.includes(user.role)) {
-    redirect(user.role === "USER" ? "/dashboard/profile" : "/dashboard")
+    redirect(user.role === "USER" ? "/dashboard/create-article" : "/dashboard")
   }
 
   await scheduleActivityTouch(user.id)

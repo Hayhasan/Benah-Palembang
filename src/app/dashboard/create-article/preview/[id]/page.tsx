@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 import { OwnedArticlePreview } from "@/modules/article/components/owned-article-preview"
 import { getOwnedArticle } from "@/modules/article/data/get-owned-article"
 
@@ -8,6 +9,8 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
+  await requireCurrentUser()
+
   const { id } = await params
   if (!/^[1-9]\d*$/.test(id)) notFound()
 

@@ -3,7 +3,7 @@ import "server-only"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
-import { requireCurrentUser } from "@/modules/auth/data/session-dal"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { managedContentListQuerySchema } from "../schemas/manage-content.schema"
 import type {
@@ -22,7 +22,7 @@ export async function getManagedContent(input: {
   q?: string | null
 }): Promise<ManagedContentListResult> {
   await connection()
-  await requireCurrentUser()
+  await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = managedContentListQuerySchema.safeParse({
     page: input.page ?? 1,

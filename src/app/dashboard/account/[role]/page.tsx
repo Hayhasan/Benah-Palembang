@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation"
 
+import { requireRole } from "@/modules/auth/data/session-dal"
 import { AccountList } from "@/modules/account-manage/components/account-list"
 import { isAccountRouteRole } from "@/modules/account-manage/constants/account-route-role"
 import { getManagedAccounts } from "@/modules/account-manage/data/get-managed-accounts"
@@ -20,6 +21,8 @@ export default async function AccountListPage({
   params,
   searchParams,
 }: AccountListPageProps) {
+  await requireRole(["SUPERADMIN"])
+
   const { role } = await params
   if (!isAccountRouteRole(role)) notFound()
 

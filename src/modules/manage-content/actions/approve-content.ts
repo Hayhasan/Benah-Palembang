@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db/prisma"
-import { requireCurrentUser } from "@/modules/auth/data/session-dal"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { moderationPayloadSchema } from "../schemas/manage-content.schema"
 import type { ManageContentActionResult } from "../types/managed-content"
@@ -10,7 +10,7 @@ import { revalidateManagedContentRoutes } from "./revalidate-managed-content"
 export async function approveContentAction(
   input: unknown,
 ): Promise<ManageContentActionResult> {
-  await requireCurrentUser()
+  await requireRole(["ADMIN", "SUPERADMIN"])
 
   const parsed = moderationPayloadSchema.safeParse(input)
   if (!parsed.success) {

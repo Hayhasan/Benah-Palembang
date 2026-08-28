@@ -1,3 +1,4 @@
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 import { OwnedEventList } from "@/modules/event/components/owned-event-list"
 import { getOwnedEvents } from "@/modules/event/data/get-owned-events"
 
@@ -13,6 +14,8 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  await requireCurrentUser()
+
   const params = await searchParams
   const data = await getOwnedEvents({
     page: firstValue(params.page),

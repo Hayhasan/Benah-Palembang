@@ -1,3 +1,4 @@
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 import { OwnedArticleList } from "@/modules/article/components/owned-article-list"
 import { getOwnedArticles } from "@/modules/article/data/get-owned-articles"
 
@@ -13,6 +14,8 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  await requireCurrentUser()
+
   const params = await searchParams
   const data = await getOwnedArticles({
     page: firstValue(params.page),

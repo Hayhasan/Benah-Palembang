@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 
+import { requireRole } from "@/modules/auth/data/session-dal"
 import { AccountDetail } from "@/modules/account-manage/components/account-detail"
 import { isAccountRouteRole } from "@/modules/account-manage/constants/account-route-role"
 import { getManagedAccount } from "@/modules/account-manage/data/get-managed-account"
@@ -14,6 +15,8 @@ interface AccountDetailPageProps {
 export default async function AccountDetailPage({
   params,
 }: AccountDetailPageProps) {
+  await requireRole(["SUPERADMIN"])
+
   const { role, id } = await params
   if (!isAccountRouteRole(role)) notFound()
 

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 import { OwnedEventPreview } from "@/modules/event/components/owned-event-preview"
 import { getOwnedEvent } from "@/modules/event/data/get-owned-event"
 
@@ -8,6 +9,8 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
+  await requireCurrentUser()
+
   const { id } = await params
   if (!/^[1-9]\d*$/.test(id)) notFound()
 
