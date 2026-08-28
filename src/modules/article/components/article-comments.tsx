@@ -41,7 +41,9 @@ export function ArticleComments({
   const isAuthenticated = status === "authenticated" && Boolean(user)
 
   const [commentText, setCommentText] = useState("")
-  const [isPending, startTransition] = useTransition()
+  const [isCreatePending, startCreateTransition] = useTransition()
+  const [isDeletePending, startDeleteTransition] = useTransition()
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null)
   const [commentToDelete, setCommentToDelete] =
     useState<PublicArticleCommentItem | null>(null)
   const [showAll, setShowAll] = useState(false)
@@ -66,7 +68,7 @@ export function ArticleComments({
       return
     }
 
-    startTransition(async () => {
+    startCreateTransition(async () => {
       const result = await createArticleCommentAction({
         articleId,
         content: trimmed,
@@ -84,21 +86,29 @@ export function ArticleComments({
 
   function handleConfirmDelete() {
     if (!commentToDelete) return
+    const targetId = commentToDelete.id
+    setDeletingCommentId(targetId)
 
-    startTransition(async () => {
-      const result = await deleteArticleCommentAction({
-        id: commentToDelete.id,
-      })
+    startDeleteTransition(async () => {
+      try {
+        const result = await deleteArticleCommentAction({
+          id: targetId,
+        })
 
-      if (!result.success) {
-        toast.error(result.message)
-        return
+        if (!result.success) {
+          toast.error(result.message)
+          return
+        }
+
+        toast.success(result.message)
+        setCommentToDelete(null)
+      } finally {
+        setDeletingCommentId(null)
       }
-
-      toast.success(result.message)
-      setCommentToDelete(null)
     })
   }
+
+  const isFormDisabled = isCreatePending || isDeletePending
 
   return (
     <section id="komentar" className="mt-16 border-t border-border pt-10">
@@ -129,7 +139,7 @@ export function ArticleComments({
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Tulis tanggapan atau cerita Anda..."
-                  disabled={isPending}
+                  disabled={isFormDisabled}
                   maxLength={1000}
                   className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
                 />
@@ -140,10 +150,10 @@ export function ArticleComments({
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={isPending || !commentText.trim()}
-                    className="h-8 gap-1.5 bg-palembang-red px-3 text-xs text-white hover:bg-palembang-red/90"
+                    disabled={isFormDisabled || !commentText.trim()}
+                    className="h-8 gap-1.5 bg-palembang-red px-3 text-xs text-white hover:bg-palembang-red/90 disabled:opacity-50"
                   >
-                    {isPending ? (
+                    {isCreatePending ? (
                       <Loader2 className="size-3.5 animate-spin" />
                     ) : (
                       <Send className="size-3.5" />
@@ -200,11 +210,14 @@ export function ArticleComments({
           <div className="space-y-6">
             {visibleComments.map((comment) => {
               const isOwner = user?.id === comment.userId
+              const isThisDeleting = deletingCommentId === comment.id
 
               return (
                 <div
                   key={comment.id}
-                  className="group flex items-start gap-3 rounded-xl p-2 transition-colors hover:bg-muted/20"
+                  className={`group flex items-start gap-3 rounded-xl p-2 transition-colors hover:bg-muted/20 ${
+                    isThisDeleting ? "pointer-events-none opacity-50" : ""
+                  }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -232,11 +245,20 @@ export function ArticleComments({
                         <button
                           type="button"
                           onClick={() => setCommentToDelete(comment)}
-                          className="opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                          disabled={isDeletePending}
+                          className={`transition-opacity hover:text-red-600 ${
+                            isThisDeleting
+                              ? "opacity-100"
+                              : "opacity-0 group-hover:opacity-100"
+                          }`}
                           title="Hapus komentar"
                           aria-label="Hapus komentar"
                         >
-                          <Trash2 className="size-3.5 text-muted-foreground hover:text-red-600" />
+                          {isThisDeleting ? (
+                            <Loader2 className="size-3.5 animate-spin text-red-600" />
+                          ) : (
+                            <Trash2 className="size-3.5 text-muted-foreground hover:text-red-600" />
+                          )}
                         </button>
                       ) : null}
                     </div>
