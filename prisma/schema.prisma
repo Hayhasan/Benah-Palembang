@@ -47,6 +47,7 @@ model User {
   articleComments     ArticleComment[] @relation("ArticleCommentUser")
   articleLikes        ArticleLike[]    @relation("ArticleLikeUser")
   eventLikes          EventLike[]      @relation("EventLikeUser")
+  eventParticipants   EventParticipant[] @relation("EventParticipantUser")
   activityLogs        ActivityLog[]    @relation("UserActivityLogs")
 
   @@index([role, deletedAt, createdAt])
@@ -360,6 +361,7 @@ model Event {
   owner           User          @relation("EventOwner", fields: [ownerId], references: [id])
   tags            EventTag[]
   likes           EventLike[]
+  participants    EventParticipant[]
 
   @@index([ownerId, deletedAt, updatedAt])
   @@index([status, deletedAt, startsAt])
@@ -467,6 +469,24 @@ model EventLike {
   @@index([userId])
   @@index([eventId])
   @@map("event_likes")
+}
+
+model EventParticipant {
+  id         Int       @id @default(autoincrement())
+  eventId    Int
+  userId     String?   @db.Uuid
+  deviceId   String?   @db.VarChar(100)
+  identifier String    @db.VarChar(160)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  deletedAt  DateTime? @db.Timestamptz(6)
+  event      Event     @relation(fields: [eventId], references: [id])
+  user       User?     @relation("EventParticipantUser", fields: [userId], references: [id])
+
+  @@unique([eventId, identifier])
+  @@index([eventId])
+  @@index([userId])
+  @@index([identifier])
+  @@map("event_participants")
 }
 
 enum ActivityAction {

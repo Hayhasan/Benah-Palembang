@@ -19,7 +19,9 @@ export interface PublicEventDetail extends PublicEventListItem {
   registrationUrl: string | null
   tags: string[]
   likesCount: number
+  participantsCount: number
   hasLiked: boolean
+  hasRegistered: boolean
 }
 
 export interface PublicEventDetailData {

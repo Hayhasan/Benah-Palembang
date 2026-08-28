@@ -22,24 +22,29 @@ import { PublicFooter as Footer } from "@/features/public/components/PublicFoote
 import { SectionHeading } from "@/features/public/components/SectionHeading"
 import { useSession } from "@/modules/auth/hooks/use-session"
 
+import { registerEventParticipantAction } from "../actions/register-event-participant"
 import { toggleEventLikeAction } from "../actions/toggle-event-like"
-import { getPublicEventMockStats } from "../constants/public-event-stats"
 import type { PublicEventDetailData } from "../types/public-event"
 import { EventShareButton } from "./event-share-button"
 
 export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
   const { event, relatedEvents } = data
-  const stats = getPublicEventMockStats(event.id)
   const router = useRouter()
   const { user, status } = useSession()
   const isAuthenticated = status === "authenticated" && Boolean(user)
 
   const [optimisticLike, setOptimisticLike] = useState<boolean | null>(null)
   const [likesCountDelta, setLikesCountDelta] = useState(0)
+  const [hasRegistered, setHasRegistered] = useState(event.hasRegistered)
+  const [participantsDelta, setParticipantsDelta] = useState(0)
   const [, startTransition] = useTransition()
 
   const isLiked = isAuthenticated ? (optimisticLike ?? event.hasLiked) : false
   const likesCount = Math.max(0, event.likesCount + (isAuthenticated ? likesCountDelta : 0))
+  const participantsCount = Math.max(
+    0,
+    event.participantsCount + participantsDelta,
+  )
 
   function handleToggleLike() {
     if (!isAuthenticated) {
@@ -70,6 +75,21 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
       setOptimisticLike(result.hasLiked ?? nextLiked)
       setLikesCountDelta(0)
     })
+  }
+
+  function handleRegisterClick() {
+    if (!hasRegistered) {
+      setHasRegistered(true)
+      setParticipantsDelta((prev) => prev + 1)
+      startTransition(async () => {
+        const result = await registerEventParticipantAction({
+          eventId: event.id,
+        })
+        if (!result.success) {
+          console.error(result.message)
+        }
+      })
+    }
   }
 
   return (
@@ -121,7 +141,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
             </span>
             <span className="flex items-center gap-2">
               <Users className="size-4" />
-              {stats.participants.toLocaleString("id-ID")} participants
+              {participantsCount.toLocaleString("id-ID")} participants
             </span>
           </div>
         </div>
@@ -196,6 +216,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                         href={event.registrationUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={handleRegisterClick}
                         className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white transition-colors hover:bg-palembang-red/90"
                       >
                         <Ticket className="size-4" />

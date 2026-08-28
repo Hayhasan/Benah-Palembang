@@ -489,10 +489,26 @@ Sistem view agenda/event mencatat pembacaan riil secara atomic dengan proteksi d
   - Menggunakan command Redis atomic `SET key "1" EX 86400 NX`.
   - Key format authenticated user: `<REDIS_PREFIX>:view:event:<eventId>:user:<userId>`.
   - Key format guest / unauthenticated: `<REDIS_PREFIX>:view:event:<eventId>:device:<deviceId>`.
-  - `deviceId` digenerate otomatis melalui Next.js Middleware dalam bentuk cookie HTTP `benah_device_id` (durasi 1 tahun).
+  - `deviceId` digenerate otomatis melalui Next.js Proxy/Middleware dalam bentuk cookie HTTP `benah_device_id` (durasi 1 tahun).
 - **Trigger Penambahan View:**
   - Hanya bertambah pada halaman publik detail `/agenda/[id]` (`src/app/(public)/agenda/[id]/page.tsx`).
   - Tidak bertambah pada halaman preview author, dashboard, atau manage content.
 - **Sinkronisasi UI:**
   - Halaman detail publik `/agenda/[id]`, dashboard author `/dashboard/create-event`, author preview, dan manage content membaca angka `views` riil dari database.
+
+## 15. Sistem Partisipan Event (CTA Tracking)
+
+Sistem partisipan agenda/event mencatat pengunjung yang mengklik tombol CTA **"Daftar Sekarang"** secara persistent dan unik selamanya di database PostgreSQL:
+
+- **Model Prisma:** `EventParticipant` dengan kolom `eventId`, `userId?`, `deviceId?`, `identifier` (`user:<userId>` atau `device:<deviceId>`), serta constraint unik `@@unique([eventId, identifier])`.
+- **Server Action:** `registerEventParticipantAction({ eventId })` yang mencatat pendaftaran jika `identifier` belum pernah terdaftar untuk acara terkait.
+- **Halaman Publik (`/agenda/[id]`):**
+  - Tombol CTA *"Daftar Sekarang"* membuka tautan pendaftaran eksternal (`registrationUrl`) di tab baru.
+  - State optimis langsung menambahkan jumlah partisipan `+1` di hero header dan menandai status terdaftar.
+- **Agregasi & Sinkronisasi Dashboard:**
+  - Menghitung jumlah partisipan aktif secara riil menggunakan agregasi Prisma `_count: { select: { participants: { where: { deletedAt: null } } } }`.
+  - `/dashboard/content` menampilkan jumlah partisipan riil pada kolom statistik event.
+  - `/dashboard/create-event` menampilkan jumlah partisipan riil pada tabel event milik author.
+  - `/dashboard/create-event/preview/[id]` dan preview Manage Content menampilkan jumlah partisipan riil.
+
 

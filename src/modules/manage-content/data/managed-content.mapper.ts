@@ -46,6 +46,7 @@ export interface EventModerationRecord extends Event {
   owner: Pick<User, "id" | "name" | "avatarUrl">
   _count?: {
     likes?: number
+    participants?: number
   }
 }
 
@@ -122,6 +123,7 @@ export function mapEventToManagedContent(
       ...baseStats,
       views: formatCompactNumber(event.views),
       likes: (event._count?.likes ?? 0).toString(),
+      participants: event._count?.participants ?? 0,
     },
   }
 }

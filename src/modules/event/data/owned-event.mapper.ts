@@ -2,7 +2,6 @@ import "server-only"
 
 import type { ContentStatus, Prisma } from "@prisma/client"
 
-import { getPublicEventMockStats } from "../constants/public-event-stats"
 import type {
   OwnedEventEditorData,
   OwnedEventListItem,
@@ -52,6 +51,7 @@ export const ownedEventListSelect = {
   _count: {
     select: {
       likes: true,
+      participants: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.EventSelect
@@ -78,6 +78,7 @@ export const ownedEventEditorSelect = {
   _count: {
     select: {
       likes: true,
+      participants: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.EventSelect
@@ -109,8 +110,6 @@ function inputDate(date: Date) {
 export function mapOwnedEventListItem(
   event: OwnedEventListRecord,
 ): OwnedEventListItem {
-  const stats = getPublicEventMockStats(event.id)
-
   return {
     id: event.id,
     title: event.title,
@@ -122,7 +121,7 @@ export function mapOwnedEventListItem(
     statusLabel: ownedEventStatusLabel(event.status),
     views: event.views,
     likes: event._count.likes,
-    participants: stats.participants,
+    participants: event._count.participants,
   }
 }
 
@@ -149,5 +148,6 @@ export function mapOwnedEventEditor(
     tags: event.tags.map((tag) => tag.label),
     views: event.views,
     likesCount: event._count.likes,
+    participantsCount: event._count.participants,
   }
 }

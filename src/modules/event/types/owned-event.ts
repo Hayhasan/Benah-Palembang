@@ -43,6 +43,7 @@ export interface OwnedEventEditorData {
   tags: string[]
   views: number
   likesCount: number
+  participantsCount: number
 }
 
 export type EventSaveIntent = "SAVE" | "POST"

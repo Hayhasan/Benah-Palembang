@@ -15,11 +15,9 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 
-import { getPublicEventMockStats } from "../constants/public-event-stats"
 import type { OwnedEventEditorData } from "../types/owned-event"
 
 export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
-  const stats = getPublicEventMockStats(event.id)
 
   return (
     <div className="space-y-6 pb-16">
@@ -82,7 +80,7 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
               </span>
               <span className="flex items-center gap-2">
                 <Users className="size-4" />
-                {stats.participants.toLocaleString("id-ID")} participants
+                {event.participantsCount.toLocaleString("id-ID")} participants
               </span>
             </div>
           </div>

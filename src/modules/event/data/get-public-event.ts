@@ -3,7 +3,7 @@ import "server-only"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
-import { recordEventView } from "@/lib/views/view-tracker"
+import { recordEventView, resolveClientIdentifier } from "@/lib/views/view-tracker"
 import { getCurrentUser } from "@/modules/auth/data/session-dal"
 
 import type { PublicEventDetailData } from "../types/public-event"
@@ -19,6 +19,7 @@ export async function getPublicEvent(
 ): Promise<PublicEventDetailData | null> {
   await connection()
   const currentUser = await getCurrentUser()
+  const identifier = await resolveClientIdentifier(currentUser?.id)
 
   const event = await prisma.event.findFirst({
     where: {
@@ -32,7 +33,11 @@ export async function getPublicEvent(
   if (!event) return null
 
   const incremented = await recordEventView(event.id, currentUser?.id)
-  const eventDetail = mapPublicEventDetail(event, currentUser?.id)
+  const eventDetail = mapPublicEventDetail(
+    event,
+    currentUser?.id,
+    identifier,
+  )
   if (incremented) {
     eventDetail.views += 1
   }

@@ -23,7 +23,6 @@ import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
-import { getPublicEventMockStats } from "@/modules/event/constants/public-event-stats"
 import type { OwnedEventEditorData } from "@/modules/event/types/owned-event"
 
 import { approveContentAction } from "../actions/approve-content"
@@ -37,7 +36,6 @@ export function ManagedEventPreview({
   event: OwnedEventEditorData
 }) {
   const router = useRouter()
-  const stats = getPublicEventMockStats(event.id)
   const [isPending, startTransition] = useTransition()
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -207,7 +205,7 @@ export function ManagedEventPreview({
               </span>
               <span className="flex items-center gap-2">
                 <Users className="size-4" />
-                {stats.participants.toLocaleString("id-ID")} participants
+                {event.participantsCount.toLocaleString("id-ID")} participants
               </span>
             </div>
           </div>
