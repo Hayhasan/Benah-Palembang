@@ -122,7 +122,6 @@ Schema yang direncanakan:
 model Article {
   id                      Int                   @id @default(autoincrement())
   authorId                String                @db.Uuid
-  reviewedById            String?               @db.Uuid
   websiteArticleSectionId Int
   slug                    String                @unique @db.VarChar(180)
   originalSlug            String?               @db.VarChar(180)
@@ -136,12 +135,10 @@ model Article {
   moderationNote          String?               @db.Text
   submittedAt             DateTime?             @db.Timestamptz(6)
   publishedAt             DateTime?             @db.Timestamptz(6)
-  reviewedAt              DateTime?             @db.Timestamptz(6)
   createdAt               DateTime              @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime              @updatedAt @db.Timestamptz(6)
   deletedAt               DateTime?             @db.Timestamptz(6)
   author                  User                  @relation("ArticleAuthor", fields: [authorId], references: [id])
-  reviewedBy              User?                 @relation("ArticleReviewer", fields: [reviewedById], references: [id])
   websiteArticleSection   WebsiteArticleSection @relation(fields: [websiteArticleSectionId], references: [id])
   tags                    ArticleTag[]
 
@@ -166,8 +163,7 @@ model ArticleTag {
 ```
 
 Model `User` dan `WebsiteArticleSection` mendapatkan relation collection yang
-sesuai. Nama relation eksplisit diperlukan karena User juga dapat menjadi
-reviewer.
+sesuai untuk author dan kategori Article.
 
 ### Keputusan schema
 
@@ -181,6 +177,8 @@ reviewer.
 - Rich content disanitasi pada server sebelum disimpan atau dirender.
 - Views, likes, dan comments tidak menjadi column pada implementasi awal.
 - Participants tidak menjadi bagian domain Article.
+- Actor dan waktu moderation tidak disimpan ulang pada Article. Informasi
+  reviewer dan `reviewedAt` nantinya berasal dari central activity log.
 
 ## 6. Soft delete
 

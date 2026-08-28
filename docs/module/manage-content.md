@@ -38,8 +38,9 @@ Aturan sementara:
 - Halaman tetap berada pada authenticated dashboard boundary.
 - Actor moderation berasal dari current authenticated user.
 - Client tidak boleh mengirim actor ID atau actor role sebagai sumber otorisasi.
-- Module menyimpan reviewer ID untuk audit, tetapi keputusan apakah actor boleh
-  melakukan moderation akan dipasang oleh module Permission nanti.
+- Module mengirim actor moderation ke central activity log untuk audit, tetapi
+  keputusan apakah actor boleh melakukan moderation akan dipasang oleh module
+  Permission nanti.
 - Existing hardcoded role guard pada route tidak dianggap bagian dari scope
   implementasi module ini dan tidak diperluas.
 
@@ -216,7 +217,8 @@ Action melakukan:
 2. Memvalidasi payload dengan Zod.
 3. Memilih model berdasarkan `type` yang sudah divalidasi.
 4. Melakukan conditional update berdasarkan status sebelumnya.
-5. Mengisi `reviewedById`, `reviewedAt`, dan optional `moderationNote`.
+5. Menyimpan actor, action, dan waktu review ke central activity log serta
+   optional `moderationNote` pada content aggregate.
 6. Mengisi `publishedAt` ketika content pertama kali disetujui.
 7. Merevalidasi dashboard dan seluruh public route yang memakai content.
 

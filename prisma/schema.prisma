@@ -14,6 +14,14 @@ enum UserRole {
   SUPERADMIN
 }
 
+enum ContentStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  TAKEN_DOWN
+}
+
 model User {
   id                  String    @id @default(uuid()) @db.Uuid
   name                String    @db.VarChar(160)
@@ -34,6 +42,7 @@ model User {
   createdAt           DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @db.Timestamptz(6)
   deletedAt           DateTime? @db.Timestamptz(6)
+  ownedEvents         Event[]   @relation("EventOwner")
 
   @@index([role, deletedAt, createdAt])
   @@index([isBanned, deletedAt])
@@ -317,4 +326,48 @@ model WebsiteAgendaContent {
 
   @@index([deletedAt])
   @@map("website_agenda_contents")
+}
+
+model Event {
+  id              Int           @id @default(autoincrement())
+  ownerId         String        @db.Uuid
+  slug            String        @unique @db.VarChar(180)
+  originalSlug    String?       @db.VarChar(180)
+  title           String        @db.VarChar(255)
+  description     String        @db.Text
+  content         String        @db.Text
+  bannerUrl       String        @db.Text
+  category        String        @db.VarChar(100)
+  startsAt        DateTime      @db.Timestamptz(6)
+  endsAt          DateTime?     @db.Timestamptz(6)
+  location        String        @db.VarChar(255)
+  organizer       String        @db.VarChar(255)
+  registrationUrl String?       @db.Text
+  status          ContentStatus @default(DRAFT)
+  moderationNote  String?       @db.Text
+  submittedAt     DateTime?     @db.Timestamptz(6)
+  publishedAt     DateTime?     @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @db.Timestamptz(6)
+  deletedAt       DateTime?     @db.Timestamptz(6)
+  owner           User          @relation("EventOwner", fields: [ownerId], references: [id])
+  tags            EventTag[]
+
+  @@index([ownerId, deletedAt, updatedAt])
+  @@index([status, deletedAt, startsAt])
+  @@map("events")
+}
+
+model EventTag {
+  id        Int       @id @default(autoincrement())
+  eventId   Int
+  label     String    @db.VarChar(80)
+  position  Int
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt DateTime? @db.Timestamptz(6)
+  event     Event     @relation(fields: [eventId], references: [id])
+
+  @@index([eventId, deletedAt, position])
+  @@map("event_tags")
 }

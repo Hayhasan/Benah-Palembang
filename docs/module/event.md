@@ -91,13 +91,12 @@ editor secara domain berarti mengajukan Event menjadi `PENDING_REVIEW`.
 
 ## 4. Database
 
-Schema yang direncanakan:
+Schema yang sudah diimplementasikan:
 
 ```prisma
 model Event {
   id                   Int           @id @default(autoincrement())
   ownerId              String        @db.Uuid
-  reviewedById         String?       @db.Uuid
   slug                 String        @unique @db.VarChar(180)
   originalSlug         String?       @db.VarChar(180)
   title                String        @db.VarChar(255)
@@ -114,12 +113,10 @@ model Event {
   moderationNote       String?       @db.Text
   submittedAt          DateTime?     @db.Timestamptz(6)
   publishedAt          DateTime?     @db.Timestamptz(6)
-  reviewedAt           DateTime?     @db.Timestamptz(6)
   createdAt            DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime      @updatedAt @db.Timestamptz(6)
   deletedAt            DateTime?     @db.Timestamptz(6)
   owner                User          @relation("EventOwner", fields: [ownerId], references: [id])
-  reviewedBy           User?         @relation("EventReviewer", fields: [reviewedById], references: [id])
   tags                 EventTag[]
 
   @@index([ownerId, deletedAt, updatedAt])
@@ -142,8 +139,8 @@ model EventTag {
 }
 ```
 
-Nama relation Prisma dapat disesuaikan saat migration selama tetap eksplisit
-karena `User` mempunyai relasi sebagai owner dan reviewer.
+Relation Prisma pada `User` dibuat eksplisit sebagai `EventOwner` untuk
+menghubungkan Event dengan account pembuatnya.
 
 ### Keputusan schema
 
@@ -159,6 +156,10 @@ karena `User` mempunyai relasi sebagai owner dan reviewer.
   `Asia/Jakarta`.
 - Rich content disanitasi di server sebelum disimpan atau dirender.
 - Statistik interaksi tidak menjadi column pada tahap awal.
+- Actor dan waktu proses review tidak diduplikasi pada Event. Informasi
+  `reviewedBy` dan `reviewedAt` nantinya berasal dari central activity log.
+- Event tetap menyimpan current status, optional `moderationNote`, serta
+  `publishedAt` sebagai state aggregate yang dibutuhkan query aplikasi.
 
 ## 5. Soft delete
 
@@ -353,18 +354,45 @@ tetap tipis dan tidak mengakses Prisma langsung.
 
 ## 11. Implementation plan Event
 
-1. Finalisasi dokumen Event.
-2. Tambahkan enum, model, relation User, dan migration Event.
-3. Buat default Event canonical dan seeder idempotent.
-4. Jalankan seeder dua kali untuk memverifikasi create lalu skip.
-5. Implementasikan query dan halaman publik `/agenda`.
-6. Implementasikan detail publik `/agenda/[id]`.
-7. Implementasikan list Event milik current user.
-8. Implementasikan editor dan Server Action ownership.
-9. Pindahkan komponen Event yang sudah terhubung backend dari `src/features` ke
-   `src/modules/event`.
-10. Hapus dependency Event terhadap mock lama yang sudah digantikan.
-11. Jalankan validasi Prisma, TypeScript, lint, build, dan smoke check.
+- [x] Finalisasi dokumen Event.
+- [x] Tambahkan enum, model, relation User, dan migration Event.
+- [x] Buat default Event canonical dan seeder idempotent.
+- [x] Jalankan seeder dua kali untuk memverifikasi create lalu skip.
+- [x] Implementasikan query dan halaman publik `/agenda`.
+- [x] Implementasikan detail publik `/agenda/[id]`.
+- [ ] Implementasikan list Event milik current user.
+- [ ] Implementasikan editor dan Server Action ownership.
+- [ ] Pindahkan komponen Event yang sudah terhubung backend dari `src/features`
+  ke `src/modules/event`.
+- [ ] Hapus dependency Event terhadap mock lama yang sudah digantikan.
+- [ ] Jalankan validasi frontend, build, dan smoke check setelah integrasi route.
+
+### Status schema dan seeding
+
+- Migration `20260828095033_add_event_module` dan
+  `20260828202349_remove_event_review_fields` sudah diterapkan.
+- Canonical data berisi 56 Event dari mock publik Agenda dan dashboard Event.
+- Distribusi awal terdiri dari 51 `PUBLISHED`, 4 `DRAFT`, dan 1 `TAKEN_DOWN`.
+- Seeder memilih owner secara random hanya dari User aktif, tidak banned, dan
+  mempunyai role `USER`.
+- Eksekusi pertama membuat 56 Event; eksekusi kedua melewati seluruh data tanpa
+  duplicate atau overwrite.
+- Validasi Prisma dan TypeScript untuk tahap ini sudah berhasil.
+
+### Status halaman publik
+
+- `/agenda` membaca hero dari `website-content` dan Event `PUBLISHED` aktif dari
+  database secara paralel pada Server Component.
+- Filter This Month, Upcoming, dan Past Event memakai timestamp database dengan
+  acuan timezone `Asia/Jakarta`.
+- `/agenda/[id]` memvalidasi ID integer positif, hanya membaca Event
+  `PUBLISHED` aktif, dan menghasilkan `notFound()` untuk ID invalid atau record
+  yang tidak tersedia.
+- Related Event berasal dari Event published dengan kategori yang sama.
+- CTA pendaftaran hanya menjadi link ketika `registrationUrl` tersedia.
+- Views, likes, dan participants ditampilkan dari helper mock deterministic;
+  tidak ada interaction table dan tidak ada comments Event.
+- Public Agenda sudah tidak membaca `agendaItems` dari `src/data/mockData.ts`.
 
 ## 12. Kriteria selesai
 
