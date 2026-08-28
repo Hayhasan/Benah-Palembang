@@ -16,8 +16,8 @@ npm run seed:website-content
 
 - `npm run seed` menjalankan seluruh seeder aplikasi melalui runner utama.
 - `npm run seed:website-content` hanya menjalankan seeder module website
-  content, termasuk aggregate `home`, `collaboration`, `header-footer`, dan
-  seluruh child table terkait.
+  content, termasuk aggregate `home`, `agenda`, `collaboration`,
+  `header-footer`, dan seluruh child table terkait.
 - Seeder berikutnya mengikuti pola `npm run seed:<module-name>`, misalnya
   `seed:article` atau `seed:event`.
 - Jangan membuat command terpisah untuk setiap child table jika table-table
@@ -41,7 +41,7 @@ prisma/
 ## 3. Sumber data canonical
 
 - Seed website content menggunakan default content yang sama dengan fallback
-  landing page, halaman kolaborasi, header, dan footer.
+  landing page, halaman agenda, halaman kolaborasi, header, dan footer.
 - Nilai awal mengikuti tampilan public landing page yang aktif, bukan nilai form
   dashboard yang berbeda atau sudah tertinggal.
 - Default content tidak boleh diduplikasi di public component, dashboard form,
@@ -54,7 +54,7 @@ prisma/
 
 - Semua seeder wajib aman dijalankan lebih dari sekali.
 - Seeder website content mencari root row dengan key canonical `home`,
-  `collaboration`, dan `header-footer` secara independen.
+  `agenda`, `collaboration`, dan `header-footer` secara independen.
 - Jika salah satu aggregate sudah aktif, seeder melewati aggregate tersebut
   tanpa menghalangi pembuatan aggregate lain yang belum ada.
 - Seeder tidak menimpa perubahan yang dibuat admin pada aggregate yang sudah
@@ -111,6 +111,7 @@ Log seeder harus ringkas dan menjelaskan hasil yang penting:
 [website-content:home] created
 [website-content:collaboration] skipped: canonical content already exists
 [website-content:header-footer] skipped: canonical content already exists
+[website-content:agenda] skipped: canonical content already exists
 ```
 
 - Jangan mencetak seluruh content atau payload yang panjang.
@@ -140,11 +141,11 @@ Ketentuan validasi:
   website content dan pastikan aggregate berhasil dibuat.
 - Jalankan command yang sama untuk kedua kali dan pastikan hasilnya `skipped`,
   bukan membuat duplicate atau menimpa data.
-- Pastikan hanya terdapat satu root row aktif untuk key `home`, `collaboration`,
-  dan `header-footer`.
+- Pastikan hanya terdapat satu root row aktif untuk key `home`, `agenda`,
+  `collaboration`, dan `header-footer`.
 - Pastikan child collection terbaca sesuai `position`.
-- Pastikan public landing page, `/kolaborasi`, serta public layout Header/Footer
-  dapat membaca hasil seed melalui Server Component.
+- Pastikan public landing page, `/agenda`, `/kolaborasi`, serta public layout
+  Header/Footer dapat membaca hasil seed melalui Server Component.
 - Pastikan fallback masing-masing halaman tetap tampil ketika root row terkait
   tidak ditemukan.
 - Minimal jalankan typecheck/lint atau build sesuai luas perubahan. Untuk

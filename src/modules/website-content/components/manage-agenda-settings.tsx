@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
+import { useState, type ReactNode } from "react"
 
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+
+import type { AgendaPageEditorData } from "../types/agenda-page-editor"
 
 function SectionCard({
   title,
@@ -59,64 +61,57 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function Textarea({
-  value,
+export function ManageAgendaSettings({
+  data,
   onChange,
-  placeholder,
 }: {
-  value?: string
-  onChange?: (value: string) => void
-  placeholder?: string
+  data: AgendaPageEditorData
+  onChange: (
+    updater: (current: AgendaPageEditorData) => AgendaPageEditorData,
+  ) => void
 }) {
   return (
-    <textarea
-      value={value}
-      onChange={(event) => onChange?.(event.target.value)}
-      placeholder={placeholder}
-      className="min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-    />
-  )
-}
-
-export function ArticleSettings() {
-  const categories = [
-    "Cerita Warga",
-    "Gaya Hidup",
-    "Ruang Kota",
-    "Industri Kreatif",
-    "Kebudayaan",
-  ]
-
-  return (
     <div className="space-y-8">
-      {categories.map((category) => (
-        <CategorySettings key={category} categoryName={category} />
-      ))}
+      <SectionCard
+        title="Section Heroes — Agenda"
+        desc="Konfigurasi tampilan heroes halaman agenda."
+      >
+        <Field label="Background">
+          <ImageUpload
+            value={data.hero.imageUrl}
+            onChange={(imageUrl) =>
+              onChange((current) => ({
+                ...current,
+                hero: { ...current.hero, imageUrl },
+              }))
+            }
+            placeholder="Upload background agenda..."
+          />
+        </Field>
+        <Field label="Judul Halaman">
+          <Input
+            value={data.hero.title}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                hero: { ...current.hero, title: event.target.value },
+              }))
+            }
+          />
+        </Field>
+        <Field label="Deskripsi">
+          <textarea
+            value={data.hero.description}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                hero: { ...current.hero, description: event.target.value },
+              }))
+            }
+            className="min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
+        </Field>
+      </SectionCard>
     </div>
-  )
-}
-
-function CategorySettings({ categoryName }: { categoryName: string }) {
-  const [backgroundUrl, setBackgroundUrl] = useState("")
-
-  return (
-    <SectionCard
-      title={`Section Heroes — ${categoryName}`}
-      desc={`Konfigurasi background, judul, dan deskripsi halaman kategori ${categoryName}.`}
-    >
-      <Field label="Background">
-        <ImageUpload
-          value={backgroundUrl}
-          onChange={setBackgroundUrl}
-          placeholder={`Upload background ${categoryName}...`}
-        />
-      </Field>
-      <Field label="Judul Halaman">
-        <Input defaultValue={categoryName} />
-      </Field>
-      <Field label="Deskripsi">
-        <Textarea placeholder={`Deskripsi mengenai ${categoryName}...`} />
-      </Field>
-    </SectionCard>
   )
 }

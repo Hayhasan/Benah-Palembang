@@ -95,30 +95,37 @@ Struktur awal yang disarankan:
 ```text
 src/modules/website-content/
   actions/
+    update-agenda-page.ts
     update-collaboration-page.ts
     update-header-footer-content.ts
     update-landing-page.ts
   components/
+    agenda-page.tsx
     collaboration-page.tsx
     header-footer-content-provider.tsx
     landing-page.tsx
+    manage-agenda-settings.tsx
     manage-collaboration-settings.tsx
     manage-header-footer-settings.tsx
     manage-landing-page-form.tsx
   constants/
+    default-agenda-page.ts
     default-collaboration-page.ts
     default-header-footer-content.ts
     default-landing-page.ts
   data/
+    get-agenda-page.ts
     get-collaboration-page.ts
     get-header-footer-content.ts
     get-landing-page.ts
     website-content.mapper.ts
   schemas/
+    agenda-page.schema.ts
     collaboration-page.schema.ts
     header-footer-content.schema.ts
     landing-page.schema.ts
   types/
+    agenda-page.ts
     collaboration-page.ts
     header-footer-content.ts
     landing-page.ts
@@ -186,6 +193,11 @@ Satu module boleh memiliki beberapa table selama masih berada dalam satu domain.
 - Jika root `collaboration` belum ada, route `/kolaborasi` menggunakan
   `default-collaboration-page.ts` sebagai fallback dengan aturan error yang sama
   seperti landing page.
+- Halaman agenda memakai root terpisah dengan key tetap `agenda`. Root hanya
+  menyimpan konfigurasi hero; daftar dan detail acara tetap menjadi tanggung
+  jawab module Agenda/Event.
+- Jika root `agenda` belum ada, route `/agenda` menggunakan
+  `default-agenda-page.ts` sebagai fallback dengan aturan error yang sama.
 - Header dan footer global memakai root `header-footer`. Public layout membaca
   root tersebut di server lalu membagikan DTO melalui provider client kepada
   Header dan Footer tanpa browser fetch.

@@ -4,6 +4,7 @@ import type {
   WebsiteCollaborationPlatform,
 } from "@prisma/client"
 
+import { DEFAULT_AGENDA_PAGE } from "../../src/modules/website-content/constants/default-agenda-page"
 import { DEFAULT_COLLABORATION_PAGE } from "../../src/modules/website-content/constants/default-collaboration-page"
 import { DEFAULT_HEADER_FOOTER_CONTENT } from "../../src/modules/website-content/constants/default-header-footer-content"
 import { DEFAULT_LANDING_PAGE } from "../../src/modules/website-content/constants/default-landing-page"
@@ -194,8 +195,46 @@ async function seedHeaderFooterContent(prisma: PrismaClient) {
   console.log("[website-content:header-footer] created")
 }
 
+async function seedAgendaPage(prisma: PrismaClient) {
+  const existing = await prisma.websiteAgendaContent.findUnique({
+    where: { key: DEFAULT_AGENDA_PAGE.key },
+    select: { deletedAt: true },
+  })
+
+  if (existing?.deletedAt === null) {
+    console.log(
+      "[website-content:agenda] skipped: canonical content already exists",
+    )
+    return
+  }
+
+  if (existing) {
+    throw new Error(
+      "[website-content:agenda] canonical key is still occupied by a soft-deleted record",
+    )
+  }
+
+  console.log("[website-content:agenda] creating default content")
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.websiteAgendaContent.create({
+      data: {
+        key: DEFAULT_AGENDA_PAGE.key,
+        heroImageUrl: DEFAULT_AGENDA_PAGE.hero.imageUrl,
+        heroImageAlt: DEFAULT_AGENDA_PAGE.hero.imageAlt,
+        heroEyebrow: DEFAULT_AGENDA_PAGE.hero.eyebrow,
+        heroTitle: DEFAULT_AGENDA_PAGE.hero.title,
+        heroDescription: DEFAULT_AGENDA_PAGE.hero.description,
+      },
+    })
+  })
+
+  console.log("[website-content:agenda] created")
+}
+
 export async function seedWebsiteContent(prisma: PrismaClient) {
   await seedLandingPage(prisma)
   await seedCollaborationPage(prisma)
   await seedHeaderFooterContent(prisma)
+  await seedAgendaPage(prisma)
 }

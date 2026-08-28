@@ -32,9 +32,11 @@ import {
 } from "@/components/ui/select"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
+import { updateAgendaPageAction } from "../actions/update-agenda-page"
 import { updateCollaborationPageAction } from "../actions/update-collaboration-page"
 import { updateHeaderFooterContentAction } from "../actions/update-header-footer-content"
 import { updateLandingPageAction } from "../actions/update-landing-page"
+import type { AgendaPageEditorData } from "../types/agenda-page-editor"
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
 import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
 import type {
@@ -44,12 +46,13 @@ import type {
   LandingPageEditorData,
   LandingTeamMemberEditorData,
 } from "../types/landing-page-editor"
-import { AgendaSettings, ArticleSettings } from "./website-editor-secondary-tabs"
+import { ArticleSettings } from "./website-editor-secondary-tabs"
+import { ManageAgendaSettings } from "./manage-agenda-settings"
 import { ManageCollaborationSettings } from "./manage-collaboration-settings"
 import { ManageHeaderFooterSettings } from "./manage-header-footer-settings"
 
 const tabs = ["Home", "Article", "Agenda", "Collaboration", "Header & Footer"]
-type EditableModule = "Home" | "Collaboration" | "Header & Footer"
+type EditableModule = "Home" | "Agenda" | "Collaboration" | "Header & Footer"
 const articleSectionNames = [
   "Cerita Palembang",
   "Gaya Hidup",
@@ -152,15 +155,18 @@ function clientKey(prefix: string) {
 
 export function ManageLandingPageForm({
   initialData,
+  initialAgendaData,
   initialCollaborationData,
   initialHeaderFooterData,
 }: {
   initialData: LandingPageEditorData
+  initialAgendaData: AgendaPageEditorData
   initialCollaborationData: CollaborationPageEditorData
   initialHeaderFooterData: HeaderFooterContentEditorData
 }) {
   const [activeTab, setActiveTab] = useState(tabs[0])
   const [data, setData] = useState(initialData)
+  const [agendaData, setAgendaData] = useState(initialAgendaData)
   const [collaborationData, setCollaborationData] = useState(
     initialCollaborationData,
   )
@@ -169,6 +175,7 @@ export function ManageLandingPageForm({
   )
   const [isPending, startTransition] = useTransition()
   const dataRef = useRef(data)
+  const agendaDataRef = useRef(agendaData)
   const collaborationDataRef = useRef(collaborationData)
   const headerFooterDataRef = useRef(headerFooterData)
   const activeTabRef = useRef(activeTab)
@@ -178,6 +185,10 @@ export function ManageLandingPageForm({
   useEffect(() => {
     dataRef.current = data
   }, [data])
+
+  useEffect(() => {
+    agendaDataRef.current = agendaData
+  }, [agendaData])
 
   useEffect(() => {
     collaborationDataRef.current = collaborationData
@@ -221,6 +232,16 @@ export function ManageLandingPageForm({
       collaborationDataRef.current = next
       setCollaborationData(next)
       markDirty("Collaboration")
+    },
+    [markDirty],
+  )
+
+  const changeAgendaData = useCallback(
+    (updater: (current: AgendaPageEditorData) => AgendaPageEditorData) => {
+      const next = updater(agendaDataRef.current)
+      agendaDataRef.current = next
+      setAgendaData(next)
+      markDirty("Agenda")
     },
     [markDirty],
   )
@@ -279,6 +300,20 @@ export function ManageLandingPageForm({
                 setCollaborationData(result.data)
                 collaborationDataRef.current = result.data
                 dirtyModulesRef.current.delete("Collaboration")
+                successMessages.push(result.message)
+              } else {
+                const field = result.field ? ` (${result.field})` : ""
+                toast.error(`${result.message}${field}`)
+                allSucceeded = false
+              }
+            }
+
+            if (dirtyModules.includes("Agenda")) {
+              const result = await updateAgendaPageAction(agendaDataRef.current)
+              if (result.success) {
+                setAgendaData(result.data)
+                agendaDataRef.current = result.data
+                dirtyModulesRef.current.delete("Agenda")
                 successMessages.push(result.message)
               } else {
                 const field = result.field ? ` (${result.field})` : ""
@@ -1227,7 +1262,9 @@ export function ManageLandingPageForm({
           </div>
         ) : null}
         {activeTab === "Article" ? <ArticleSettings /> : null}
-        {activeTab === "Agenda" ? <AgendaSettings /> : null}
+        {activeTab === "Agenda" ? (
+          <ManageAgendaSettings data={agendaData} onChange={changeAgendaData} />
+        ) : null}
         {activeTab === "Collaboration" ? (
           <ManageCollaborationSettings
             data={collaborationData}
