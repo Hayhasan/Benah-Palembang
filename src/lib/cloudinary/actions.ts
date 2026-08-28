@@ -1,19 +1,36 @@
 "use server"
 
+import { z } from "zod"
+
 import { getCloudinary } from "./cloudinary"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
-const WEBSITE_CONTENT_FOLDER = "benah-palembang/website-content"
+const uploadScopeSchema = z.enum(["website-content", "profile"])
+const UPLOAD_FOLDERS = {
+  "website-content": "benah-palembang/website-content",
+  profile: "benah-palembang/profiles",
+} as const
 
-export async function createImageUploadSignature() {
+export async function createImageUploadSignature(
+  input: unknown = "website-content",
+) {
   await requireCurrentUser()
+
+  const parsedScope = uploadScopeSchema.safeParse(input)
+  if (!parsedScope.success) {
+    return {
+      success: false as const,
+      message: "Scope upload gambar tidak valid.",
+    }
+  }
 
   try {
     const { client, config } = getCloudinary()
     const timestamp = Math.floor(Date.now() / 1000)
+    const folder = UPLOAD_FOLDERS[parsedScope.data]
     const signature = client.utils.api_sign_request(
       {
-        folder: WEBSITE_CONTENT_FOLDER,
+        folder,
         timestamp,
       },
       config.apiSecret,
@@ -24,7 +41,7 @@ export async function createImageUploadSignature() {
       data: {
         apiKey: config.apiKey,
         cloudName: config.cloudName,
-        folder: WEBSITE_CONTENT_FOLDER,
+        folder,
         signature,
         timestamp,
       },

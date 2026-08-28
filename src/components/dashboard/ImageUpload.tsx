@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import {
+  Camera,
   Crop,
   Image as ImageIcon,
   Loader2,
@@ -18,6 +19,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { createImageUploadSignature } from "@/lib/cloudinary/actions"
+import { cn } from "@/lib/utils"
 
 import "react-image-crop/dist/ReactCrop.css"
 
@@ -29,6 +31,10 @@ interface ImageUploadProps {
   aspect?: number
   defaultImage?: string
   disabled?: boolean
+  uploadScope?: "website-content" | "profile"
+  variant?: "default" | "profile-banner" | "profile-avatar"
+  alt?: string
+  onUploadingChange?: (isUploading: boolean) => void
 }
 
 interface CloudinaryUploadResponse {
@@ -97,8 +103,12 @@ function centerAspectCrop(
   )
 }
 
-async function uploadImageToCloudinary(file: Blob, filename: string) {
-  const signatureResult = await createImageUploadSignature()
+async function uploadImageToCloudinary(
+  file: Blob,
+  filename: string,
+  uploadScope: "website-content" | "profile",
+) {
+  const signatureResult = await createImageUploadSignature(uploadScope)
   if (!signatureResult.success) {
     throw new Error(signatureResult.message)
   }
@@ -136,6 +146,10 @@ export function ImageUpload({
   aspect,
   defaultImage,
   disabled = false,
+  uploadScope = "website-content",
+  variant = "default",
+  alt = "Preview",
+  onUploadingChange,
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -192,8 +206,13 @@ export function ImageUpload({
 
   const uploadImage = async (file: Blob, filename: string) => {
     setIsUploading(true)
+    onUploadingChange?.(true)
     try {
-      const secureUrl = await uploadImageToCloudinary(file, filename)
+      const secureUrl = await uploadImageToCloudinary(
+        file,
+        filename,
+        uploadScope,
+      )
       onChange(secureUrl)
       toast.success("Gambar berhasil diunggah.")
       resetCropModal()
@@ -206,6 +225,7 @@ export function ImageUpload({
       )
     } finally {
       setIsUploading(false)
+      onUploadingChange?.(false)
     }
   }
 
@@ -240,7 +260,7 @@ export function ImageUpload({
 
   return (
     <>
-      <div className={`w-full ${className}`}>
+      <div className={cn("w-full", className)}>
         <input
           type="file"
           accept="image/avif,image/gif,image/jpeg,image/png,image/svg+xml,image/webp"
@@ -249,13 +269,90 @@ export function ImageUpload({
           className="hidden"
         />
 
-        {displayValue ? (
+        {displayValue && variant === "profile-banner" ? (
+          <div className="group relative h-48 w-full overflow-hidden md:h-64">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={displayValue}
+              alt={alt}
+              className="size-full object-cover"
+            />
+            {!disabled ? (
+              <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 hover:text-white"
+                >
+                  {isUploading ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <Camera className="mr-2 size-4" />
+                  )}
+                  Ubah Banner
+                </Button>
+                {value ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={handleRemove}
+                    disabled={isUploading}
+                    aria-label="Hapus banner"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : displayValue && variant === "profile-avatar" ? (
+          <div className="group relative size-24 overflow-hidden rounded-full border-4 border-palembang-charcoal bg-white shadow-sm sm:size-32">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={displayValue}
+              alt={alt}
+              className="size-full object-cover"
+            />
+            {!disabled ? (
+              <div className="absolute inset-0 flex items-center justify-center gap-1 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="rounded-full p-2 text-white transition-colors hover:bg-white/20 disabled:opacity-60"
+                  aria-label="Ubah foto profil"
+                >
+                  {isUploading ? (
+                    <Loader2 className="size-6 animate-spin" />
+                  ) : (
+                    <Camera className="size-6" />
+                  )}
+                </button>
+                {value ? (
+                  <button
+                    type="button"
+                    onClick={handleRemove}
+                    disabled={isUploading}
+                    className="rounded-full p-2 text-white transition-colors hover:bg-destructive/80 disabled:opacity-60"
+                    aria-label="Hapus foto profil"
+                  >
+                    <X className="size-5" />
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : displayValue ? (
           <div className="group relative h-48 w-full overflow-hidden rounded-md border bg-muted/20">
             {/* The native image element is required by the crop canvas API. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={displayValue}
-              alt="Preview"
+              alt={alt}
               className="h-full w-full object-cover"
             />
             {!value && defaultImage ? (
@@ -295,11 +392,17 @@ export function ImageUpload({
             type="button"
             disabled={disabled || isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className={`flex h-32 w-full flex-col items-center justify-center rounded-md border-2 border-dashed text-muted-foreground transition-colors ${
+            className={cn(
+              "flex flex-col items-center justify-center border-2 border-dashed text-muted-foreground transition-colors",
+              variant === "profile-banner"
+                ? "h-48 w-full md:h-64"
+                : variant === "profile-avatar"
+                  ? "size-24 rounded-full border-4 border-palembang-charcoal bg-white sm:size-32"
+                  : "h-32 w-full rounded-md",
               disabled || isUploading
                 ? "cursor-not-allowed bg-muted/10 opacity-50"
-                : "hover:border-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
+                : "hover:border-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            )}
           >
             {isUploading ? (
               <Loader2 className="mb-2 size-8 animate-spin opacity-70" />
@@ -313,7 +416,7 @@ export function ImageUpload({
                   ? "Tidak ada gambar"
                   : placeholder}
             </span>
-            {!disabled && !isUploading ? (
+            {!disabled && !isUploading && variant === "default" ? (
               <span className="mt-1 text-xs opacity-70">
                 JPG, PNG, WEBP, AVIF, GIF, atau SVG (maks. 10 MB)
               </span>
