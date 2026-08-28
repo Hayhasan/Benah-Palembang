@@ -44,6 +44,9 @@ export interface ArticleModerationRecord extends Article {
 
 export interface EventModerationRecord extends Event {
   owner: Pick<User, "id" | "name" | "avatarUrl">
+  _count?: {
+    likes?: number
+  }
 }
 
 export function mapArticleToManagedContent(
@@ -85,6 +88,7 @@ export function mapEventToManagedContent(
 ): ManagedContentListItem {
   const status = event.status as ManagedContentStatus
   const displayDate = event.submittedAt ?? event.updatedAt
+  const baseStats = getManagedContentStatistics("EVENT", event.id)
 
   return {
     id: event.id,
@@ -105,6 +109,9 @@ export function mapEventToManagedContent(
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
     dateLabel: formatManagedDate(displayDate),
-    stats: getManagedContentStatistics("EVENT", event.id),
+    stats: {
+      ...baseStats,
+      likes: (event._count?.likes ?? 0).toString(),
+    },
   }
 }

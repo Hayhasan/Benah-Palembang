@@ -48,6 +48,11 @@ export const ownedEventListSelect = {
   bannerUrl: true,
   startsAt: true,
   status: true,
+  _count: {
+    select: {
+      likes: true,
+    },
+  },
 } satisfies Prisma.EventSelect
 
 export const ownedEventEditorSelect = {
@@ -67,6 +72,11 @@ export const ownedEventEditorSelect = {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
     select: { label: true },
+  },
+  _count: {
+    select: {
+      likes: true,
+    },
   },
 } satisfies Prisma.EventSelect
 
@@ -108,7 +118,9 @@ export function mapOwnedEventListItem(
     startsAtLabel: `${listDateFormatter.format(event.startsAt)} WIB`,
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
-    ...stats,
+    views: stats.views,
+    likes: event._count.likes,
+    participants: stats.participants,
   }
 }
 
@@ -133,5 +145,6 @@ export function mapOwnedEventEditor(
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
     tags: event.tags.map((tag) => tag.label),
+    likesCount: event._count.likes,
   }
 }

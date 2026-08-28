@@ -46,6 +46,7 @@ model User {
   ownedEvents         Event[]          @relation("EventOwner")
   articleComments     ArticleComment[] @relation("ArticleCommentUser")
   articleLikes        ArticleLike[]    @relation("ArticleLikeUser")
+  eventLikes          EventLike[]      @relation("EventLikeUser")
 
   @@index([role, deletedAt, createdAt])
   @@index([isBanned, deletedAt])
@@ -356,6 +357,7 @@ model Event {
   deletedAt       DateTime?     @db.Timestamptz(6)
   owner           User          @relation("EventOwner", fields: [ownerId], references: [id])
   tags            EventTag[]
+  likes           EventLike[]
 
   @@index([ownerId, deletedAt, updatedAt])
   @@index([status, deletedAt, startsAt])
@@ -448,4 +450,18 @@ model ArticleLike {
   @@index([userId])
   @@index([articleId])
   @@map("article_likes")
+}
+
+model EventLike {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation("EventLikeUser", fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("event_likes")
 }

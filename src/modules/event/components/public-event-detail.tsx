@@ -1,3 +1,5 @@
+"use client"
+
 import {
   ArrowRight,
   CalendarDays,
@@ -11,10 +13,16 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 
+import { Button } from "@/components/ui/button"
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
 import { SectionHeading } from "@/features/public/components/SectionHeading"
+import { useSession } from "@/modules/auth/hooks/use-session"
 
+import { toggleEventLikeAction } from "../actions/toggle-event-like"
 import { getPublicEventMockStats } from "../constants/public-event-stats"
 import type { PublicEventDetailData } from "../types/public-event"
 import { EventShareButton } from "./event-share-button"
@@ -22,6 +30,48 @@ import { EventShareButton } from "./event-share-button"
 export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
   const { event, relatedEvents } = data
   const stats = getPublicEventMockStats(event.id)
+  const router = useRouter()
+  const { user, status } = useSession()
+
+  const [liked, setLiked] = useState(event.hasLiked)
+  const [likesCount, setLikesCount] = useState(event.likesCount)
+  const [, startTransition] = useTransition()
+
+  function handleToggleLike() {
+    if (status !== "authenticated" || !user) {
+      toast.info("Silakan masuk terlebih dahulu untuk menyukai acara ini.", {
+        action: {
+          label: "Masuk",
+          onClick: () =>
+            router.push(
+              `/login?redirect=${encodeURIComponent(`/agenda/${event.id}`)}`,
+            ),
+        },
+      })
+      return
+    }
+
+    const nextLiked = !liked
+    const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1)
+    setLiked(nextLiked)
+    setLikesCount(nextCount)
+
+    startTransition(async () => {
+      const result = await toggleEventLikeAction({ eventId: event.id })
+      if (!result.success) {
+        toast.error(result.message)
+        setLiked(!nextLiked)
+        setLikesCount(likesCount)
+        return
+      }
+      if (typeof result.likesCount === "number") {
+        setLikesCount(result.likesCount)
+      }
+      if (typeof result.hasLiked === "boolean") {
+        setLiked(result.hasLiked)
+      }
+    })
+  }
 
   return (
     <>
@@ -63,8 +113,12 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
               {stats.views.toLocaleString("id-ID")} views
             </span>
             <span className="flex items-center gap-2">
-              <Heart className="size-4" />
-              {stats.likes.toLocaleString("id-ID")} likes
+              <Heart
+                className={`size-4 ${
+                  liked ? "fill-palembang-red text-palembang-red" : ""
+                }`}
+              />
+              {likesCount.toLocaleString("id-ID")} likes
             </span>
             <span className="flex items-center gap-2">
               <Users className="size-4" />
@@ -136,6 +190,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                       value={event.organizer}
                     />
                   </div>
+
                   <div className="mt-8 grid gap-3">
                     {event.registrationUrl ? (
                       <a
@@ -152,7 +207,28 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                         Informasi pendaftaran belum tersedia.
                       </div>
                     )}
-                    <EventShareButton title={event.title} />
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleToggleLike}
+                        className={`h-11 w-full font-semibold ${
+                          liked
+                            ? "border-palembang-red text-palembang-red hover:bg-red-50 hover:text-palembang-red"
+                            : "hover:border-palembang-red hover:text-palembang-red"
+                        }`}
+                      >
+                        <Heart
+                          className={`size-4 ${
+                            liked ? "fill-palembang-red text-palembang-red" : ""
+                          }`}
+                        />
+                        <span>{liked ? "Disukai" : "Suka"}</span>
+                      </Button>
+
+                      <EventShareButton title={event.title} />
+                    </div>
                   </div>
                 </div>
 

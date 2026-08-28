@@ -3,6 +3,7 @@ import "server-only"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { getCurrentUser } from "@/modules/auth/data/session-dal"
 
 import type { PublicEventDetailData } from "../types/public-event"
 import {
@@ -16,6 +17,7 @@ export async function getPublicEvent(
   id: number,
 ): Promise<PublicEventDetailData | null> {
   await connection()
+  const currentUser = await getCurrentUser()
 
   const event = await prisma.event.findFirst({
     where: {
@@ -41,7 +43,7 @@ export async function getPublicEvent(
   })
 
   return {
-    event: mapPublicEventDetail(event),
+    event: mapPublicEventDetail(event, currentUser?.id),
     relatedEvents: relatedEvents.map(mapPublicEventListItem),
   }
 }

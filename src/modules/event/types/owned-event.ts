@@ -41,6 +41,7 @@ export interface OwnedEventEditorData {
   status: ContentStatus
   statusLabel: string
   tags: string[]
+  likesCount: number
 }
 
 export type EventSaveIntent = "SAVE" | "POST"

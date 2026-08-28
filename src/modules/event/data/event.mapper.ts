@@ -50,6 +50,16 @@ export const publicEventDetailSelect = {
     orderBy: { position: "asc" },
     select: { label: true },
   },
+  likes: {
+    select: {
+      userId: true,
+    },
+  },
+  _count: {
+    select: {
+      likes: true,
+    },
+  },
 } satisfies Prisma.EventSelect
 
 type PublicEventListRecord = Prisma.EventGetPayload<{
@@ -98,11 +108,18 @@ export function mapPublicEventListItem(
 
 export function mapPublicEventDetail(
   event: PublicEventDetailRecord,
+  currentUserId?: string | null,
 ): PublicEventDetail {
+  const hasLiked = Boolean(
+    currentUserId && event.likes.some((like) => like.userId === currentUserId),
+  )
+
   return {
     ...mapPublicEventListItem(event),
     content: event.content,
     registrationUrl: event.registrationUrl,
     tags: event.tags.map((tag) => tag.label),
+    likesCount: event._count.likes,
+    hasLiked,
   }
 }

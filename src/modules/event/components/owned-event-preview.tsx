@@ -77,8 +77,8 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
                 {stats.views.toLocaleString("id-ID")} views
               </span>
               <span className="flex items-center gap-2">
-                <Heart className="size-4" />
-                {stats.likes.toLocaleString("id-ID")} likes
+                <Heart className="size-4 text-palembang-red" />
+                {event.likesCount.toLocaleString("id-ID")} likes
               </span>
               <span className="flex items-center gap-2">
                 <Users className="size-4" />

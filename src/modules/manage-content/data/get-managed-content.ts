@@ -99,6 +99,11 @@ export async function getManagedContent(input: {
             owner: {
               select: { id: true, name: true, avatarUrl: true },
             },
+            _count: {
+              select: {
+                likes: true,
+              },
+            },
           },
         }),
   ])

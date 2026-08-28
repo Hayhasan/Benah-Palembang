@@ -463,18 +463,19 @@ tetap tipis dan tidak mengakses Prisma langsung.
   browser sementara berformat `blob:`.
 - Statistik views, likes, dan participants tetap memakai mock deterministic.
 
-## 12. Kriteria selesai
+## 13. Sistem Like Event
 
-- Event mempunyai schema dan migration valid.
-- `seed:event` tersedia, random owner menggunakan User role `USER`, dan aman
-  dijalankan ulang.
-- `/agenda` dan `/agenda/[id]` membaca database.
-- Public route hanya menampilkan Event published.
-- Dashboard hanya membaca dan mengubah Event milik current user.
-- Archive owner memakai soft delete dan hanya tersedia untuk Event published.
-- Post owner mengubah Event draft menjadi pending review, bukan published.
-- POV owner tidak menyediakan Takedown atau Restore.
-- Status moderation tersimpan untuk integrasi Manage Content.
-- Views, likes, dan participants tetap hardcoded di UI.
-- Event tidak mempunyai comments.
-- Tidak ada permission system atau hardcoded role access baru pada tahap ini.
+Event like diimplementasikan menggunakan table relasional `EventLike`:
+
+- **Model Prisma:** `EventLike` dengan relasi ke `Event` dan `User`, serta constraint `@@unique([eventId, userId])`.
+- **Server Action:** `toggleEventLikeAction({ eventId })` yang memvalidasi session user dan melakukan toggle insert/delete row like.
+- **Halaman Publik (`/agenda/[id]`):**
+  - Tombol like ditempatkan di dalam card *Detail Acara* (berdampingan dengan tombol *Bagikan Acara*).
+  - Hanya dapat di-like oleh user authenticated.
+  - User guest/unauthenticated akan menerima notifikasi toast ramah untuk login ke `/login?redirect=/agenda/[id]`.
+  - State optimis interaktif: icon hati merah menyala saat aktif, teks tombol menyesuaikan (`Disukai` / `Suka`), dan jumlah like pada hero header ter-update instan.
+- **Dashboard Synchronization:**
+  - `/dashboard/content` menampilkan jumlah like riil database pada kolom statistik tipe Event.
+  - `/dashboard/content/[id]/event` menampilkan jumlah like riil pada metadata hero event.
+  - `/dashboard/create-event` menampilkan jumlah like riil pada tabel event milik author.
+  - `/dashboard/create-event/preview/[id]` menampilkan jumlah like riil pada metadata preview owner.
