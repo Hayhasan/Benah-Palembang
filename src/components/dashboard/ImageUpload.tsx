@@ -18,7 +18,11 @@ import ReactCrop, {
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { createImageUploadSignature } from "@/lib/cloudinary/actions"
+import {
+  type ImageUploadScope,
+  uploadImageToCloudinary,
+  validateImageUpload,
+} from "@/lib/cloudinary/upload-image"
 import { cn } from "@/lib/utils"
 
 import "react-image-crop/dist/ReactCrop.css"
@@ -31,28 +35,11 @@ interface ImageUploadProps {
   aspect?: number
   defaultImage?: string
   disabled?: boolean
-  uploadScope?: "website-content" | "profile"
+  uploadScope?: ImageUploadScope
   variant?: "default" | "profile-banner" | "profile-avatar"
   alt?: string
   onUploadingChange?: (isUploading: boolean) => void
 }
-
-interface CloudinaryUploadResponse {
-  secure_url?: string
-  error?: {
-    message?: string
-  }
-}
-
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/avif",
-  "image/gif",
-  "image/jpeg",
-  "image/png",
-  "image/svg+xml",
-  "image/webp",
-])
 
 function getCroppedImage(image: HTMLImageElement, crop: PixelCrop) {
   const canvas = document.createElement("canvas")
@@ -103,41 +90,6 @@ function centerAspectCrop(
   )
 }
 
-async function uploadImageToCloudinary(
-  file: Blob,
-  filename: string,
-  uploadScope: "website-content" | "profile",
-) {
-  const signatureResult = await createImageUploadSignature(uploadScope)
-  if (!signatureResult.success) {
-    throw new Error(signatureResult.message)
-  }
-
-  const { apiKey, cloudName, folder, signature, timestamp } =
-    signatureResult.data
-  const formData = new FormData()
-  formData.append("file", file, filename)
-  formData.append("api_key", apiKey)
-  formData.append("folder", folder)
-  formData.append("signature", signature)
-  formData.append("timestamp", String(timestamp))
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  )
-  const result = (await response.json()) as CloudinaryUploadResponse
-
-  if (!response.ok || !result.secure_url) {
-    throw new Error(result.error?.message ?? "Upload gambar ke Cloudinary gagal.")
-  }
-
-  return result.secure_url
-}
-
 export function ImageUpload({
   value,
   onChange,
@@ -181,10 +133,9 @@ export function ImageUpload({
 
     const file = event.target.files?.[0]
     if (file) {
-      if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-        toast.error("Format gambar harus JPG, PNG, WEBP, AVIF, GIF, atau SVG.")
-      } else if (file.size > MAX_IMAGE_SIZE) {
-        toast.error("Ukuran gambar maksimal 10 MB.")
+      const validationMessage = validateImageUpload(file)
+      if (validationMessage) {
+        toast.error(validationMessage)
       } else {
         const url = URL.createObjectURL(file)
         setSelectedFile(file)

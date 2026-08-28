@@ -1,10 +1,5 @@
-import { Suspense } from "react"
-import { CreateEventEditor } from "@/features/dashboard/CreateEventEditor"
+import { EventEditor } from "@/modules/event/components/event-editor"
 
 export default function Page() {
-  return (
-    <Suspense>
-      <CreateEventEditor />
-    </Suspense>
-  )
+  return <EventEditor />
 }

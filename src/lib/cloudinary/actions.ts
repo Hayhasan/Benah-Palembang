@@ -5,8 +5,9 @@ import { z } from "zod"
 import { getCloudinary } from "./cloudinary"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
-const uploadScopeSchema = z.enum(["website-content", "profile"])
+const uploadScopeSchema = z.enum(["event", "website-content", "profile"])
 const UPLOAD_FOLDERS = {
+  event: "benah-palembang/events",
   "website-content": "benah-palembang/website-content",
   profile: "benah-palembang/profiles",
 } as const

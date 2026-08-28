@@ -89,6 +89,17 @@ TAKEN_DOWN -> PUBLISHED
 Owner tidak mempublikasikan langsung ke halaman publik. Tombol publikasi pada
 editor secara domain berarti mengajukan Event menjadi `PENDING_REVIEW`.
 
+Pada halaman owner, aksi status yang tersedia sengaja lebih sempit:
+
+- Event `DRAFT` mempunyai tombol **Post** untuk berpindah ke
+  `PENDING_REVIEW`.
+- Event `PUBLISHED` mempunyai tombol **Archive** untuk menjalankan soft delete.
+- Event `PENDING_REVIEW`, `REJECTED`, dan `TAKEN_DOWN` tidak mempunyai tombol
+  perubahan status.
+- Tombol **Takedown** dan **Restore** tidak tersedia pada POV owner. Kedua aksi
+  tersebut merupakan bagian flow moderasi Manage Content yang dikerjakan
+  terpisah.
+
 ## 4. Database
 
 Schema yang sudah diimplementasikan:
@@ -163,7 +174,8 @@ menghubungkan Event dengan account pembuatnya.
 
 ## 5. Soft delete
 
-Delete dari halaman owner selalu soft delete.
+Archive dari halaman owner selalu menggunakan soft delete dan hanya dapat
+dijalankan untuk Event `PUBLISHED`.
 
 Dalam satu transaction:
 
@@ -173,8 +185,9 @@ Dalam satu transaction:
 - Isi `deletedAt` Event.
 - Isi `deletedAt` seluruh EventTag aktif.
 
-Takedown bukan delete. Takedown hanya mengubah status menjadi `TAKEN_DOWN` dan
-record tetap dapat dipulihkan.
+Takedown bukan archive atau delete. Takedown hanya mengubah status menjadi
+`TAKEN_DOWN`, record tetap aktif, dan aksi tersebut tidak tersedia pada halaman
+owner.
 
 ## 6. Sumber mock canonical
 
@@ -301,14 +314,42 @@ Input editor:
 - Category.
 - Tags.
 
-Server Action yang direncanakan:
+Server Action yang diimplementasikan:
 
 ```text
-createEventDraftAction
-updateEventAction
-submitEventForReviewAction
-softDeleteEventAction
+saveEventAction
+postEventAction
+archiveEventAction
 ```
+
+`saveEventAction` menangani create dan update aggregate Event. Intent `SAVE`
+mempertahankan status saat ini, sedangkan intent `POST` hanya valid untuk Event
+baru atau Event `DRAFT` dan menyimpan status `PENDING_REVIEW`.
+
+### Preview Event
+
+Route `/dashboard/create-event/preview/[id]` hanya membaca Event aktif milik
+current user. Preview dapat digunakan untuk seluruh status dan menampilkan
+konten tersimpan menggunakan tampilan detail Event tanpa mengekspos draft ke
+route publik.
+
+Tombol Preview pada editor menyimpan perubahan terlebih dahulu. Dengan demikian,
+Event baru memperoleh ID dan halaman preview selalu membaca data terbaru dari
+database.
+
+### Aksi status owner
+
+| Status | Aksi status | Hasil |
+| --- | --- | --- |
+| `DRAFT` | Post | Status menjadi `PENDING_REVIEW` |
+| `PUBLISHED` | Archive | Event dan EventTag di-soft-delete |
+| `PENDING_REVIEW` | Tidak ada | Menunggu flow moderasi |
+| `REJECTED` | Tidak ada | Tidak ada transisi owner pada tahap awal |
+| `TAKEN_DOWN` | Tidak ada | Ditangani flow moderasi terpisah |
+
+Tombol Save, Preview, View, dan Edit merupakan aksi pengelolaan konten, bukan
+aksi status. Tidak ada tombol Takedown atau Restore pada list, editor, maupun
+preview owner.
 
 Semua mutation:
 
@@ -324,29 +365,31 @@ Semua mutation:
 ```text
 src/modules/event/
   actions/
-    create-event-draft.ts
-    soft-delete-event.ts
-    submit-event-for-review.ts
-    update-event.ts
+    archive-event.ts
+    post-event.ts
+    revalidate-event-routes.ts
+    save-event.ts
   components/
     event-editor.tsx
-    event-list.tsx
-    event-preview.tsx
+    owned-event-list.tsx
+    owned-event-preview.tsx
     public-event-detail.tsx
     public-event-list.tsx
   constants/
     default-events.ts
   data/
     event.mapper.ts
-    get-event-editor.ts
     get-owned-event.ts
     get-owned-events.ts
     get-public-event.ts
     get-public-events.ts
+    owned-event.mapper.ts
+    sanitize-event-content.ts
   schemas/
     event.schema.ts
   types/
     event.ts
+    owned-event.ts
 ```
 
 Nama file dapat disesuaikan berdasarkan use case nyata. Route di `src/app`
@@ -360,12 +403,13 @@ tetap tipis dan tidak mengakses Prisma langsung.
 - [x] Jalankan seeder dua kali untuk memverifikasi create lalu skip.
 - [x] Implementasikan query dan halaman publik `/agenda`.
 - [x] Implementasikan detail publik `/agenda/[id]`.
-- [ ] Implementasikan list Event milik current user.
-- [ ] Implementasikan editor dan Server Action ownership.
-- [ ] Pindahkan komponen Event yang sudah terhubung backend dari `src/features`
+- [x] Implementasikan list Event milik current user.
+- [x] Implementasikan create, edit, preview, dan Server Action ownership.
+- [x] Implementasikan aksi owner `Post` dan `Archive` sesuai status.
+- [x] Pindahkan komponen Event yang sudah terhubung backend dari `src/features`
   ke `src/modules/event`.
-- [ ] Hapus dependency Event terhadap mock lama yang sudah digantikan.
-- [ ] Jalankan validasi frontend, build, dan smoke check setelah integrasi route.
+- [x] Hapus dependency Event terhadap mock lama yang sudah digantikan.
+- [x] Jalankan validasi frontend, build, dan smoke check setelah integrasi route.
 
 ### Status schema dan seeding
 
@@ -394,6 +438,31 @@ tetap tipis dan tidak mengakses Prisma langsung.
   tidak ada interaction table dan tidak ada comments Event.
 - Public Agenda sudah tidak membaca `agendaItems` dari `src/data/mockData.ts`.
 
+### Status dashboard owner
+
+- `/dashboard/create-event` membaca maksimal 25 Event aktif milik current user
+  per halaman, dengan search title dan description melalui URL.
+- `/dashboard/create-event/new` membuat Event baru sebagai `DRAFT` atau langsung
+  mengajukannya sebagai `PENDING_REVIEW` melalui tombol Post.
+- `/dashboard/create-event/edit?id=<id>` hanya membuka Event aktif yang dimiliki
+  current user dan menghasilkan `notFound()` untuk target invalid atau bukan
+  milik actor.
+- `/dashboard/create-event/preview/[id]` menyediakan preview owner untuk seluruh
+  status tanpa mengubah visibility route publik.
+- Update Event dan replacement EventTag dijalankan dalam transaction. Rich HTML
+  disanitasi pada server sebelum disimpan.
+- Event `DRAFT` menampilkan aksi Post, Event `PUBLISHED` menampilkan aksi
+  Archive, dan status lain tidak menampilkan aksi status.
+- Archive melepaskan slug canonical, menyimpan `originalSlug`, serta melakukan
+  soft delete pada Event dan seluruh EventTag aktif dalam satu transaction.
+- Tidak ada tombol Takedown atau Restore pada POV owner.
+- Upload banner Event menggunakan signed upload Cloudinary ke folder
+  `benah-palembang/events`.
+- Gambar yang ditambahkan melalui rich-text editor di-upload ke Cloudinary
+  terlebih dahulu. HTML hanya menyimpan URL HTTPS hasil upload, bukan URL
+  browser sementara berformat `blob:`.
+- Statistik views, likes, dan participants tetap memakai mock deterministic.
+
 ## 12. Kriteria selesai
 
 - Event mempunyai schema dan migration valid.
@@ -402,7 +471,9 @@ tetap tipis dan tidak mengakses Prisma langsung.
 - `/agenda` dan `/agenda/[id]` membaca database.
 - Public route hanya menampilkan Event published.
 - Dashboard hanya membaca dan mengubah Event milik current user.
-- Delete memakai soft delete.
+- Archive owner memakai soft delete dan hanya tersedia untuk Event published.
+- Post owner mengubah Event draft menjadi pending review, bukan published.
+- POV owner tidak menyediakan Takedown atau Restore.
 - Status moderation tersimpan untuk integrasi Manage Content.
 - Views, likes, dan participants tetap hardcoded di UI.
 - Event tidak mempunyai comments.
