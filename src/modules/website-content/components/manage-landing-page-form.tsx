@@ -33,8 +33,10 @@ import {
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
 import { updateCollaborationPageAction } from "../actions/update-collaboration-page"
+import { updateHeaderFooterContentAction } from "../actions/update-header-footer-content"
 import { updateLandingPageAction } from "../actions/update-landing-page"
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
+import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
 import type {
   LandingArticleSectionEditorData,
   LandingExploreItemEditorData,
@@ -42,15 +44,12 @@ import type {
   LandingPageEditorData,
   LandingTeamMemberEditorData,
 } from "../types/landing-page-editor"
-import {
-  AgendaSettings,
-  ArticleSettings,
-  HeaderFooterSettings,
-} from "./website-editor-secondary-tabs"
+import { AgendaSettings, ArticleSettings } from "./website-editor-secondary-tabs"
 import { ManageCollaborationSettings } from "./manage-collaboration-settings"
+import { ManageHeaderFooterSettings } from "./manage-header-footer-settings"
 
 const tabs = ["Home", "Article", "Agenda", "Collaboration", "Header & Footer"]
-type EditableModule = "Home" | "Collaboration"
+type EditableModule = "Home" | "Collaboration" | "Header & Footer"
 const articleSectionNames = [
   "Cerita Palembang",
   "Gaya Hidup",
@@ -154,18 +153,24 @@ function clientKey(prefix: string) {
 export function ManageLandingPageForm({
   initialData,
   initialCollaborationData,
+  initialHeaderFooterData,
 }: {
   initialData: LandingPageEditorData
   initialCollaborationData: CollaborationPageEditorData
+  initialHeaderFooterData: HeaderFooterContentEditorData
 }) {
   const [activeTab, setActiveTab] = useState(tabs[0])
   const [data, setData] = useState(initialData)
   const [collaborationData, setCollaborationData] = useState(
     initialCollaborationData,
   )
+  const [headerFooterData, setHeaderFooterData] = useState(
+    initialHeaderFooterData,
+  )
   const [isPending, startTransition] = useTransition()
   const dataRef = useRef(data)
   const collaborationDataRef = useRef(collaborationData)
+  const headerFooterDataRef = useRef(headerFooterData)
   const activeTabRef = useRef(activeTab)
   const dirtyModulesRef = useRef<Set<EditableModule>>(new Set())
   const { setIsDirty, registerSaveHandler } = useUnsavedChanges()
@@ -177,6 +182,10 @@ export function ManageLandingPageForm({
   useEffect(() => {
     collaborationDataRef.current = collaborationData
   }, [collaborationData])
+
+  useEffect(() => {
+    headerFooterDataRef.current = headerFooterData
+  }, [headerFooterData])
 
   useEffect(() => {
     activeTabRef.current = activeTab
@@ -212,6 +221,20 @@ export function ManageLandingPageForm({
       collaborationDataRef.current = next
       setCollaborationData(next)
       markDirty("Collaboration")
+    },
+    [markDirty],
+  )
+
+  const changeHeaderFooterData = useCallback(
+    (
+      updater: (
+        current: HeaderFooterContentEditorData,
+      ) => HeaderFooterContentEditorData,
+    ) => {
+      const next = updater(headerFooterDataRef.current)
+      headerFooterDataRef.current = next
+      setHeaderFooterData(next)
+      markDirty("Header & Footer")
     },
     [markDirty],
   )
@@ -256,6 +279,22 @@ export function ManageLandingPageForm({
                 setCollaborationData(result.data)
                 collaborationDataRef.current = result.data
                 dirtyModulesRef.current.delete("Collaboration")
+                successMessages.push(result.message)
+              } else {
+                const field = result.field ? ` (${result.field})` : ""
+                toast.error(`${result.message}${field}`)
+                allSucceeded = false
+              }
+            }
+
+            if (dirtyModules.includes("Header & Footer")) {
+              const result = await updateHeaderFooterContentAction(
+                headerFooterDataRef.current,
+              )
+              if (result.success) {
+                setHeaderFooterData(result.data)
+                headerFooterDataRef.current = result.data
+                dirtyModulesRef.current.delete("Header & Footer")
                 successMessages.push(result.message)
               } else {
                 const field = result.field ? ` (${result.field})` : ""
@@ -1195,7 +1234,12 @@ export function ManageLandingPageForm({
             onChange={changeCollaborationData}
           />
         ) : null}
-        {activeTab === "Header & Footer" ? <HeaderFooterSettings /> : null}
+        {activeTab === "Header & Footer" ? (
+          <ManageHeaderFooterSettings
+            data={headerFooterData}
+            onChange={changeHeaderFooterData}
+          />
+        ) : null}
       </div>
     </div>
   )

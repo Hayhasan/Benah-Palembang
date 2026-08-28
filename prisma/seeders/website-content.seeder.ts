@@ -5,6 +5,7 @@ import type {
 } from "@prisma/client"
 
 import { DEFAULT_COLLABORATION_PAGE } from "../../src/modules/website-content/constants/default-collaboration-page"
+import { DEFAULT_HEADER_FOOTER_CONTENT } from "../../src/modules/website-content/constants/default-header-footer-content"
 import { DEFAULT_LANDING_PAGE } from "../../src/modules/website-content/constants/default-landing-page"
 import type {
   CollaborationAspectRatio,
@@ -143,7 +144,58 @@ async function seedCollaborationPage(prisma: PrismaClient) {
   console.log("[website-content:collaboration] created")
 }
 
+async function seedHeaderFooterContent(prisma: PrismaClient) {
+  const existing = await prisma.websiteHeaderFooterContent.findUnique({
+    where: { key: DEFAULT_HEADER_FOOTER_CONTENT.key },
+    select: { deletedAt: true },
+  })
+
+  if (existing?.deletedAt === null) {
+    console.log(
+      "[website-content:header-footer] skipped: canonical content already exists",
+    )
+    return
+  }
+
+  if (existing) {
+    throw new Error(
+      "[website-content:header-footer] canonical key is still occupied by a soft-deleted record",
+    )
+  }
+
+  console.log("[website-content:header-footer] creating default content")
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.websiteHeaderFooterContent.create({
+      data: {
+        key: DEFAULT_HEADER_FOOTER_CONTENT.key,
+        logoImageUrl: DEFAULT_HEADER_FOOTER_CONTENT.logo.imageUrl,
+        logoImageAlt: DEFAULT_HEADER_FOOTER_CONTENT.logo.imageAlt,
+        logoLinkUrl: DEFAULT_HEADER_FOOTER_CONTENT.logo.linkUrl,
+        footerDescription:
+          DEFAULT_HEADER_FOOTER_CONTENT.footer.description,
+        exploreDescription:
+          DEFAULT_HEADER_FOOTER_CONTENT.footer.exploreDescription,
+        contactEmail: DEFAULT_HEADER_FOOTER_CONTENT.footer.contactEmail,
+        contactPhone: DEFAULT_HEADER_FOOTER_CONTENT.footer.contactPhone,
+        contactAddress: DEFAULT_HEADER_FOOTER_CONTENT.footer.contactAddress,
+        copyrightText: DEFAULT_HEADER_FOOTER_CONTENT.footer.copyrightText,
+        closingText: DEFAULT_HEADER_FOOTER_CONTENT.footer.closingText,
+        footerExploreLinks: {
+          create: DEFAULT_HEADER_FOOTER_CONTENT.footer.exploreLinks,
+        },
+        footerConnectLinks: {
+          create: DEFAULT_HEADER_FOOTER_CONTENT.footer.connectLinks,
+        },
+      },
+    })
+  })
+
+  console.log("[website-content:header-footer] created")
+}
+
 export async function seedWebsiteContent(prisma: PrismaClient) {
   await seedLandingPage(prisma)
   await seedCollaborationPage(prisma)
+  await seedHeaderFooterContent(prisma)
 }

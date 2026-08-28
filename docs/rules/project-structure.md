@@ -96,24 +96,31 @@ Struktur awal yang disarankan:
 src/modules/website-content/
   actions/
     update-collaboration-page.ts
+    update-header-footer-content.ts
     update-landing-page.ts
   components/
     collaboration-page.tsx
+    header-footer-content-provider.tsx
     landing-page.tsx
     manage-collaboration-settings.tsx
+    manage-header-footer-settings.tsx
     manage-landing-page-form.tsx
   constants/
     default-collaboration-page.ts
+    default-header-footer-content.ts
     default-landing-page.ts
   data/
     get-collaboration-page.ts
+    get-header-footer-content.ts
     get-landing-page.ts
     website-content.mapper.ts
   schemas/
     collaboration-page.schema.ts
+    header-footer-content.schema.ts
     landing-page.schema.ts
   types/
     collaboration-page.ts
+    header-footer-content.ts
     landing-page.ts
 ```
 
@@ -179,6 +186,11 @@ Satu module boleh memiliki beberapa table selama masih berada dalam satu domain.
 - Jika root `collaboration` belum ada, route `/kolaborasi` menggunakan
   `default-collaboration-page.ts` sebagai fallback dengan aturan error yang sama
   seperti landing page.
+- Header dan footer global memakai root `header-footer`. Public layout membaca
+  root tersebut di server lalu membagikan DTO melalui provider client kepada
+  Header dan Footer tanpa browser fetch.
+- Jika root `header-footer` belum ada, public layout menggunakan
+  `default-header-footer-content.ts` sebagai fallback.
 - Artikel yang tampil pada landing page tetap menjadi tanggung jawab module
   `article`. Relasi pin artikel dibuat setelah model Article tersedia; jangan
   menyimpan judul artikel sebagai pengganti foreign key permanen.

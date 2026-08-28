@@ -208,3 +208,59 @@ model WebsiteCollaborationPartnerContent {
   @@index([collaborationContentId, deletedAt, position])
   @@map("website_collaboration_partner_contents")
 }
+
+model WebsiteHeaderFooterContent {
+  id                 Int                        @id @default(autoincrement())
+  key                String                     @unique @db.VarChar(100)
+  originalKey        String?                    @db.VarChar(100)
+  logoImageUrl       String                     @db.Text
+  logoImageAlt       String                     @db.VarChar(255)
+  logoLinkUrl        String                     @db.Text
+  footerDescription  String                     @db.Text
+  exploreDescription String                     @db.Text
+  contactEmail       String                     @db.VarChar(255)
+  contactPhone       String                     @db.VarChar(50)
+  contactAddress     String                     @db.VarChar(255)
+  copyrightText      String                     @db.VarChar(255)
+  closingText        String                     @db.VarChar(255)
+  createdAt          DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime                   @updatedAt @db.Timestamptz(6)
+  deletedAt          DateTime?                  @db.Timestamptz(6)
+  footerExploreLinks WebsiteFooterExploreLink[]
+  footerConnectLinks WebsiteFooterConnectLink[]
+
+  @@index([deletedAt])
+  @@map("website_header_footer_contents")
+}
+
+model WebsiteFooterExploreLink {
+  id                    Int                        @id @default(autoincrement())
+  headerFooterContentId Int
+  label                 String                     @db.VarChar(160)
+  linkUrl               String                     @db.Text
+  position              Int
+  isVisible             Boolean                    @default(true)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime                   @updatedAt @db.Timestamptz(6)
+  deletedAt             DateTime?                  @db.Timestamptz(6)
+  headerFooterContent   WebsiteHeaderFooterContent @relation(fields: [headerFooterContentId], references: [id])
+
+  @@index([headerFooterContentId, deletedAt, position])
+  @@map("website_footer_explore_links")
+}
+
+model WebsiteFooterConnectLink {
+  id                    Int                        @id @default(autoincrement())
+  headerFooterContentId Int
+  label                 String                     @db.VarChar(160)
+  linkUrl               String                     @db.Text
+  position              Int
+  isVisible             Boolean                    @default(true)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime                   @updatedAt @db.Timestamptz(6)
+  deletedAt             DateTime?                  @db.Timestamptz(6)
+  headerFooterContent   WebsiteHeaderFooterContent @relation(fields: [headerFooterContentId], references: [id])
+
+  @@index([headerFooterContentId, deletedAt, position])
+  @@map("website_footer_connect_links")
+}

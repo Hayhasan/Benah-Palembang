@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/liquid-glass-button'
 import React, { useState, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useHeaderFooterContent } from '@/modules/website-content/components/header-footer-content-provider'
 
 const categories = [
     { name: 'Cerita Warga', href: '/cerita-warga' },
@@ -17,6 +18,7 @@ const categories = [
 ]
 
 export const Header = () => {
+    const { logo } = useHeaderFooterContent()
     const { user, logout } = useAuth()
     const [profileOpen, setProfileOpen] = useState(false)
     const [menuState, setMenuState] = useState(false)
@@ -60,10 +62,10 @@ export const Header = () => {
                     <div className="relative flex flex-wrap items-center justify-between gap-6 lg:gap-0 py-2">
                         <div className="flex w-full justify-between lg:w-auto">
                             <Link
-                                href="/"
+                                href={logo.linkUrl}
                                 aria-label="home"
                                 className="flex gap-2 items-center">
-                                <img src="/logo.png" alt="Benah Palembang" className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
+                                <img src={logo.imageUrl} alt={logo.imageAlt} className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
                             </Link>
 
                             <button
