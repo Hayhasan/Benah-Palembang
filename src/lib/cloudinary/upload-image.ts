@@ -1,6 +1,10 @@
 import { createImageUploadSignature } from "./actions"
 
-export type ImageUploadScope = "event" | "website-content" | "profile"
+export type ImageUploadScope =
+  | "article"
+  | "event"
+  | "website-content"
+  | "profile"
 
 interface CloudinaryUploadResponse {
   secure_url?: string

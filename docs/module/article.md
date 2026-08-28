@@ -402,8 +402,8 @@ Query category option dapat menggunakan query publik yang diekspos module
 - [x] Integrasikan Article database ke landing page.
 - [x] Integrasikan Article database ke `/<categorySlug>`.
 - [x] Implementasikan detail `/artikel/[slug]` dengan `notFound()`.
-- [ ] Implementasikan list Article milik current user.
-- [ ] Implementasikan editor dan Server Action ownership.
+- [x] Implementasikan list Article milik current user.
+- [x] Implementasikan editor dan Server Action ownership.
 - [x] Pindahkan komponen Article yang sudah terhubung backend ke module Article.
 - [x] Hapus dependency Article publik terhadap mock lama yang sudah digantikan.
 - [x] Jalankan validasi frontend, build, dan smoke check setelah integrasi
@@ -443,6 +443,34 @@ Query category option dapat menggunakan query publik yang diekspos module
   belum mempunyai table database.
 - Komponen card serta detail publik berada di `src/modules/article/components`;
   public Article tidak lagi mengimpor dataset `src/data/mockData.ts`.
+
+### Status dashboard author
+
+- `/dashboard/create-article` membaca maksimal 25 Article aktif milik current user
+  per halaman, dengan search title dan excerpt melalui URL.
+- `/dashboard/create-article/new` membuat Article baru sebagai `DRAFT` atau langsung
+  mengajukannya sebagai `PENDING_REVIEW` melalui tombol Post. Pilihan kategori
+  diambil dari row aktif `WebsiteArticleSection`.
+- `/dashboard/create-article/edit?id=<id>` hanya membuka Article aktif yang dimiliki
+  current user dan menghasilkan `notFound()` untuk target invalid atau bukan
+  milik actor.
+- `/dashboard/create-article/preview/[id]` menyediakan preview author untuk seluruh
+  status tanpa mengubah visibility route publik.
+- Update Article dan replacement ArticleTag dijalankan dalam transaction. Rich HTML
+  disanitasi pada server sebelum disimpan, dan `readingTime` dihitung otomatis
+  berdasarkan kata konten.
+- Article `DRAFT` menampilkan aksi Post, Article `PUBLISHED` menampilkan aksi
+  Archive, dan status lain tidak menampilkan aksi status.
+- Archive melepaskan slug canonical (`<originalSlug>-deleted-<YYYYMMDDHHmmss>-<id>`),
+  menyimpan `originalSlug`, serta melakukan soft delete pada Article dan seluruh
+  ArticleTag aktif dalam satu transaction.
+- Tidak ada tombol Takedown atau Restore pada POV author.
+- Upload banner Article menggunakan signed upload Cloudinary ke folder
+  `benah-palembang/articles`.
+- Gambar yang ditambahkan melalui rich-text editor di-upload ke Cloudinary
+  terlebih dahulu dengan scope `article`.
+- Statistik views, likes, dan comments tetap memakai mock deterministic tanpa
+  interaction table dan tanpa participants.
 
 ## 13. Kriteria selesai
 

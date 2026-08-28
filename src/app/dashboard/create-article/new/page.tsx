@@ -1,10 +1,8 @@
-import { Suspense } from "react"
-import { CreateArticleEditor } from "@/features/dashboard/CreateArticleEditor"
+import { ArticleEditor } from "@/modules/article/components/article-editor"
+import { getArticleCategoryOptions } from "@/modules/article/data/get-article-category-options"
 
-export default function Page() {
-  return (
-    <Suspense>
-      <CreateArticleEditor />
-    </Suspense>
-  )
+export default async function Page() {
+  const categories = await getArticleCategoryOptions()
+
+  return <ArticleEditor categories={categories} />
 }
