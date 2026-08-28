@@ -15,7 +15,8 @@
     "seed:account-manage": "tsx prisma/seed.ts account-manage",
     "seed:article": "tsx prisma/seed.ts article",
     "seed:event": "tsx prisma/seed.ts event",
-    "seed:website-content": "tsx prisma/seed.ts website-content"
+    "seed:website-content": "tsx prisma/seed.ts website-content",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
