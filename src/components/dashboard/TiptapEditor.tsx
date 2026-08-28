@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
+import type { Editor } from '@tiptap/core'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
@@ -16,10 +17,16 @@ import {
     Heading1, Heading2, Heading3, Type, Indent as IndentIcon, Outdent as OutdentIcon,
     List, ListOrdered, Quote, Undo, Redo, Link as LinkIcon, Image as ImageIcon,
     AlignLeft, AlignCenter, AlignRight, AlignJustify, Video as VideoIcon,
-    Table as TableIcon, Trash2, Plus, Minus
+    Table as TableIcon, Trash2, Plus, Minus, Loader2
 } from 'lucide-react'
+import { toast } from "sonner"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  type ImageUploadScope,
+  uploadImageToCloudinary,
+  validateImageUpload,
+} from "@/lib/cloudinary/upload-image"
 import {
   Dialog,
   DialogContent,
@@ -29,22 +36,62 @@ import {
 } from "@/components/ui/dialog"
 import { ResizableMedia, Indent } from './TiptapExtensions'
 
-const MenuBar = ({ editor }: { editor: any }) => {
+const MenuBar = ({
+  editor,
+  imageUploadScope,
+  onUploadingChange,
+}: {
+  editor: Editor
+  imageUploadScope?: ImageUploadScope
+  onUploadingChange?: (isUploading: boolean) => void
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [linkModalOpen, setLinkModalOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   if (!editor) return null
 
   const addImage = () => fileInputRef.current?.click()
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (!file) return
+
+    const validationMessage = validateImageUpload(file)
+    if (validationMessage) {
+      toast.error(validationMessage)
+      return
+    }
+
+    if (!imageUploadScope) {
       const url = URL.createObjectURL(file)
       editor.chain().focus().insertContent({ type: 'resizableMedia', attrs: { src: url, mediaType: 'image' } }).run()
+      return
     }
-    if (fileInputRef.current) fileInputRef.current.value = ""
+
+    setIsUploadingImage(true)
+    onUploadingChange?.(true)
+    try {
+      const url = await uploadImageToCloudinary(
+        file,
+        file.name,
+        imageUploadScope,
+      )
+      editor.chain().focus().insertContent({ type: 'resizableMedia', attrs: { src: url, mediaType: 'image' } }).run()
+      toast.success("Gambar berhasil diunggah dan ditambahkan ke konten.")
+    } catch (error) {
+      console.error("Rich text image upload failed:", error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Upload gambar ke Cloudinary gagal.",
+      )
+    } finally {
+      setIsUploadingImage(false)
+      onUploadingChange?.(false)
+    }
   }
 
   const addVideo = () => videoInputRef.current?.click()
@@ -116,7 +163,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
 
             {/* Media & Embeds */}
             <Button type="button" variant="ghost" size="icon" onClick={openLinkModal} className={editor.isActive('link') ? 'bg-muted' : ''}><LinkIcon className="size-4" /></Button>
-            <Button type="button" variant="ghost" size="icon" onClick={addImage}><ImageIcon className="size-4" /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={addImage} disabled={isUploadingImage} aria-label={isUploadingImage ? "Mengunggah gambar" : "Tambahkan gambar"}>{isUploadingImage ? <Loader2 className="size-4 animate-spin" /> : <ImageIcon className="size-4" />}</Button>
             <Button type="button" variant="ghost" size="icon" onClick={addVideo}><VideoIcon className="size-4" /></Button>
             <Button type="button" variant="ghost" size="icon" onClick={addTable}><TableIcon className="size-4" /></Button>
 
@@ -146,7 +193,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
   )
 }
 
-export const TiptapEditor = ({ content, onChange, editable = true }: { content: string, onChange?: (content: string) => void, editable?: boolean }) => {
+export const TiptapEditor = ({ content, onChange, editable = true, imageUploadScope, onUploadingChange }: { content: string, onChange?: (content: string) => void, editable?: boolean, imageUploadScope?: ImageUploadScope, onUploadingChange?: (isUploading: boolean) => void }) => {
   const editor = useEditor({
     editable,
     immediatelyRender: false,
@@ -189,9 +236,9 @@ export const TiptapEditor = ({ content, onChange, editable = true }: { content: 
 
   return (
     <div className={`border rounded-md overflow-hidden bg-background ${!editable ? 'bg-muted/5' : ''}`}>
-      {editable && <MenuBar editor={editor} />}
+      {editable && editor && <MenuBar editor={editor} imageUploadScope={imageUploadScope} onUploadingChange={onUploadingChange} />}
       {editable && editor && (
-        <BubbleMenu editor={editor} shouldShow={({ editor }: { editor: any }) => editor.isActive('table')}>
+        <BubbleMenu editor={editor} shouldShow={({ editor }) => editor.isActive('table')}>
             <div className="flex flex-wrap items-center gap-1 p-1 bg-white dark:bg-zinc-900 border shadow-lg rounded-md text-xs">
                 <span className="font-semibold px-2 text-muted-foreground hidden sm:inline">Tabel:</span>
                 <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addColumnBefore().run()} className="h-7"><Plus className="size-3 mr-1" /> Kol Kiri</Button>

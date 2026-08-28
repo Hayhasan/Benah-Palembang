@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Proyek Vite lama, disimpan sebagai referensi selama migrasi.
     "benah-palembang-legacy-vite/**",
+    // Snapshot project original hanya digunakan sebagai referensi UI.
+    "benah-palembang-original-project/**",
   ]),
   {
     // Kode yang dipindahkan apa adanya dari proyek Vite. Proyek lama tidak

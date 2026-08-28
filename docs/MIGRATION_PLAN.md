@@ -47,12 +47,18 @@
 | `/agenda` | `app/(public)/agenda/page.tsx` | `AgendaPage` |
 | `/agenda/:id` | `app/(public)/agenda/[id]/page.tsx` | `AgendaDetailPage` |
 | `/kolaborasi` | `app/(public)/kolaborasi/page.tsx` | `CollaborationPage` |
-| `/login` | `app/(public)/login/page.tsx` | `LoginPage` |
-| `/register` | `app/(public)/register/page.tsx` | `RegisterPage` |
-| `/lupa-password` | `app/(public)/lupa-password/page.tsx` | `ForgotPasswordPage` |
 | `*` | `app/not-found.tsx` | `NotFound` + `<Header />` |
 
 > Kategori dibuat sebagai 5 folder statis (bukan `[category]` dinamis) agar slug tak dikenal tetap jatuh ke 404, persis seperti legacy.
+
+### Autentikasi & Setup — route group `(auth)`, layout = `AuthLayout`
+
+| Legacy route | File Next.js | Komponen |
+|---|---|---|
+| `/login` | `app/(auth)/login/page.tsx` | `LoginPage` |
+| `/register` | `app/(auth)/register/page.tsx` | `RegisterPage` |
+| `/lupa-password` | `app/(auth)/lupa-password/page.tsx` | `ForgotPasswordPage` |
+| `/first-time-setup` | `app/(auth)/first-time-setup/page.tsx` | `FirstTimeSetupPage` |
 
 ### Dashboard — `app/dashboard/`, layout = `DashboardLayout`
 

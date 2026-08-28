@@ -1,10 +1,10 @@
-import { Suspense } from "react"
-import { EventPreview } from "@/features/dashboard/EventPreview"
+import { redirect } from "next/navigation"
 
-export default function Page() {
-  return (
-    <Suspense>
-      <EventPreview />
-    </Suspense>
-  )
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function Page({ params }: PageProps) {
+  const { id } = await params
+  redirect(`/dashboard/create-event/preview/${id}`)
 }

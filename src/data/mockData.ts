@@ -30,18 +30,6 @@ export interface Article {
   tags: string[];
 }
 
-export interface AgendaItem {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  category: string;
-  description: string;
-  image: string;
-  organizer: string;
-}
-
 export interface TeamMember {
   id: string;
   name: string;
@@ -929,87 +917,6 @@ export const articles: Article[] = [
     likes: 178,
     featured: false,
     tags: ["Ukiran Kayu", "Seni Kriya", "Emas Perada", "Warisan"],
-  },
-];
-
-export const agendaItems: AgendaItem[] = [
-  {
-    id: "1",
-    title: "Diskusi Publik: Masa Depan Ruang Terbuka Palembang",
-    date: "15 September 2025",
-    time: "14:00 – 17:00 WIB",
-    location: "Benteng Kuto Besak, Palembang",
-    category: "Diskusi",
-    description:
-      "Forum terbuka membahas pentingnya ruang publik yang inklusif di tengah pembangunan kota yang pesat.",
-    image:
-      "https://images.pexels.com/photos/38956265/pexels-photo-38956265.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop",
-    organizer: "Benah Palembang x Komunitas Kota Kita",
-  },
-  {
-    id: "2",
-    title: "Workshop Tenun Songket untuk Pemula",
-    date: "22 September 2025",
-    time: "09:00 – 12:00 WIB",
-    location: "Rumah Songket Zainal, Kawasan 30 Ilir",
-    category: "Workshop",
-    description:
-      "Belajar dasar-dasar tenun songket langsung dari pengrajin berpengalaman. Terbuka untuk umum, kapasitas terbatas.",
-    image:
-      "https://images.pexels.com/photos/37628562/pexels-photo-37628562.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop",
-    organizer: "Benah Palembang x Rumah Songket Zainal",
-  },
-  {
-    id: "3",
-    title: "Pameran Foto: Wajah-Wajah Sungai Musi",
-    date: "1–15 Oktober 2025",
-    time: "10:00 – 20:00 WIB",
-    location: "Galeri Sriwijaya, Jl. Sudirman",
-    category: "Pameran",
-    description:
-      "Koleksi foto dokumenter dari 12 fotografer Palembang yang merekam kehidupan di sekitar Sungai Musi.",
-    image:
-      "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop",
-    organizer: "Benah Palembang x Palembang Photography Club",
-  },
-  {
-    id: "4",
-    title: "Kuliah Umum: Arsitektur Vernakular Sumatera Selatan",
-    date: "8 Oktober 2025",
-    time: "13:00 – 16:00 WIB",
-    location: "Universitas Sriwijaya, Aula Utama",
-    category: "Kuliah Umum",
-    description:
-      "Bersama arsitek dan sejarawan lokal, membahas kekayaan arsitektur vernakular yang perlu dipelajari dan dilestarikan.",
-    image:
-      "https://images.pexels.com/photos/10682942/pexels-photo-10682942.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop",
-    organizer: "Benah Palembang x Universitas Sriwijaya",
-  },
-  {
-    id: "5",
-    title: "Festival Kuliner: Rasa Palembang",
-    date: "18–20 Oktober 2025",
-    time: "16:00 – 22:00 WIB",
-    location: "Lapangan Merdeka Palembang",
-    category: "Festival",
-    description:
-      "Merayakan kekayaan kuliner Palembang—dari pempek klasik hingga inovasi kuliner anak muda yang menggugah selera.",
-    image:
-      "https://images.pexels.com/photos/37234075/pexels-photo-37234075.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop",
-    organizer: "Benah Palembang x Dinas Pariwisata Palembang",
-  },
-  {
-    id: "6",
-    title: "Creative Networking Night",
-    date: "25 Oktober 2025",
-    time: "18:00 – 21:00 WIB",
-    location: "Coworking Space Musi, Jl. Angkatan 45",
-    category: "Networking",
-    description:
-      "Mempertemukan pelaku industri kreatif, jurnalis, desainer, dan pengusaha lokal dalam suasana santai dan inspiratif.",
-    image:
-      "https://images.pexels.com/photos/36748274/pexels-photo-36748274.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop",
-    organizer: "Benah Palembang",
   },
 ];
 

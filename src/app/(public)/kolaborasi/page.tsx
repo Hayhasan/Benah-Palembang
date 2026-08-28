@@ -1,5 +1,8 @@
-import { CollaborationPage } from "@/features/public/PublicSite"
+import { CollaborationPage } from "@/modules/website-content/components/collaboration-page"
+import { getCollaborationPage } from "@/modules/website-content/data/get-collaboration-page"
 
-export default function Page() {
-  return <CollaborationPage />
+export default async function Page() {
+  const data = await getCollaborationPage()
+
+  return <CollaborationPage data={data} />
 }

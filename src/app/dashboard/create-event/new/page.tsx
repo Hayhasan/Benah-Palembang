@@ -1,10 +1,8 @@
-import { Suspense } from "react"
-import { CreateEventEditor } from "@/features/dashboard/CreateEventEditor"
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
+import { EventEditor } from "@/modules/event/components/event-editor"
 
-export default function Page() {
-  return (
-    <Suspense>
-      <CreateEventEditor />
-    </Suspense>
-  )
+export default async function Page() {
+  await requireCurrentUser()
+
+  return <EventEditor />
 }

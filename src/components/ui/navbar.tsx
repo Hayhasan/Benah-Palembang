@@ -6,7 +6,8 @@ import { Equal, X, ChevronDown, ArrowUpRight, LogOut, LayoutDashboard } from 'lu
 import { Button } from '@/components/ui/liquid-glass-button'
 import React, { useState, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/context/AuthContext'
+import { useSession } from '@/modules/auth/hooks/use-session'
+import { useHeaderFooterContent } from '@/modules/website-content/components/header-footer-content-provider'
 
 const categories = [
     { name: 'Cerita Warga', href: '/cerita-warga' },
@@ -17,7 +18,8 @@ const categories = [
 ]
 
 export const Header = () => {
-    const { user, logout } = useAuth()
+    const { logo } = useHeaderFooterContent()
+    const { user, logout, isLoggingOut } = useSession()
     const [profileOpen, setProfileOpen] = useState(false)
     const [menuState, setMenuState] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -60,10 +62,10 @@ export const Header = () => {
                     <div className="relative flex flex-wrap items-center justify-between gap-6 lg:gap-0 py-2">
                         <div className="flex w-full justify-between lg:w-auto">
                             <Link
-                                href="/"
+                                href={logo.linkUrl}
                                 aria-label="home"
                                 className="flex gap-2 items-center">
-                                <img src="/logo.png" alt="Benah Palembang" className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
+                                <img src={logo.imageUrl} alt={logo.imageAlt} className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
                             </Link>
 
                             <button
@@ -158,7 +160,7 @@ export const Header = () => {
                                             onClick={() => setProfileOpen(!profileOpen)}
                                             className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", !isScrolled && isHome ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
                                         >
-                                            <img src={user.avatar} alt={user.name} className="size-7 rounded-full object-cover" />
+                                            <img src={user.avatarUrl || "https://i.pravatar.cc/150?img=0"} alt={user.name} className="size-7 rounded-full object-cover" />
                                             <span className="text-sm font-semibold">{user.name}</span>
                                         </button>
                                         
@@ -173,6 +175,7 @@ export const Header = () => {
                                                     Dashboard
                                                 </Link>
                                                 <button 
+                                                    disabled={isLoggingOut}
                                                     onClick={() => { setProfileOpen(false); logout(); }}
                                                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                                                 >
