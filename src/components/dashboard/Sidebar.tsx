@@ -18,7 +18,9 @@ export function Sidebar() {
     const location = useLocation()
     const [isMobile, setIsMobile] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
-    const [accountOpen, setAccountOpen] = useState(false)
+    const [accountOpen, setAccountOpen] = useState(
+        location.pathname.startsWith("/dashboard/account"),
+    )
     
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024)
@@ -119,7 +121,9 @@ export function Sidebar() {
                                                 onClick={() => handleNav(sub.path)}
                                                 className={cn(
                                                     "rounded-lg px-3 py-2 text-sm transition-colors text-left w-full",
-                                                    location.pathname === sub.path ? "bg-palembang-red text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                    location.pathname === sub.path || location.pathname.startsWith(`${sub.path}/`)
+                                                        ? "bg-palembang-red text-white"
+                                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 )}
                                             >
                                                 {sub.title}

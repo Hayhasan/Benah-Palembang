@@ -61,11 +61,15 @@ bersama. Perbedaan hanya berada pada konfigurasi berikut:
 
 ## Revisi UI list
 
-Aksi per row Admin sama dengan User:
+Aksi per row untuk account `ADMIN` sama dengan User:
 
 - View.
 - Ban atau Unban.
 - Delete.
+
+Account `SUPERADMIN` hanya mempunyai aksi View. Tombol Ban, Unban, dan Delete
+tidak ditampilkan. Server action juga wajib menolak mutation tersebut meskipun
+dipanggil secara langsung dari luar UI.
 
 Aksi Edit dihapus. Delete memakai confirmation dialog dengan informasi nama,
 UUID, dan dampak bahwa account tidak lagi dapat ditemukan pada list/detail.
@@ -119,6 +123,7 @@ karena role account sudah tidak sesuai dengan filter route.
 - Ban mengubah `isBanned` dan `bannedAt`, tanpa mengubah role.
 - Delete mengisi `deletedAt` dan melepaskan unique email sesuai strategi pada
   User Manage.
+- Account `SUPERADMIN` tidak dapat di-ban, di-unban, maupun di-delete.
 - Ban atau delete tidak menghapus Article, Event, Comment, maupun log activity
   yang mereference UUID account.
 - Future Auth bertanggung jawab menolak login account banned/deleted dan
