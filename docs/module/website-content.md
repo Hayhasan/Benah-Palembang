@@ -1,9 +1,10 @@
 # Website Content Module
 
 Module ini mengelola content presentasional website. Implementasi saat ini
-mencakup landing page dengan root canonical `home`, hero halaman agenda dengan
-root canonical `agenda`, halaman kolaborasi dengan root canonical
-`collaboration`, serta konfigurasi global dengan root canonical `header-footer`.
+mencakup landing page dan lima halaman kategori artikel dengan root canonical
+`home`, hero halaman agenda dengan root canonical `agenda`, halaman kolaborasi
+dengan root canonical `collaboration`, serta konfigurasi global dengan root
+canonical `header-footer`.
 
 ## Scope awal
 
@@ -11,6 +12,7 @@ root canonical `agenda`, halaman kolaborasi dengan root canonical
 - About section.
 - Explore category items.
 - Presentation configuration untuk featured/category article sections.
+- Hero untuk lima halaman kategori artikel.
 - Team section dan anggota tim.
 - CTA section.
 - Hero halaman agenda.
@@ -28,8 +30,8 @@ konfigurasi tampilan section.
   `home`.
 - `website_hero_slides`: ordered hero carousel items.
 - `website_explore_items`: ordered explore/category links.
-- `website_article_sections`: ordered presentation configuration untuk article
-  sections.
+- `website_article_sections`: lima row fixed yang menyimpan presentasi section
+  Home, slug kategori, dan hero halaman kategori terkait.
 - `website_team_members`: ordered team members.
 - `website_agenda_contents`: root hero halaman agenda, expected satu active row
   dengan key `agenda`.
@@ -52,10 +54,11 @@ Semua table menggunakan ID `Int`, timestamps, dan soft delete melalui
 npm run seed:website-content
 ```
 
-Seeder memakai dummy content yang sama dengan landing page, hero agenda, halaman
-kolaborasi, header, dan footer publik saat ini. Aggregate `home`, `agenda`,
-`collaboration`, dan `header-footer` diperiksa secara independen, bersifat
-create-if-missing, dan tidak menimpa content yang sudah tersedia.
+Seeder memakai dummy content yang sama dengan landing page, halaman kategori
+artikel, hero agenda, halaman kolaborasi, header, dan footer publik saat ini.
+Aggregate `home`, `agenda`, `collaboration`, dan `header-footer` diperiksa secara
+independen, bersifat create-if-missing, dan tidak menimpa content yang sudah
+tersedia.
 
 ## Public landing page
 
@@ -70,6 +73,24 @@ create-if-missing, dan tidak menimpa content yang sudah tersedia.
 - Hero carousel menjadi Client Component tersendiri. Section landing lain tetap
   berupa Server Component agar JavaScript client tidak membesar tanpa kebutuhan.
 - Data artikel masih menggunakan mock Article sampai module Article tersedia.
+- URL “Lihat semua” diturunkan dari `articleCategorySlug`; table tidak menyimpan
+  `linkUrl` terpisah untuk article section.
+
+## Public article category pages
+
+- Lima URL kategori ditangani satu dynamic route
+  `src/app/(public)/[categorySlug]/page.tsx`, bukan lima file route statis.
+- Dynamic route mencari `website_article_sections.articleCategorySlug` pada root
+  aktif `home`; slug yang tidak ditemukan menghasilkan `notFound()`.
+- Hero kategori membaca background, alt, judul, dan deskripsi dari row section
+  terkait. Daftar artikel dan pencarian masih memakai mock Article sampai module
+  Article tersedia.
+- Jika root `home` belum ada, route menggunakan
+  `DEFAULT_ARTICLE_CATEGORY_PAGES`. Jika root tersedia tetapi slug tidak cocok,
+  request tetap dianggap tidak ditemukan.
+- Route statis seperti `/agenda`, `/artikel`, `/kolaborasi`, `/login`, dan
+  `/dashboard` mempunyai prioritas dan tidak boleh digunakan sebagai slug
+  kategori.
 
 ## Public collaboration page
 
@@ -109,15 +130,15 @@ create-if-missing, dan tidak menimpa content yang sudah tersedia.
 
 ## Dashboard editor
 
-- Route `/dashboard/website` membaca aggregate aktif `home`, `agenda`,
-  `collaboration`, dan `header-footer` pada Server Component dan mengirim DTO
-  serializable ke form Client Component.
+- Route `/dashboard/website` membaca aggregate aktif `home` beserta editor
+  kategori Article, `agenda`, `collaboration`, dan `header-footer` pada Server
+  Component dan mengirim DTO serializable ke form Client Component.
 - Form Home mengelola hero carousel, about, explore, konfigurasi section
   artikel, team, dan CTA. Seluruh field yang ada pada schema Prisma bersifat
   controlled dan berasal dari data database.
-- Tab Home, Agenda, Collaboration, dan Header & Footer memakai persistence
-  database. Tab Article tetap dapat dibuka menggunakan UI frontend original dan
-  belum mempunyai persistence.
+- Tab Home, Article, Agenda, Collaboration, dan Header & Footer memakai
+  persistence database. Tab Home mengubah field landing section, sedangkan tab
+  Article hanya mengubah field hero kategori pada row yang sama.
 - Perubahan disimpan melalui Server Action dengan validasi Zod dan transaction
   Prisma. Root scalar dan seluruh child collection disimpan sebagai satu
   aggregate.
@@ -127,12 +148,15 @@ create-if-missing, dan tidak menimpa content yang sudah tersedia.
 - Item aktif yang tidak lagi dikirim form di-soft-delete. Posisi child selalu
   dihitung ulang berdasarkan urutan form dan tidak mempercayai nilai posisi
   mentah dari client.
-- Save handler melacak perubahan Home, Agenda, Collaboration, serta Header &
-  Footer secara terpisah. Tombol Simpan Perubahan maupun save dari guard
+- Save handler melacak perubahan Home, Article, Agenda, Collaboration, serta
+  Header & Footer secara terpisah. Tombol Simpan Perubahan maupun save dari guard
   navigasi menyimpan seluruh module nyata yang masih dirty.
 - Landing page selalu mempunyai lima article section fixed: Cerita Palembang,
   Gaya Hidup, Ruang Kota, Industri Kreatif, dan Kebudayaan. Admin dapat mengubah
   field presentasinya, tetapi tidak menambah, menghapus, atau mengubah urutannya.
+- Slug kategori wajib berupa kebab-case, unik di dalam root `home`, dan tidak
+  boleh memakai route statis yang dicadangkan. Pelanggaran ditolak Server Action
+  dan ditampilkan sebagai toast dashboard.
 - Image editor melakukan crop di browser, meminta signed upload parameters dari
   server, lalu mengunggah file langsung ke Cloudinary. Upload admin disimpan
   sebagai `secure_url`; canonical seed masih boleh menunjuk asset public internal

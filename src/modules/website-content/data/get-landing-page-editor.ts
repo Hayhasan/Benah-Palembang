@@ -65,7 +65,6 @@ export const landingPageEditorSelect = {
       description: true,
       backgroundImageUrl: true,
       linkLabel: true,
-      linkUrl: true,
       theme: true,
       layout: true,
       maxItems: true,

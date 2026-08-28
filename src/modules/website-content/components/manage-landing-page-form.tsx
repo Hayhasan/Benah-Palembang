@@ -33,10 +33,12 @@ import {
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
 import { updateAgendaPageAction } from "../actions/update-agenda-page"
+import { updateArticleCategoryPagesAction } from "../actions/update-article-category-pages"
 import { updateCollaborationPageAction } from "../actions/update-collaboration-page"
 import { updateHeaderFooterContentAction } from "../actions/update-header-footer-content"
 import { updateLandingPageAction } from "../actions/update-landing-page"
 import type { AgendaPageEditorData } from "../types/agenda-page-editor"
+import type { ArticleCategoryPagesEditorData } from "../types/article-category-page-editor"
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
 import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
 import type {
@@ -46,13 +48,18 @@ import type {
   LandingPageEditorData,
   LandingTeamMemberEditorData,
 } from "../types/landing-page-editor"
-import { ArticleSettings } from "./website-editor-secondary-tabs"
 import { ManageAgendaSettings } from "./manage-agenda-settings"
+import { ManageArticleCategorySettings } from "./manage-article-category-settings"
 import { ManageCollaborationSettings } from "./manage-collaboration-settings"
 import { ManageHeaderFooterSettings } from "./manage-header-footer-settings"
 
 const tabs = ["Home", "Article", "Agenda", "Collaboration", "Header & Footer"]
-type EditableModule = "Home" | "Agenda" | "Collaboration" | "Header & Footer"
+type EditableModule =
+  | "Home"
+  | "Article"
+  | "Agenda"
+  | "Collaboration"
+  | "Header & Footer"
 const articleSectionNames = [
   "Cerita Palembang",
   "Gaya Hidup",
@@ -155,17 +162,22 @@ function clientKey(prefix: string) {
 
 export function ManageLandingPageForm({
   initialData,
+  initialArticleCategoryData,
   initialAgendaData,
   initialCollaborationData,
   initialHeaderFooterData,
 }: {
   initialData: LandingPageEditorData
+  initialArticleCategoryData: ArticleCategoryPagesEditorData
   initialAgendaData: AgendaPageEditorData
   initialCollaborationData: CollaborationPageEditorData
   initialHeaderFooterData: HeaderFooterContentEditorData
 }) {
   const [activeTab, setActiveTab] = useState(tabs[0])
   const [data, setData] = useState(initialData)
+  const [articleCategoryData, setArticleCategoryData] = useState(
+    initialArticleCategoryData,
+  )
   const [agendaData, setAgendaData] = useState(initialAgendaData)
   const [collaborationData, setCollaborationData] = useState(
     initialCollaborationData,
@@ -175,6 +187,7 @@ export function ManageLandingPageForm({
   )
   const [isPending, startTransition] = useTransition()
   const dataRef = useRef(data)
+  const articleCategoryDataRef = useRef(articleCategoryData)
   const agendaDataRef = useRef(agendaData)
   const collaborationDataRef = useRef(collaborationData)
   const headerFooterDataRef = useRef(headerFooterData)
@@ -185,6 +198,10 @@ export function ManageLandingPageForm({
   useEffect(() => {
     dataRef.current = data
   }, [data])
+
+  useEffect(() => {
+    articleCategoryDataRef.current = articleCategoryData
+  }, [articleCategoryData])
 
   useEffect(() => {
     agendaDataRef.current = agendaData
@@ -246,6 +263,20 @@ export function ManageLandingPageForm({
     [markDirty],
   )
 
+  const changeArticleCategoryData = useCallback(
+    (
+      updater: (
+        current: ArticleCategoryPagesEditorData,
+      ) => ArticleCategoryPagesEditorData,
+    ) => {
+      const next = updater(articleCategoryDataRef.current)
+      articleCategoryDataRef.current = next
+      setArticleCategoryData(next)
+      markDirty("Article")
+    },
+    [markDirty],
+  )
+
   const changeHeaderFooterData = useCallback(
     (
       updater: (
@@ -284,6 +315,22 @@ export function ManageLandingPageForm({
                 setData(result.data)
                 dataRef.current = result.data
                 dirtyModulesRef.current.delete("Home")
+                successMessages.push(result.message)
+              } else {
+                const field = result.field ? ` (${result.field})` : ""
+                toast.error(`${result.message}${field}`)
+                allSucceeded = false
+              }
+            }
+
+            if (dirtyModules.includes("Article")) {
+              const result = await updateArticleCategoryPagesAction(
+                articleCategoryDataRef.current,
+              )
+              if (result.success) {
+                setArticleCategoryData(result.data)
+                articleCategoryDataRef.current = result.data
+                dirtyModulesRef.current.delete("Article")
                 successMessages.push(result.message)
               } else {
                 const field = result.field ? ` (${result.field})` : ""
@@ -975,14 +1022,15 @@ export function ManageLandingPageForm({
                         }
                       />
                     </Field>
-                    <Field label="Link URL (Lihat Semua)">
+                    <Field label="Slug Kategori Artikel">
                       <Input
-                        value={section.linkUrl}
+                        value={section.articleCategorySlug}
                         onChange={(event) =>
                           updateArticleSection(section.clientKey, {
-                            linkUrl: event.target.value,
+                            articleCategorySlug: event.target.value,
                           })
                         }
+                        placeholder="contoh: cerita-warga"
                       />
                     </Field>
                   </div>
@@ -1261,7 +1309,12 @@ export function ManageLandingPageForm({
             </SectionCard>
           </div>
         ) : null}
-        {activeTab === "Article" ? <ArticleSettings /> : null}
+        {activeTab === "Article" ? (
+          <ManageArticleCategorySettings
+            data={articleCategoryData}
+            onChange={changeArticleCategoryData}
+          />
+        ) : null}
         {activeTab === "Agenda" ? (
           <ManageAgendaSettings data={agendaData} onChange={changeAgendaData} />
         ) : null}

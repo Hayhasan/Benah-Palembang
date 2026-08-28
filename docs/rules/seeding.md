@@ -41,7 +41,8 @@ prisma/
 ## 3. Sumber data canonical
 
 - Seed website content menggunakan default content yang sama dengan fallback
-  landing page, halaman agenda, halaman kolaborasi, header, dan footer.
+  landing page, halaman kategori artikel, halaman agenda, halaman kolaborasi,
+  header, dan footer.
 - Nilai awal mengikuti tampilan public landing page yang aktif, bukan nilai form
   dashboard yang berbeda atau sudah tertinggal.
 - Default content tidak boleh diduplikasi di public component, dashboard form,
@@ -69,6 +70,9 @@ prisma/
 - Jika suatu module membutuhkan update data seed yang sudah ada, perubahan itu
   harus dibuat eksplisit dan didokumentasikan; jangan menyelipkannya ke seed
   bootstrap biasa.
+- Penambahan field wajib pada lima article section yang sudah ada dilakukan lewat
+  migration backfill. Seeder tetap create-if-missing dan tidak mengubah konten
+  admin yang sudah tersimpan.
 
 ## 5. Transaction dan urutan data
 
@@ -144,8 +148,9 @@ Ketentuan validasi:
 - Pastikan hanya terdapat satu root row aktif untuk key `home`, `agenda`,
   `collaboration`, dan `header-footer`.
 - Pastikan child collection terbaca sesuai `position`.
-- Pastikan public landing page, `/agenda`, `/kolaborasi`, serta public layout
-  Header/Footer dapat membaca hasil seed melalui Server Component.
+- Pastikan public landing page, dynamic route kategori artikel, `/agenda`,
+  `/kolaborasi`, serta public layout Header/Footer dapat membaca hasil seed
+  melalui Server Component.
 - Pastikan fallback masing-masing halaman tetap tampil ketika root row terkait
   tidak ditemukan.
 - Minimal jalankan typecheck/lint atau build sesuai luas perubahan. Untuk

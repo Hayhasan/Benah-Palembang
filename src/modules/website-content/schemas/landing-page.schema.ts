@@ -1,12 +1,7 @@
 import { z } from "zod"
 
-const LANDING_ARTICLE_SECTION_KEYS = [
-  "featured",
-  "gaya-hidup",
-  "ruang-kota",
-  "industri-kreatif",
-  "kebudayaan",
-] as const
+import { ARTICLE_CATEGORY_SECTION_KEYS } from "../constants/default-article-category-pages"
+import { isReservedArticleCategorySlug } from "../constants/reserved-article-category-slugs"
 
 const requiredText = (label: string, max: number) =>
   z
@@ -39,6 +34,29 @@ const imageUrlSchema = z
     "Gambar harus menggunakan URL HTTP(S), bukan file atau blob lokal.",
   )
 
+const articleCategorySlugSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.toLowerCase())
+  .pipe(
+    z
+      .string()
+      .min(1, "Slug kategori artikel wajib diisi.")
+      .max(160, "Slug kategori artikel maksimal 160 karakter.")
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        "Slug kategori artikel hanya boleh berisi huruf kecil, angka, dan tanda hubung.",
+      ),
+  )
+  .superRefine((slug, context) => {
+    if (isReservedArticleCategorySlug(slug)) {
+      context.addIssue({
+        code: "custom",
+        message: `Slug "${slug}" digunakan oleh halaman statis dan tidak dapat dipakai sebagai kategori artikel.`,
+      })
+    }
+  })
+
 const editorRecordSchema = {
   id: z.number().int().positive().nullable(),
   clientKey: z.string().min(1).max(100),
@@ -69,18 +87,12 @@ const exploreItemSchema = z.object({
 const articleSectionSchema = z.object({
   ...editorRecordSchema,
   sectionKey: requiredText("Section key", 160),
-  articleCategorySlug: z
-    .string()
-    .trim()
-    .max(160)
-    .transform((value) => value || null)
-    .nullable(),
+  articleCategorySlug: articleCategorySlugSchema,
   eyebrow: requiredText("Eyebrow section", 160),
   title: requiredText("Judul section", 255),
   description: requiredText("Deskripsi section", 5000),
   backgroundImageUrl: imageUrlSchema,
   linkLabel: requiredText("Label link section", 100),
-  linkUrl: linkUrlSchema,
   theme: z.enum(["DEFAULT", "RED", "OFF_WHITE", "DARK"]),
   layout: z.enum(["STANDARD", "FEATURED_FIRST"]),
   maxItems: z.number().int().min(1).max(12),
@@ -162,7 +174,18 @@ export const landingPageEditorSchema = z
       })
     }
 
-    LANDING_ARTICLE_SECTION_KEYS.forEach((sectionKey, index) => {
+    const categorySlugs = data.articleSections.map(
+      (section) => section.articleCategorySlug,
+    )
+    if (new Set(categorySlugs).size !== categorySlugs.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Slug kategori artikel harus unik.",
+        path: ["articleSections"],
+      })
+    }
+
+    ARTICLE_CATEGORY_SECTION_KEYS.forEach((sectionKey, index) => {
       if (data.articleSections[index]?.sectionKey !== sectionKey) {
         context.addIssue({
           code: "custom",

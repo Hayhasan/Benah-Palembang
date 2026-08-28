@@ -148,7 +148,7 @@ function FeaturedArticleSection({
         </div>
         <div className="mt-12 flex justify-end">
           <Link
-            href={section.linkUrl}
+            href={`/${section.articleCategorySlug}`}
             className={`group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] ${style.link}`}
           >
             {section.linkLabel}
@@ -202,7 +202,7 @@ function CategoryArticleSection({
             dark={style.darkHeading}
           />
           <Link
-            href={section.linkUrl}
+            href={`/${section.articleCategorySlug}`}
             className={`group hidden items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] md:flex ${style.link}`}
           >
             {section.linkLabel}
@@ -226,7 +226,7 @@ function CategoryArticleSection({
         </div>
         <div className="mt-12 flex justify-end md:hidden">
           <Link
-            href={section.linkUrl}
+            href={`/${section.articleCategorySlug}`}
             className={`group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] ${style.link}`}
           >
             {section.linkLabel}
@@ -247,7 +247,7 @@ function LandingArticleSection({
 }: {
   section: LandingArticleSectionData
 }) {
-  if (section.articleCategorySlug === null || section.sectionKey === "featured") {
+  if (section.sectionKey === "featured") {
     return <FeaturedArticleSection section={section} />
   }
 

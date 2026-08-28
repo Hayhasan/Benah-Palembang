@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
 
+import { getDefaultArticleCategoryPage } from "../constants/default-article-category-pages"
 import { readLandingPageEditor } from "../data/get-landing-page-editor"
 import { landingPageEditorSchema } from "../schemas/landing-page.schema"
 import type {
@@ -74,12 +75,25 @@ function articleSectionData(
     description: section.description,
     backgroundImageUrl: section.backgroundImageUrl,
     linkLabel: section.linkLabel,
-    linkUrl: section.linkUrl,
     theme: section.theme,
     layout: section.layout,
     maxItems: section.maxItems,
     position,
     isVisible: section.isVisible,
+  }
+}
+
+function defaultArticleCategoryHeroData(sectionKey: string) {
+  const category = getDefaultArticleCategoryPage(sectionKey)
+  if (!category) {
+    throw new Error(`Default halaman kategori untuk ${sectionKey} tidak ditemukan.`)
+  }
+
+  return {
+    categoryHeroImageUrl: category.hero.imageUrl,
+    categoryHeroImageAlt: category.hero.imageAlt,
+    categoryHeroTitle: category.hero.title,
+    categoryHeroDescription: category.hero.description,
   }
 }
 
@@ -137,9 +151,10 @@ async function createLandingPage(
         ),
       },
       articleSections: {
-        create: data.articleSections.map((section, index) =>
-          articleSectionData(section, index + 1),
-        ),
+        create: data.articleSections.map((section, index) => ({
+          ...articleSectionData(section, index + 1),
+          ...defaultArticleCategoryHeroData(section.sectionKey),
+        })),
       },
       teamMembers: {
         create: data.team.members.map((member, index) =>
@@ -157,7 +172,11 @@ async function updateLandingPage(
     id: number
     heroSlides: { id: number }[]
     exploreItems: { id: number }[]
-    articleSections: { id: number; sectionKey: string }[]
+    articleSections: {
+      id: number
+      sectionKey: string
+      articleCategorySlug: string
+    }[]
     teamMembers: { id: number }[]
   },
 ) {
@@ -247,9 +266,40 @@ async function updateLandingPage(
       data: {
         originalSectionKey: section.sectionKey,
         sectionKey: deletedUniqueValue(section.sectionKey, section.id, now),
+        originalArticleCategorySlug: section.articleCategorySlug,
+        articleCategorySlug: deletedUniqueValue(
+          section.articleCategorySlug,
+          section.id,
+          now,
+        ),
         deletedAt: now,
       },
     })
+  }
+
+  const currentCategorySlugs = new Map(
+    existing.articleSections.map((section) => [
+      section.id,
+      section.articleCategorySlug,
+    ]),
+  )
+  for (const section of data.articleSections) {
+    const currentSlug = section.id
+      ? currentCategorySlugs.get(section.id)
+      : undefined
+
+    if (section.id !== null && currentSlug !== section.articleCategorySlug) {
+      await tx.websiteArticleSection.update({
+        where: { id: section.id },
+        data: {
+          articleCategorySlug: deletedUniqueValue(
+            currentSlug ?? section.articleCategorySlug,
+            section.id,
+            now,
+          ),
+        },
+      })
+    }
   }
 
   for (const [index, slide] of data.heroSlides.entries()) {
@@ -278,7 +328,11 @@ async function updateLandingPage(
     const values = articleSectionData(section, index + 1)
     if (section.id === null) {
       await tx.websiteArticleSection.create({
-        data: { websiteContentId: existing.id, ...values },
+        data: {
+          websiteContentId: existing.id,
+          ...values,
+          ...defaultArticleCategoryHeroData(section.sectionKey),
+        },
       })
     } else {
       await tx.websiteArticleSection.update({
@@ -328,7 +382,11 @@ export async function updateLandingPageAction(
           exploreItems: { where: { deletedAt: null }, select: { id: true } },
           articleSections: {
             where: { deletedAt: null },
-            select: { id: true, sectionKey: true },
+            select: {
+              id: true,
+              sectionKey: true,
+              articleCategorySlug: true,
+            },
           },
           teamMembers: { where: { deletedAt: null }, select: { id: true } },
         },

@@ -96,36 +96,43 @@ Struktur awal yang disarankan:
 src/modules/website-content/
   actions/
     update-agenda-page.ts
+    update-article-category-pages.ts
     update-collaboration-page.ts
     update-header-footer-content.ts
     update-landing-page.ts
   components/
     agenda-page.tsx
+    article-category-page.tsx
     collaboration-page.tsx
     header-footer-content-provider.tsx
     landing-page.tsx
     manage-agenda-settings.tsx
+    manage-article-category-settings.tsx
     manage-collaboration-settings.tsx
     manage-header-footer-settings.tsx
     manage-landing-page-form.tsx
   constants/
     default-agenda-page.ts
+    default-article-category-pages.ts
     default-collaboration-page.ts
     default-header-footer-content.ts
     default-landing-page.ts
   data/
     get-agenda-page.ts
+    get-article-category-page.ts
     get-collaboration-page.ts
     get-header-footer-content.ts
     get-landing-page.ts
     website-content.mapper.ts
   schemas/
     agenda-page.schema.ts
+    article-category-page.schema.ts
     collaboration-page.schema.ts
     header-footer-content.schema.ts
     landing-page.schema.ts
   types/
     agenda-page.ts
+    article-category-page.ts
     collaboration-page.ts
     header-footer-content.ts
     landing-page.ts
@@ -142,6 +149,9 @@ Satu module boleh memiliki beberapa table selama masih berada dalam satu domain.
   client fetch untuk data awal landing page.
 - Client Component hanya digunakan pada bagian yang membutuhkan state, event,
   carousel, editor, crop image, atau browser API.
+- Halaman kategori artikel pada root URL menggunakan satu dynamic segment
+  `[categorySlug]`. Route statis tetap memiliki prioritas, sedangkan slug yang
+  tidak terdaftar wajib menghasilkan `notFound()`.
 - Dashboard `page.tsx` membaca initial data di server dan memberikannya kepada
   form Client Component.
 - Jangan mengimpor Prisma Client ke file yang memakai `"use client"`.
@@ -181,6 +191,13 @@ Satu module boleh memiliki beberapa table selama masih berada dalam satu domain.
 - Seeder, query, dan mutation selalu menargetkan key canonical tersebut.
 - Collection seperti hero slide, explore item, article section, dan team member
   disimpan pada child table terkait.
+- `website_article_sections` selalu berisi lima logical row dengan section key
+  fixed. Field landing dan field hero kategori berada pada row yang sama, tetapi
+  disimpan melalui DTO dan Server Action terpisah agar tidak saling menimpa.
+- Link halaman kategori diturunkan dari `articleCategorySlug`; jangan menyimpan
+  URL duplikat jika seluruh target selalu mengikuti pola `/<slug>`.
+- Slug kategori wajib unik per root, kebab-case, dan tidak boleh bertabrakan
+  dengan route statis seperti `agenda`, `artikel`, `kolaborasi`, atau route auth.
 - Jika root row `home` belum ada, public page menggunakan
   `default-landing-page.ts` sebagai fallback.
 - Fallback hanya digunakan ketika record tidak ditemukan. Error koneksi,
@@ -305,8 +322,9 @@ Aturan penerapannya:
 
 - Module boleh membaca public type atau query yang memang diekspos module lain.
 - Module tidak boleh mengakses internal repository module lain secara acak.
-- `website-content` memiliki konfigurasi tampilan landing page, sedangkan
-  `article` memiliki data artikel dan kategori artikel.
+- `website-content` memiliki konfigurasi tampilan landing page dan halaman
+  kategori, sedangkan `article` memiliki record artikel serta relasi domain
+  kategorinya ketika module tersebut diimplementasikan.
 - `auth` menjadi dependency wajib sebelum mutation dashboard atau upload image
   dapat dianggap aman untuk production.
 - Hindari circular dependency. Jika dua module membutuhkan helper yang sama dan
@@ -315,8 +333,8 @@ Aturan penerapannya:
 ## 14. Migration bertahap
 
 - Jangan menghapus mock data yang masih digunakan module lain.
-- Landing page dan Collaboration dapat berpindah ke database sementara Article
-  dan Event masih menggunakan mock data.
+- Landing page, hero kategori Article, Agenda, dan Collaboration dapat berpindah
+  ke database sementara record Article dan Event masih menggunakan mock data.
 - Setelah suatu data resmi dimiliki database, hapus duplikasi default dari
   komponen dan gunakan DTO/default canonical milik module.
 - Perubahan struktur tidak boleh mengubah tampilan frontend kecuali memang

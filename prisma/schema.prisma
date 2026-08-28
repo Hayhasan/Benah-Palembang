@@ -105,28 +105,33 @@ model WebsiteExploreItem {
 }
 
 model WebsiteArticleSection {
-  id                  Int                         @id @default(autoincrement())
-  websiteContentId    Int
-  sectionKey          String                      @db.VarChar(160)
-  originalSectionKey  String?                     @db.VarChar(160)
-  articleCategorySlug String?                     @db.VarChar(160)
-  eyebrow             String                      @db.VarChar(160)
-  title               String                      @db.VarChar(255)
-  description         String                      @db.Text
-  backgroundImageUrl  String                      @db.Text
-  linkLabel           String                      @db.VarChar(100)
-  linkUrl             String                      @db.Text
-  theme               WebsiteArticleSectionTheme  @default(DEFAULT)
-  layout              WebsiteArticleSectionLayout @default(STANDARD)
-  maxItems            Int                         @default(4)
-  position            Int
-  isVisible           Boolean                     @default(true)
-  createdAt           DateTime                    @default(now()) @db.Timestamptz(6)
-  updatedAt           DateTime                    @updatedAt @db.Timestamptz(6)
-  deletedAt           DateTime?                   @db.Timestamptz(6)
-  websiteContent      WebsiteContent              @relation(fields: [websiteContentId], references: [id])
+  id                          Int                         @id @default(autoincrement())
+  websiteContentId            Int
+  sectionKey                  String                      @db.VarChar(160)
+  originalSectionKey          String?                     @db.VarChar(160)
+  articleCategorySlug         String                      @db.VarChar(160)
+  originalArticleCategorySlug String?                     @db.VarChar(160)
+  eyebrow                     String                      @db.VarChar(160)
+  title                       String                      @db.VarChar(255)
+  description                 String                      @db.Text
+  backgroundImageUrl          String                      @db.Text
+  linkLabel                   String                      @db.VarChar(100)
+  categoryHeroImageUrl        String                      @db.Text
+  categoryHeroImageAlt        String                      @db.VarChar(255)
+  categoryHeroTitle           String                      @db.VarChar(255)
+  categoryHeroDescription     String                      @db.Text
+  theme                       WebsiteArticleSectionTheme  @default(DEFAULT)
+  layout                      WebsiteArticleSectionLayout @default(STANDARD)
+  maxItems                    Int                         @default(4)
+  position                    Int
+  isVisible                   Boolean                     @default(true)
+  createdAt                   DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt                   DateTime                    @updatedAt @db.Timestamptz(6)
+  deletedAt                   DateTime?                   @db.Timestamptz(6)
+  websiteContent              WebsiteContent              @relation(fields: [websiteContentId], references: [id])
 
   @@unique([websiteContentId, sectionKey])
+  @@unique([websiteContentId, articleCategorySlug], map: "website_article_sections_content_category_slug_key")
   @@index([websiteContentId, deletedAt, position])
   @@map("website_article_sections")
 }

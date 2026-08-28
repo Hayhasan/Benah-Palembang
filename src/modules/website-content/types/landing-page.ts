@@ -28,13 +28,12 @@ export interface LandingExploreItemData {
 
 export interface LandingArticleSectionData {
   sectionKey: string
-  articleCategorySlug: string | null
+  articleCategorySlug: string
   eyebrow: string
   title: string
   description: string
   backgroundImageUrl: string
   linkLabel: string
-  linkUrl: string
   theme: WebsiteArticleSectionTheme
   layout: WebsiteArticleSectionLayout
   maxItems: number

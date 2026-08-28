@@ -1,3 +1,4 @@
+import { getDefaultArticleCategoryPage } from "./default-article-category-pages"
 import type { LandingPageData } from "../types/landing-page"
 
 const heroDescription =
@@ -95,7 +96,8 @@ export const DEFAULT_LANDING_PAGE = {
   articleSections: [
     {
       sectionKey: "featured",
-      articleCategorySlug: null,
+      articleCategorySlug:
+        getDefaultArticleCategoryPage("featured")?.slug ?? "cerita-warga",
       eyebrow: "Pilihan redaksi",
       title: "Cerita dari Palembang",
       description:
@@ -103,7 +105,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua cerita",
-      linkUrl: "/cerita-warga",
       theme: "OFF_WHITE",
       layout: "FEATURED_FIRST",
       maxItems: 3,
@@ -119,7 +120,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/37234075/pexels-photo-37234075.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      linkUrl: "/gaya-hidup",
       theme: "DEFAULT",
       layout: "STANDARD",
       maxItems: 4,
@@ -136,7 +136,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/38956265/pexels-photo-38956265.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      linkUrl: "/ruang-kota",
       theme: "RED",
       layout: "FEATURED_FIRST",
       maxItems: 3,
@@ -153,7 +152,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/36748274/pexels-photo-36748274.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      linkUrl: "/industri-kreatif",
       theme: "OFF_WHITE",
       layout: "STANDARD",
       maxItems: 4,
@@ -170,7 +168,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/37628562/pexels-photo-37628562.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      linkUrl: "/kebudayaan",
       theme: "DEFAULT",
       layout: "FEATURED_FIRST",
       maxItems: 3,

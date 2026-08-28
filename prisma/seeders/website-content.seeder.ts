@@ -5,6 +5,7 @@ import type {
 } from "@prisma/client"
 
 import { DEFAULT_AGENDA_PAGE } from "../../src/modules/website-content/constants/default-agenda-page"
+import { getDefaultArticleCategoryPage } from "../../src/modules/website-content/constants/default-article-category-pages"
 import { DEFAULT_COLLABORATION_PAGE } from "../../src/modules/website-content/constants/default-collaboration-page"
 import { DEFAULT_HEADER_FOOTER_CONTENT } from "../../src/modules/website-content/constants/default-header-footer-content"
 import { DEFAULT_LANDING_PAGE } from "../../src/modules/website-content/constants/default-landing-page"
@@ -32,6 +33,20 @@ const collaborationAspectRatioToDatabase: Record<
   "4:5": "PORTRAIT_4_5",
   "16:9": "LANDSCAPE_16_9",
   "1:1": "SQUARE_1_1",
+}
+
+function defaultArticleCategoryHeroData(sectionKey: string) {
+  const category = getDefaultArticleCategoryPage(sectionKey)
+  if (!category) {
+    throw new Error(`Default category page for section ${sectionKey} is missing`)
+  }
+
+  return {
+    categoryHeroImageUrl: category.hero.imageUrl,
+    categoryHeroImageAlt: category.hero.imageAlt,
+    categoryHeroTitle: category.hero.title,
+    categoryHeroDescription: category.hero.description,
+  }
 }
 
 async function seedLandingPage(prisma: PrismaClient) {
@@ -79,7 +94,10 @@ async function seedLandingPage(prisma: PrismaClient) {
           create: DEFAULT_LANDING_PAGE.explore.items,
         },
         articleSections: {
-          create: DEFAULT_LANDING_PAGE.articleSections,
+          create: DEFAULT_LANDING_PAGE.articleSections.map((section) => ({
+            ...section,
+            ...defaultArticleCategoryHeroData(section.sectionKey),
+          })),
         },
         teamMembers: {
           create: DEFAULT_LANDING_PAGE.team.members,
