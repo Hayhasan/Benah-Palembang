@@ -3,13 +3,10 @@
 import {
   ArrowRight,
   Check,
-  ChevronDown,
   Clock3,
   Copy,
   Eye,
   Heart,
-  MessageCircle,
-  Send,
   Share2,
 } from "lucide-react"
 import Image from "next/image"
@@ -22,52 +19,8 @@ import { SectionHeading } from "@/features/public/components/SectionHeading"
 
 import { getPublicArticleMockStats } from "../constants/public-article-stats"
 import type { PublicArticlePageData } from "../types/public-article"
+import { ArticleComments } from "./article-comments"
 import { PublicArticleCard } from "./public-article-card"
-
-const dummyComments = [
-  {
-    id: 1,
-    name: "Rina Sari",
-    avatar: "https://i.pravatar.cc/80?img=1",
-    time: "2 jam lalu",
-    text: "Artikel yang sangat menarik! Palembang memang penuh dengan cerita yang perlu diangkat.",
-  },
-  {
-    id: 2,
-    name: "Budi Hartono",
-    avatar: "https://i.pravatar.cc/80?img=3",
-    time: "5 jam lalu",
-    text: "Terima kasih sudah mengangkat topik ini. Sebagai warga Palembang, saya sangat tersentuh.",
-  },
-  {
-    id: 3,
-    name: "Dewi Ayu",
-    avatar: "https://i.pravatar.cc/80?img=5",
-    time: "1 hari lalu",
-    text: "Sudah lama menunggu platform seperti ini. Semoga terus berkembang dan konsisten!",
-  },
-  {
-    id: 4,
-    name: "Ahmad Fauzi",
-    avatar: "https://i.pravatar.cc/80?img=8",
-    time: "2 hari lalu",
-    text: "Perspektif yang segar. Saya suka cara penulisannya yang mendalam tapi tetap ringan dibaca.",
-  },
-  {
-    id: 5,
-    name: "Siti Rahma",
-    avatar: "https://i.pravatar.cc/80?img=9",
-    time: "3 hari lalu",
-    text: "Foto dan visual pendukungnya luar biasa ciamik. Bangga dengan kebudayaan kita!",
-  },
-  {
-    id: 6,
-    name: "Reza Pratama",
-    avatar: "https://i.pravatar.cc/80?img=11",
-    time: "4 hari lalu",
-    text: "Ditunggu liputan seputar kuliner malam lorong basah dan tempat nongkrong seni lainnya.",
-  },
-]
 
 export function PublicArticleDetail({
   data,
@@ -78,12 +31,6 @@ export function PublicArticleDetail({
   const stats = getPublicArticleMockStats(article.id)
   const [liked, setLiked] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [showAllComments, setShowAllComments] = useState(false)
-
-  const visibleComments = showAllComments
-    ? dummyComments
-    : dummyComments.slice(0, 4)
-  const hasMoreComments = dummyComments.length > 4 && !showAllComments
 
   async function copyLink() {
     await navigator.clipboard?.writeText(window.location.href)
@@ -264,77 +211,11 @@ export function PublicArticleDetail({
                 </p>
               </div>
 
-              <div className="mt-16 border-t border-border pt-10">
-                <div className="mb-8 flex items-center gap-3">
-                  <MessageCircle className="size-5 text-palembang-red" />
-                  <h3 className="font-display text-xl font-bold tracking-[-0.03em]">
-                    Komentar ({dummyComments.length})
-                  </h3>
-                </div>
-                <form
-                  onSubmit={(event) => event.preventDefault()}
-                  className="mb-8 flex gap-3"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="https://i.pravatar.cc/80?img=12"
-                    alt="You"
-                    className="size-10 rounded-full object-cover"
-                  />
-                  <div className="flex flex-1 items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-2">
-                    <input
-                      placeholder="Tulis komentar..."
-                      className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Kirim komentar"
-                      className="rounded-full p-1.5 text-palembang-red transition-colors hover:bg-palembang-red/10"
-                    >
-                      <Send className="size-4" />
-                    </button>
-                  </div>
-                </form>
-                <div className="relative">
-                  <div className="space-y-6">
-                    {visibleComments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={comment.avatar}
-                          alt={comment.name}
-                          className="size-10 rounded-full object-cover"
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold">
-                              {comment.name}
-                            </p>
-                            <span className="text-[10px] text-muted-foreground">
-                              {comment.time}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-sm leading-6 opacity-80">
-                            {comment.text}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {hasMoreComments ? (
-                    <div className="absolute inset-x-0 -bottom-4 flex h-36 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-2 backdrop-blur-[2px]">
-                      <button
-                        type="button"
-                        onClick={() => setShowAllComments(true)}
-                        className="group flex items-center gap-2 rounded-full border border-border bg-background/95 px-6 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-foreground shadow-lg backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-palembang-red hover:text-palembang-red"
-                      >
-                        Lihat Komentar Lainnya ({dummyComments.length - 4})
-                        <ChevronDown className="size-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+              <ArticleComments
+                articleId={article.id}
+                articleSlug={article.slug}
+                comments={article.comments}
+              />
             </div>
           </div>
         </article>

@@ -23,27 +23,28 @@ enum ContentStatus {
 }
 
 model User {
-  id                  String    @id @default(uuid()) @db.Uuid
-  name                String    @db.VarChar(160)
-  email               String    @unique @db.VarChar(255)
-  originalEmail       String?   @db.VarChar(255)
-  password            String    @db.Text
-  role                UserRole  @default(USER)
-  avatarUrl           String?   @db.Text
-  bannerUrl           String?   @db.Text
-  bio                 String?   @db.Text
-  whatsappCountryCode String?   @db.VarChar(8)
-  whatsappNumber      String?   @db.VarChar(32)
-  instagramUrl        String?   @db.Text
-  xUrl                String?   @db.Text
-  linkedinUrl         String?   @db.Text
-  isBanned            Boolean   @default(false)
-  bannedAt            DateTime? @db.Timestamptz(6)
-  createdAt           DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt           DateTime  @updatedAt @db.Timestamptz(6)
-  deletedAt           DateTime? @db.Timestamptz(6)
-  authoredArticles    Article[] @relation("ArticleAuthor")
-  ownedEvents         Event[]   @relation("EventOwner")
+  id                  String           @id @default(uuid()) @db.Uuid
+  name                String           @db.VarChar(160)
+  email               String           @unique @db.VarChar(255)
+  originalEmail       String?          @db.VarChar(255)
+  password            String           @db.Text
+  role                UserRole         @default(USER)
+  avatarUrl           String?          @db.Text
+  bannerUrl           String?          @db.Text
+  bio                 String?          @db.Text
+  whatsappCountryCode String?          @db.VarChar(8)
+  whatsappNumber      String?          @db.VarChar(32)
+  instagramUrl        String?          @db.Text
+  xUrl                String?          @db.Text
+  linkedinUrl         String?          @db.Text
+  isBanned            Boolean          @default(false)
+  bannedAt            DateTime?        @db.Timestamptz(6)
+  createdAt           DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime         @updatedAt @db.Timestamptz(6)
+  deletedAt           DateTime?        @db.Timestamptz(6)
+  authoredArticles    Article[]        @relation("ArticleAuthor")
+  ownedEvents         Event[]          @relation("EventOwner")
+  articleComments     ArticleComment[] @relation("ArticleCommentUser")
 
   @@index([role, deletedAt, createdAt])
   @@index([isBanned, deletedAt])
@@ -396,6 +397,7 @@ model Article {
   author                  User                  @relation("ArticleAuthor", fields: [authorId], references: [id])
   websiteArticleSection   WebsiteArticleSection @relation(fields: [websiteArticleSectionId], references: [id])
   tags                    ArticleTag[]
+  comments                ArticleComment[]
 
   @@index([authorId, deletedAt, updatedAt])
   @@index([websiteArticleSectionId, status, deletedAt, publishedAt])
@@ -414,4 +416,20 @@ model ArticleTag {
 
   @@index([articleId, deletedAt, position])
   @@map("article_tags")
+}
+
+model ArticleComment {
+  id        Int       @id @default(autoincrement())
+  articleId Int
+  userId    String    @db.Uuid
+  content   String    @db.Text
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt DateTime? @db.Timestamptz(6)
+  article   Article   @relation(fields: [articleId], references: [id])
+  user      User      @relation("ArticleCommentUser", fields: [userId], references: [id])
+
+  @@index([articleId, deletedAt, createdAt])
+  @@index([userId, deletedAt])
+  @@map("article_comments")
 }

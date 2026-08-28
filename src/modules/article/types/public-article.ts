@@ -20,10 +20,23 @@ export interface PublicArticleAuthorData {
   roleLabel: string
 }
 
+export interface PublicArticleCommentItem {
+  id: number
+  userId: string
+  userName: string
+  userAvatarUrl: string
+  content: string
+  createdAt: string
+  createdAtLabel: string
+  isArticleAuthor: boolean
+}
+
 export interface PublicArticleDetailData extends PublicArticleCardData {
+  authorId: string
   content: string
   tags: string[]
   author: PublicArticleAuthorData
+  comments: PublicArticleCommentItem[]
 }
 
 export interface PublicArticlePageData {
@@ -35,3 +48,4 @@ export type LandingArticlesBySection = Record<
   string,
   PublicArticleCardData[]
 >
+

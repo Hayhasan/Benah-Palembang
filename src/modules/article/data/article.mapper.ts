@@ -36,6 +36,7 @@ export const publicArticleCardSelect = {
 
 export const publicArticleDetailSelect = {
   ...publicArticleCardSelect,
+  authorId: true,
   websiteArticleSectionId: true,
   content: true,
   author: {
@@ -50,6 +51,22 @@ export const publicArticleDetailSelect = {
     orderBy: { position: "asc" },
     select: { label: true },
   },
+  comments: {
+    where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      userId: true,
+      content: true,
+      createdAt: true,
+      user: {
+        select: {
+          name: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  },
 } satisfies Prisma.ArticleSelect
 
 export type PublicArticleCardRecord = Prisma.ArticleGetPayload<{
@@ -59,6 +76,33 @@ export type PublicArticleCardRecord = Prisma.ArticleGetPayload<{
 export type PublicArticleDetailRecord = Prisma.ArticleGetPayload<{
   select: typeof publicArticleDetailSelect
 }>
+
+export function formatRelativeTime(date: Date): string {
+  const now = new Date()
+  const diffInSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000))
+
+  if (diffInSeconds < 60) {
+    return "Baru saja"
+  }
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} menit lalu`
+  }
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) {
+    return `${diffInHours} jam lalu`
+  }
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 30) {
+    return `${diffInDays} hari lalu`
+  }
+  const diffInMonths = Math.floor(diffInDays / 30)
+  if (diffInMonths < 12) {
+    return `${diffInMonths} bulan lalu`
+  }
+  const diffInYears = Math.floor(diffInDays / 365)
+  return `${diffInYears} tahun lalu`
+}
 
 export function mapPublicArticleCard(
   article: PublicArticleCardRecord,
@@ -88,6 +132,7 @@ export function mapPublicArticleDetail(
 ): PublicArticleDetailData {
   return {
     ...mapPublicArticleCard(article),
+    authorId: article.authorId,
     content: article.content,
     tags: article.tags.map((tag) => tag.label),
     author: {
@@ -98,5 +143,15 @@ export function mapPublicArticleDetail(
         "Penulis dan kontributor yang berbagi cerita tentang Palembang.",
       roleLabel: "Penulis & Kontributor",
     },
+    comments: article.comments.map((comment) => ({
+      id: comment.id,
+      userId: comment.userId,
+      userName: comment.user.name,
+      userAvatarUrl: comment.user.avatarUrl || DEFAULT_AUTHOR_AVATAR,
+      content: comment.content,
+      createdAt: comment.createdAt.toISOString(),
+      createdAtLabel: formatRelativeTime(comment.createdAt),
+      isArticleAuthor: comment.userId === article.authorId,
+    })),
   }
 }

@@ -152,6 +152,7 @@ model Article {
   author                  User                  @relation("ArticleAuthor", fields: [authorId], references: [id])
   websiteArticleSection   WebsiteArticleSection @relation(fields: [websiteArticleSectionId], references: [id])
   tags                    ArticleTag[]
+  comments                ArticleComment[]
 
   @@index([authorId, deletedAt, updatedAt])
   @@index([websiteArticleSectionId, status, deletedAt, publishedAt])
@@ -171,10 +172,26 @@ model ArticleTag {
   @@index([articleId, deletedAt, position])
   @@map("article_tags")
 }
+
+model ArticleComment {
+  id        Int       @id @default(autoincrement())
+  articleId Int
+  userId    String    @db.Uuid
+  content   String    @db.Text
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt DateTime? @db.Timestamptz(6)
+  article   Article   @relation(fields: [articleId], references: [id])
+  user      User      @relation("ArticleCommentUser", fields: [userId], references: [id])
+
+  @@index([articleId, deletedAt, createdAt])
+  @@index([userId, deletedAt])
+  @@map("article_comments")
+}
 ```
 
 Model `User` dan `WebsiteArticleSection` mendapatkan relation collection yang
-sesuai untuk author dan kategori Article.
+sesuai untuk author, kategori, dan komentar Article.
 
 ### Keputusan schema
 
@@ -306,10 +323,15 @@ Komponen Landing Page tidak lagi mengimpor `articles` dari mock data.
 - Record tidak ditemukan menghasilkan `notFound()` dan tidak fallback ke artikel
   pertama.
 - Author name, avatar, dan bio berasal dari relasi User.
-- Related Article berasal dari section yang sama.
-- Views, likes, dan comments tetap mock/hardcoded pada UI.
-- Form dan daftar komentar tetap bersifat presentasional sampai module interaksi
-  dikerjakan.
+- Views dan likes tetap menggunakan helper/data presentasional mock.
+- Komentar artikel disimpan dan dibaca secara real-time dari database PostgreSQL
+  melalui model `ArticleComment`.
+- Komentar dapat dibaca publik oleh authenticated maupun unauthenticated user.
+- Komentar hanya dapat dikirim oleh authenticated user; unauthenticated user
+  diberikan CTA ramah untuk login terlebih dahulu.
+- Komentar milik sendiri dapat dihapus (soft delete) dan tidak dapat diedit.
+- Penanda waktu komentar menggunakan format relatif bahasa Indonesia, dan terdapat
+  badge khusus `Penulis` jika komentar berasal dari author artikel tersebut.
 
 ## 10. Dashboard author
 
