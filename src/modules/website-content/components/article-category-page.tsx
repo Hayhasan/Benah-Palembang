@@ -3,25 +3,25 @@
 import { ChevronDown, Search } from "lucide-react"
 import { useState } from "react"
 
-import { articles } from "@/data/mockData"
-import { ArticleCard } from "@/features/public/components/ArticleCard"
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
+import { PublicArticleCard } from "@/modules/article/components/public-article-card"
+import type { PublicArticleCardData } from "@/modules/article/types/public-article"
 
 import type { ArticleCategoryPageData } from "../types/article-category-page"
 
 export function ArticleCategoryPage({
   data,
+  articles,
 }: {
   data: ArticleCategoryPageData
+  articles: PublicArticleCardData[]
 }) {
   const [query, setQuery] = useState("")
   const [showAll, setShowAll] = useState(false)
-  const filtered = articles.filter(
-    (article) =>
-      article.category === data.category &&
-      `${article.title} ${article.excerpt}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+  const filtered = articles.filter((article) =>
+    `${article.title} ${article.excerpt}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
   )
   const initialCount = 4
   const visibleArticles =
@@ -69,7 +69,11 @@ export function ArticleCategoryPage({
             <div className="relative">
               <div className="columns-2 gap-3 sm:columns-2 sm:gap-6 lg:columns-4">
                 {visibleArticles.map((article) => (
-                  <ArticleCard key={article.id} article={article} masonry />
+                  <PublicArticleCard
+                    key={article.id}
+                    article={article}
+                    masonry
+                  />
                 ))}
               </div>
               {hasMore ? (

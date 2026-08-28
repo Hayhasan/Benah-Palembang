@@ -2,10 +2,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, ArrowUpRight, Sparkles } from "lucide-react"
 
-import { ArticleCard } from "@/features/public/components/ArticleCard"
 import { PublicFooter } from "@/features/public/components/PublicFooter"
 import { SectionHeading } from "@/features/public/components/SectionHeading"
-import { articles, categoryMeta } from "@/data/mockData"
+import { PublicArticleCard } from "@/modules/article/components/public-article-card"
+import type { LandingArticlesBySection } from "@/modules/article/types/public-article"
 
 import type {
   LandingArticleSectionData,
@@ -16,6 +16,7 @@ import { LandingHero } from "./landing-hero"
 
 interface LandingPageProps {
   data: LandingPageData
+  articlesBySection: LandingArticlesBySection
 }
 
 interface ThemeStyle {
@@ -71,17 +72,6 @@ const themeStyles: Record<WebsiteArticleSectionTheme, ThemeStyle> = {
   },
 }
 
-function getSectionArticles(section: LandingArticleSectionData) {
-  const matchingArticles = section.articleCategorySlug
-    ? articles.filter(
-        (article) =>
-          categoryMeta[article.category].slug === section.articleCategorySlug,
-      )
-    : articles.filter((article) => article.featured)
-
-  return matchingArticles.slice(0, section.maxItems)
-}
-
 function HighlightedTitle({ title }: { title: string }) {
   const separatorIndex = title.lastIndexOf(" ")
 
@@ -101,10 +91,15 @@ function HighlightedTitle({ title }: { title: string }) {
 
 function FeaturedArticleSection({
   section,
+  articlesBySection,
 }: {
   section: LandingArticleSectionData
+  articlesBySection: LandingArticlesBySection
 }) {
-  const sectionArticles = getSectionArticles(section)
+  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(
+    0,
+    section.maxItems,
+  )
   const style = themeStyles[section.theme]
 
   if (sectionArticles.length === 0) return null
@@ -137,7 +132,7 @@ function FeaturedArticleSection({
         />
         <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
           {sectionArticles.map((article, index) => (
-            <ArticleCard
+            <PublicArticleCard
               key={article.id}
               article={article}
               featured={
@@ -166,10 +161,15 @@ function FeaturedArticleSection({
 
 function CategoryArticleSection({
   section,
+  articlesBySection,
 }: {
   section: LandingArticleSectionData
+  articlesBySection: LandingArticlesBySection
 }) {
-  const sectionArticles = getSectionArticles(section)
+  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(
+    0,
+    section.maxItems,
+  )
   const style = themeStyles[section.theme]
 
   if (sectionArticles.length === 0) return null
@@ -215,7 +215,7 @@ function CategoryArticleSection({
         </div>
         <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
           {sectionArticles.map((article, index) => (
-            <ArticleCard
+            <PublicArticleCard
               key={article.id}
               article={article}
               featured={
@@ -244,14 +244,26 @@ function CategoryArticleSection({
 
 function LandingArticleSection({
   section,
+  articlesBySection,
 }: {
   section: LandingArticleSectionData
+  articlesBySection: LandingArticlesBySection
 }) {
   if (section.sectionKey === "featured") {
-    return <FeaturedArticleSection section={section} />
+    return (
+      <FeaturedArticleSection
+        section={section}
+        articlesBySection={articlesBySection}
+      />
+    )
   }
 
-  return <CategoryArticleSection section={section} />
+  return (
+    <CategoryArticleSection
+      section={section}
+      articlesBySection={articlesBySection}
+    />
+  )
 }
 
 function LandingCta({ data }: { data: LandingPageData["cta"] }) {
@@ -280,7 +292,7 @@ function LandingCta({ data }: { data: LandingPageData["cta"] }) {
   )
 }
 
-export function LandingPage({ data }: LandingPageProps) {
+export function LandingPage({ data, articlesBySection }: LandingPageProps) {
   const heroSlides = data.heroSlides.filter((slide) => slide.isVisible)
   const exploreItems = data.explore.items.filter((item) => item.isVisible)
   const articleSections = data.articleSections.filter(
@@ -365,7 +377,10 @@ export function LandingPage({ data }: LandingPageProps) {
             className="sticky top-0"
             style={{ zIndex: index === 0 ? 10 : 19 + index }}
           >
-            <LandingArticleSection section={section} />
+            <LandingArticleSection
+              section={section}
+              articlesBySection={articlesBySection}
+            />
           </div>
         ))}
 

@@ -1,8 +1,8 @@
+import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
 
-import type { Article } from "@/data/mockData"
+import type { PublicArticleCardData } from "../types/public-article"
 
 const masonryAspects = [
   "aspect-[3/4]",
@@ -17,28 +17,22 @@ const masonryAspects = [
   "aspect-[3/4]",
 ]
 
-function getCardAspect(id: string | number, featured: boolean) {
+function getCardAspect(id: number, featured: boolean) {
   if (featured) return "aspect-[16/9]"
-
-  const numericId =
-    typeof id === "string"
-      ? Number.parseInt(id.replace(/\D/g, ""), 10) || id.length
-      : id
-
-  return masonryAspects[numericId % masonryAspects.length]
+  return masonryAspects[id % masonryAspects.length]
 }
 
-interface ArticleCardProps {
-  article: Article
+interface PublicArticleCardProps {
+  article: PublicArticleCardData
   featured?: boolean
   masonry?: boolean
 }
 
-export function ArticleCard({
+export function PublicArticleCard({
   article,
   featured = false,
   masonry = false,
-}: ArticleCardProps) {
+}: PublicArticleCardProps) {
   const aspect = masonry
     ? getCardAspect(article.id, false)
     : featured
@@ -55,7 +49,7 @@ export function ArticleCard({
       >
         <Image
           fill
-          src={article.coverImage}
+          src={article.coverImageUrl}
           alt={article.title}
           sizes={
             featured
@@ -68,7 +62,9 @@ export function ArticleCard({
         <div className="absolute inset-0 flex translate-y-4 flex-col justify-end p-4 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 sm:p-7">
           <div className="mb-2 flex flex-wrap items-center gap-2 text-[8px] font-bold uppercase tracking-[0.16em] sm:gap-3 sm:text-[10px]">
             <span className="text-palembang-gold">{article.category}</span>
-            <span className="text-white/60">{article.publishedAt}</span>
+            <span className="text-white/60">
+              {article.publishedAtLabel}
+            </span>
           </div>
           <h3
             className={`font-display font-bold leading-[1.1] tracking-[-0.035em] ${featured && !masonry ? "text-lg sm:text-2xl lg:text-4xl" : "text-base sm:text-xl lg:text-2xl"}`}

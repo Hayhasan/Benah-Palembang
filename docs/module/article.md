@@ -369,10 +369,10 @@ src/modules/article/
     article-list.tsx
     article-preview.tsx
     public-article-card.tsx
-    public-article-category.tsx
     public-article-detail.tsx
   constants/
     default-articles.ts
+    public-article-stats.ts
   data/
     article.mapper.ts
     get-article-category-options.ts
@@ -386,6 +386,7 @@ src/modules/article/
     article.schema.ts
   types/
     article.ts
+    public-article.ts
 ```
 
 Query category option dapat menggunakan query publik yang diekspos module
@@ -398,14 +399,14 @@ Query category option dapat menggunakan query publik yang diekspos module
   migration.
 - [x] Buat default Article canonical dan seeder idempotent.
 - [x] Jalankan seeder dua kali untuk memastikan create lalu skip.
-- [ ] Integrasikan Article database ke landing page.
-- [ ] Integrasikan Article database ke `/<categorySlug>`.
-- [ ] Implementasikan detail `/artikel/[slug]` dengan `notFound()`.
+- [x] Integrasikan Article database ke landing page.
+- [x] Integrasikan Article database ke `/<categorySlug>`.
+- [x] Implementasikan detail `/artikel/[slug]` dengan `notFound()`.
 - [ ] Implementasikan list Article milik current user.
 - [ ] Implementasikan editor dan Server Action ownership.
-- [ ] Pindahkan komponen Article yang sudah terhubung backend ke module Article.
-- [ ] Hapus dependency Article terhadap mock lama yang sudah digantikan.
-- [ ] Jalankan validasi frontend, build, dan smoke check setelah integrasi
+- [x] Pindahkan komponen Article yang sudah terhubung backend ke module Article.
+- [x] Hapus dependency Article publik terhadap mock lama yang sudah digantikan.
+- [x] Jalankan validasi frontend, build, dan smoke check setelah integrasi
   route.
 
 ### Status schema dan seeding
@@ -425,6 +426,23 @@ Query category option dapat menggunakan query publik yang diekspos module
   tanpa duplicate atau overwrite.
 - Query verifikasi menemukan 0 Article dengan author yang tidak memenuhi aturan
   active `USER`.
+
+### Status integrasi halaman publik
+
+- Landing page mengambil Article `PUBLISHED` dari database, mengelompokkannya
+  berdasarkan `sectionKey`, lalu menerapkan `maxItems` dari konfigurasi Website
+  Content.
+- Category route memvalidasi hero/category melalui Website Content dan mengirim
+  DTO Article database ke Client Component untuk search serta show-all.
+- Detail route mencari slug exact, hanya menerima Article aktif yang sudah
+  published, dan memanggil `notFound()` ketika record tidak tersedia.
+- Related stories berasal dari `WebsiteArticleSection` yang sama dengan Article
+  detail.
+- Nama, avatar, dan bio penulis berasal dari relasi `User`.
+- Views, likes, dan comments tetap menggunakan helper/data presentasional dan
+  belum mempunyai table database.
+- Komponen card serta detail publik berada di `src/modules/article/components`;
+  public Article tidak lagi mengimpor dataset `src/data/mockData.ts`.
 
 ## 13. Kriteria selesai
 
