@@ -37,6 +37,8 @@ export interface PublicArticleDetailData extends PublicArticleCardData {
   tags: string[]
   author: PublicArticleAuthorData
   comments: PublicArticleCommentItem[]
+  likesCount: number
+  hasLiked: boolean
 }
 
 export interface PublicArticlePageData {

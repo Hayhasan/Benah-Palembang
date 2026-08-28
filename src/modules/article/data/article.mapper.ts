@@ -67,6 +67,17 @@ export const publicArticleDetailSelect = {
       },
     },
   },
+  likes: {
+    select: {
+      userId: true,
+    },
+  },
+  _count: {
+    select: {
+      likes: true,
+      comments: { where: { deletedAt: null } },
+    },
+  },
 } satisfies Prisma.ArticleSelect
 
 export type PublicArticleCardRecord = Prisma.ArticleGetPayload<{
@@ -129,7 +140,12 @@ export function mapPublicArticleCard(
 
 export function mapPublicArticleDetail(
   article: PublicArticleDetailRecord,
+  currentUserId?: string | null,
 ): PublicArticleDetailData {
+  const hasLiked = Boolean(
+    currentUserId && article.likes.some((like) => like.userId === currentUserId),
+  )
+
   return {
     ...mapPublicArticleCard(article),
     authorId: article.authorId,
@@ -153,5 +169,7 @@ export function mapPublicArticleDetail(
       createdAtLabel: formatRelativeTime(comment.createdAt),
       isArticleAuthor: comment.userId === article.authorId,
     })),
+    likesCount: article._count.likes,
+    hasLiked,
   }
 }

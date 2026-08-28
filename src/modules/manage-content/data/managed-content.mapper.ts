@@ -37,7 +37,8 @@ export function mapContentStatusLabel(
 export interface ArticleModerationRecord extends Article {
   author: Pick<User, "id" | "name" | "avatarUrl">
   _count?: {
-    comments: number
+    likes?: number
+    comments?: number
   }
 }
 
@@ -73,6 +74,7 @@ export function mapArticleToManagedContent(
     dateLabel: formatManagedDate(displayDate),
     stats: {
       ...baseStats,
+      likes: (article._count?.likes ?? 0).toString(),
       comments: article._count?.comments ?? 0,
     },
   }

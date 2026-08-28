@@ -54,6 +54,7 @@ export interface OwnedArticleEditorData {
   publishedAt: string | null
   publishedAtLabel: string
   commentsCount: number
+  likesCount: number
 }
 
 export type ArticleSaveIntent = "SAVE" | "POST"

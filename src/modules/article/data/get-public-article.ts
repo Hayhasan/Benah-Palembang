@@ -3,6 +3,7 @@ import "server-only"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { getCurrentUser } from "@/modules/auth/data/session-dal"
 
 import type { PublicArticlePageData } from "../types/public-article"
 import {
@@ -16,6 +17,7 @@ export async function getPublicArticle(
   slug: string,
 ): Promise<PublicArticlePageData | null> {
   await connection()
+  const currentUser = await getCurrentUser()
 
   const article = await prisma.article.findFirst({
     where: {
@@ -51,7 +53,7 @@ export async function getPublicArticle(
   })
 
   return {
-    article: mapPublicArticleDetail(article),
+    article: mapPublicArticleDetail(article, currentUser?.id),
     relatedArticles: relatedArticles.map(mapPublicArticleCard),
   }
 }

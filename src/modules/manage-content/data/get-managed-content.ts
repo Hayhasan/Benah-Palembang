@@ -62,6 +62,7 @@ export async function getManagedContent(input: {
             },
             _count: {
               select: {
+                likes: true,
                 comments: {
                   where: { deletedAt: null },
                 },

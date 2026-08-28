@@ -44,6 +44,7 @@ export const ownedArticleListSelect = {
   },
   _count: {
     select: {
+      likes: true,
       comments: {
         where: { deletedAt: null },
       },
@@ -82,6 +83,7 @@ export const ownedArticleEditorSelect = {
   },
   _count: {
     select: {
+      likes: true,
       comments: {
         where: { deletedAt: null },
       },
@@ -122,7 +124,7 @@ export function mapOwnedArticleListItem(
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
     views: stats.views,
-    likes: stats.likes,
+    likes: article._count.likes,
     comments: article._count.comments,
   }
 }
@@ -156,5 +158,6 @@ export function mapOwnedArticleEditor(
       ? publishedAtFormatter.format(article.publishedAt)
       : "Draf belum dipublikasikan",
     commentsCount: article._count.comments,
+    likesCount: article._count.likes,
   }
 }

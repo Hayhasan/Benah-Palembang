@@ -249,7 +249,7 @@ export function ManagedArticlePreview({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Heart className="size-4 text-palembang-red" />
-                  {stats.likes.toLocaleString("id-ID")} likes
+                  {article.likesCount.toLocaleString("id-ID")} likes
                 </span>
                 <span className="flex items-center gap-1.5">
                   <MessageCircle className="size-4 text-emerald-400" />

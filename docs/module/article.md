@@ -494,15 +494,20 @@ Query category option dapat menggunakan query publik yang diekspos module
 - Statistik views, likes, dan comments tetap memakai mock deterministic tanpa
   interaction table dan tanpa participants.
 
-## 13. Kriteria selesai
+## 14. Sistem Like Artikel
 
-- Article mempunyai schema dan migration valid.
-- Article berelasi ke User dan WebsiteArticleSection.
-- `seed:article` memakai random User role `USER` dan aman dijalankan ulang.
-- Landing, category, dan detail Article membaca database.
-- Public query hanya menampilkan Article published.
-- Dashboard hanya mengelola Article milik current user.
-- Delete memakai soft delete dan melepaskan slug unique.
-- Views, likes, dan comments tetap hardcoded di UI.
-- Article tidak mempunyai participants.
-- Tidak ada permission system atau hardcoded role access baru pada tahap ini.
+Article like diimplementasikan menggunakan table relasional `ArticleLike`:
+
+- **Model Prisma:** `ArticleLike` dengan relasi ke `Article` dan `User`, serta constraint `@@unique([articleId, userId])`.
+- **Server Action:** `toggleArticleLikeAction({ articleId })` yang memvalidasi session user dan melakukan toggle insert/delete row like.
+- **Halaman Publik (`/artikel/[slug]`):**
+  - Hanya dapat di-like oleh user authenticated.
+  - User guest/unauthenticated akan menerima notifikasi toast ramah untuk login ke `/login?redirect=/artikel/[slug]`.
+  - State optimis interaktif: icon hati merah menyala saat aktif, dan jumlah like ter-update instan.
+- **Dashboard Synchronization:**
+  - `/dashboard/content` menampilkan jumlah like riil database pada kolom statistik artikel.
+  - `/dashboard/content/[id]/article` menampilkan jumlah like riil pada metadata hero artikel.
+  - `/dashboard/create-article` menampilkan jumlah like riil pada tabel artikel author.
+  - `/dashboard/create-article/preview/[id]` menampilkan jumlah like riil pada metadata preview author.
+- **Rencana Event Like:**
+  - Model `EventLike` (`eventId`, `userId`) dirancang dengan pola yang sama dan akan diimplementasikan pada tahap terpisah.

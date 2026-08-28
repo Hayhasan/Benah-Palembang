@@ -11,12 +11,16 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
 import { SectionHeading } from "@/features/public/components/SectionHeading"
+import { useSession } from "@/modules/auth/hooks/use-session"
 
+import { toggleArticleLikeAction } from "../actions/toggle-article-like"
 import { getPublicArticleMockStats } from "../constants/public-article-stats"
 import type { PublicArticlePageData } from "../types/public-article"
 import { ArticleComments } from "./article-comments"
@@ -29,12 +33,18 @@ export function PublicArticleDetail({
 }) {
   const { article, relatedArticles } = data
   const stats = getPublicArticleMockStats(article.id)
-  const [liked, setLiked] = useState(false)
+  const router = useRouter()
+  const { user, status } = useSession()
+
+  const [liked, setLiked] = useState(article.hasLiked)
+  const [likesCount, setLikesCount] = useState(article.likesCount)
   const [copied, setCopied] = useState(false)
+  const [, startTransition] = useTransition()
 
   async function copyLink() {
     await navigator.clipboard?.writeText(window.location.href)
     setCopied(true)
+    toast.success("Tautan artikel berhasil disalin!")
     window.setTimeout(() => setCopied(false), 1_800)
   }
 
@@ -42,6 +52,42 @@ export function PublicArticleDetail({
     void navigator.share?.({
       title: article.title,
       url: window.location.href,
+    })
+  }
+
+  function handleToggleLike() {
+    if (status !== "authenticated" || !user) {
+      toast.info("Silakan masuk terlebih dahulu untuk menyukai artikel ini.", {
+        action: {
+          label: "Masuk",
+          onClick: () =>
+            router.push(
+              `/login?redirect=${encodeURIComponent(`/artikel/${article.slug}`)}`,
+            ),
+        },
+      })
+      return
+    }
+
+    const nextLiked = !liked
+    const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1)
+    setLiked(nextLiked)
+    setLikesCount(nextCount)
+
+    startTransition(async () => {
+      const result = await toggleArticleLikeAction({ articleId: article.id })
+      if (!result.success) {
+        toast.error(result.message)
+        setLiked(!nextLiked)
+        setLikesCount(likesCount)
+        return
+      }
+      if (typeof result.likesCount === "number") {
+        setLikesCount(result.likesCount)
+      }
+      if (typeof result.hasLiked === "boolean") {
+        setLiked(result.hasLiked)
+      }
     })
   }
 
@@ -99,8 +145,8 @@ export function PublicArticleDetail({
                     {article.readingTime} min read
                   </span>
                   <span className="flex items-center gap-2">
-                    <Heart className="size-4" />
-                    {stats.likes.toLocaleString("id-ID")} likes
+                    <Heart className={`size-4 ${liked ? "fill-palembang-red text-palembang-red" : ""}`} />
+                    {likesCount.toLocaleString("id-ID")} likes
                   </span>
                   <span className="flex items-center gap-2">
                     <Eye className="size-4" />
@@ -117,7 +163,7 @@ export function PublicArticleDetail({
                 <button
                   type="button"
                   aria-label="Sukai artikel"
-                  onClick={() => setLiked((value) => !value)}
+                  onClick={handleToggleLike}
                   className={`rounded-full border p-3 transition-colors ${liked ? "border-palembang-red bg-palembang-red text-white" : "border-border hover:border-palembang-red hover:text-palembang-red"}`}
                 >
                   <Heart className={`size-4 ${liked ? "fill-current" : ""}`} />
@@ -168,12 +214,13 @@ export function PublicArticleDetail({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setLiked((value) => !value)}
+                  onClick={handleToggleLike}
+                  className={liked ? "border-palembang-red text-palembang-red" : ""}
                 >
                   <Heart
                     className={`size-4 ${liked ? "fill-palembang-red text-palembang-red" : ""}`}
                   />
-                  Suka
+                  {liked ? "Disukai" : "Suka"} ({likesCount})
                 </Button>
                 <Button
                   variant="outline"
