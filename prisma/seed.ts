@@ -2,11 +2,13 @@ import "dotenv/config"
 
 import { PrismaClient } from "@prisma/client"
 
+import { seedAccountManage } from "./seeders/account-manage.seeder"
 import { seedWebsiteContent } from "./seeders/website-content.seeder"
 
 const prisma = new PrismaClient()
 
 const seeders = {
+  "account-manage": seedAccountManage,
   "website-content": seedWebsiteContent,
 } as const
 

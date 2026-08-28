@@ -9,63 +9,11 @@ import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
 import { useState, useMemo } from "react"
 import { toast } from "sonner"
-
-const initialUsers = [
-    { id: "USR-001", name: "Budi Hartono", email: "budi.hartono@gmail.com", role: "User", date: "25 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=11", isBanned: false },
-    { id: "USR-002", name: "Siti Aminah", email: "siti.aminah@gmail.com", role: "User", date: "24 Aug 2026", lastLogin: "2 jam lalu", avatar: "https://i.pravatar.cc/150?img=5", isBanned: false },
-    { id: "USR-003", name: "Andi Saputra", email: "andi.saputra@gmail.com", role: "User", date: "23 Aug 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=8", isBanned: false },
-    { id: "USR-004", name: "Rahmat Hidayat", email: "rahmat.h@yahoo.com", role: "User", date: "22 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=12", isBanned: false },
-    { id: "USR-005", name: "Dewi Lestari", email: "dewi.lestari@gmail.com", role: "User", date: "21 Aug 2026", lastLogin: "3 jam lalu", avatar: "https://i.pravatar.cc/150?img=9", isBanned: false },
-    { id: "USR-006", name: "Fajar Nugraha", email: "fajar.nugraha@outlook.com", role: "User", date: "20 Aug 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=15", isBanned: false },
-    { id: "USR-007", name: "Nurul Hidayah", email: "nurul.hidayah@gmail.com", role: "User", date: "19 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=20", isBanned: false },
-    { id: "USR-008", name: "Bayu Pratama", email: "bayu.pratama@gmail.com", role: "User", date: "18 Aug 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=33", isBanned: false },
-    { id: "USR-009", name: "Ayu Wulandari", email: "ayu.wulan@gmail.com", role: "User", date: "17 Aug 2026", lastLogin: "3 hari lalu", avatar: "https://i.pravatar.cc/150?img=26", isBanned: false },
-    { id: "USR-010", name: "Rizky Ramadhan", email: "rizky.rmd@yahoo.com", role: "User", date: "16 Aug 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=60", isBanned: true },
-    { id: "USR-011", name: "Putri Anggraini", email: "putri.ang@gmail.com", role: "User", date: "15 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=47", isBanned: false },
-    { id: "USR-012", name: "Ilham Kurniawan", email: "ilham.k@gmail.com", role: "User", date: "14 Aug 2026", lastLogin: "6 jam lalu", avatar: "https://i.pravatar.cc/150?img=52", isBanned: false },
-    { id: "USR-013", name: "Kartika Sari", email: "kartika.sari@outlook.com", role: "User", date: "13 Aug 2026", lastLogin: "4 hari lalu", avatar: "https://i.pravatar.cc/150?img=32", isBanned: false },
-    { id: "USR-014", name: "Doni Setiawan", email: "doni.setiawan@gmail.com", role: "User", date: "12 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=68", isBanned: false },
-    { id: "USR-015", name: "Mega Utami", email: "mega.utami@gmail.com", role: "User", date: "11 Aug 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=25", isBanned: false },
-    { id: "USR-016", name: "Hendra Wijaya", email: "hendra.w@yahoo.com", role: "User", date: "10 Aug 2026", lastLogin: "1 minggu lalu", avatar: "https://i.pravatar.cc/150?img=59", isBanned: false },
-    { id: "USR-017", name: "Tania Maharani", email: "tania.m@gmail.com", role: "User", date: "09 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=49", isBanned: false },
-    { id: "USR-018", name: "Bagus Prasetyo", email: "bagus.p@gmail.com", role: "User", date: "08 Aug 2026", lastLogin: "12 jam lalu", avatar: "https://i.pravatar.cc/150?img=57", isBanned: false },
-    { id: "USR-019", name: "Nadia Safitri", email: "nadia.safitri@gmail.com", role: "User", date: "07 Aug 2026", lastLogin: "5 hari lalu", avatar: "https://i.pravatar.cc/150?img=45", isBanned: false },
-    { id: "USR-020", name: "Agus Supriyadi", email: "agus.supriyadi@gmail.com", role: "User", date: "06 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=13", isBanned: false },
-    { id: "USR-021", name: "Maya Indah", email: "maya.indah@yahoo.com", role: "User", date: "05 Aug 2026", lastLogin: "3 jam lalu", avatar: "https://i.pravatar.cc/150?img=23", isBanned: false },
-    { id: "USR-022", name: "Eko Prasetyo", email: "eko.pras@gmail.com", role: "User", date: "04 Aug 2026", lastLogin: "2 minggu lalu", avatar: "https://i.pravatar.cc/150?img=53", isBanned: true },
-    { id: "USR-023", name: "Dina Kirana", email: "dina.kirana@gmail.com", role: "User", date: "03 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=29", isBanned: false },
-    { id: "USR-024", name: "Aris Munandar", email: "aris.m@gmail.com", role: "User", date: "02 Aug 2026", lastLogin: "4 jam lalu", avatar: "https://i.pravatar.cc/150?img=56", isBanned: false },
-    { id: "USR-025", name: "Rina Kusuma", email: "rina.kusuma@gmail.com", role: "User", date: "01 Aug 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=44", isBanned: false },
-    { id: "USR-026", name: "Deni Irawan", email: "deni.irawan@gmail.com", role: "User", date: "31 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=59", isBanned: false },
-    { id: "USR-027", name: "Citra Lestari", email: "citra.lestari@gmail.com", role: "User", date: "30 Jul 2026", lastLogin: "2 jam lalu", avatar: "https://i.pravatar.cc/150?img=47", isBanned: false },
-    { id: "USR-028", name: "Wahyu Hidayat", email: "wahyu.h@gmail.com", role: "User", date: "29 Jul 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=60", isBanned: false },
-    { id: "USR-029", name: "Tari Wulandari", email: "tari.wulan@gmail.com", role: "User", date: "28 Jul 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=48", isBanned: false },
-    { id: "USR-030", name: "Bambang Pamungkas", email: "bambang.p@gmail.com", role: "User", date: "27 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=61", isBanned: false },
-    { id: "USR-031", name: "Nurul Aini", email: "nurul.aini@gmail.com", role: "User", date: "26 Jul 2026", lastLogin: "3 hari lalu", avatar: "https://i.pravatar.cc/150?img=49", isBanned: false },
-    { id: "USR-032", name: "Surya Kencana", email: "surya.k@gmail.com", role: "User", date: "25 Jul 2026", lastLogin: "6 jam lalu", avatar: "https://i.pravatar.cc/150?img=62", isBanned: false },
-    { id: "USR-033", name: "Mega Utami", email: "mega.utami@gmail.com", role: "User", date: "24 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=26", isBanned: false },
-    { id: "USR-034", name: "Fajar Pratama", email: "fajar.pratama@gmail.com", role: "User", date: "23 Jul 2026", lastLogin: "4 hari lalu", avatar: "https://i.pravatar.cc/150?img=63", isBanned: false },
-    { id: "USR-035", name: "Gita Gutawa", email: "gita.gutawa@gmail.com", role: "User", date: "22 Jul 2026", lastLogin: "1 jam lalu", avatar: "https://i.pravatar.cc/150?img=25", isBanned: false },
-    { id: "USR-036", name: "Hadi Purnomo", email: "hadi.p@gmail.com", role: "User", date: "21 Jul 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=64", isBanned: false },
-    { id: "USR-037", name: "Intan Permatasari", email: "intan.p@gmail.com", role: "User", date: "20 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=24", isBanned: false },
-    { id: "USR-038", name: "Joko Susilo", email: "joko.susilo@gmail.com", role: "User", date: "19 Jul 2026", lastLogin: "1 minggu lalu", avatar: "https://i.pravatar.cc/150?img=65", isBanned: true },
-    { id: "USR-039", name: "Kartika Sari", email: "kartika.sari@gmail.com", role: "User", date: "18 Jul 2026", lastLogin: "3 jam lalu", avatar: "https://i.pravatar.cc/150?img=22", isBanned: false },
-    { id: "USR-040", name: "Lukman Hakim", email: "lukman.h@gmail.com", role: "User", date: "17 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=67", isBanned: false },
-    { id: "USR-041", name: "Melati Putri", email: "melati.putri@gmail.com", role: "User", date: "16 Jul 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=21", isBanned: false },
-    { id: "USR-042", name: "Naufal Zaki", email: "naufal.zaki@gmail.com", role: "User", date: "15 Jul 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=68", isBanned: false },
-    { id: "USR-043", name: "Olivia Maharani", email: "olivia.m@gmail.com", role: "User", date: "14 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=20", isBanned: false },
-    { id: "USR-044", name: "Pandu Wijaya", email: "pandu.wijaya@gmail.com", role: "User", date: "13 Jul 2026", lastLogin: "4 jam lalu", avatar: "https://i.pravatar.cc/150?img=69", isBanned: false },
-    { id: "USR-045", name: "Qori Alamsyah", email: "qori.alam@gmail.com", role: "User", date: "12 Jul 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=70", isBanned: false },
-    { id: "USR-046", name: "Ratna Juwita", email: "ratna.juwita@gmail.com", role: "User", date: "11 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=19", isBanned: false },
-    { id: "USR-047", name: "Sandiaga Putra", email: "sandi.putra@gmail.com", role: "User", date: "10 Jul 2026", lastLogin: "6 jam lalu", avatar: "https://i.pravatar.cc/150?img=14", isBanned: false },
-    { id: "USR-048", name: "Tiara Andini", email: "tiara.andini@gmail.com", role: "User", date: "09 Jul 2026", lastLogin: "3 hari lalu", avatar: "https://i.pravatar.cc/150?img=16", isBanned: false },
-    { id: "USR-049", name: "Umar Faruq", email: "umar.faruq@gmail.com", role: "User", date: "08 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=17", isBanned: false },
-    { id: "USR-050", name: "Vina Panduwinata", email: "vina.p@gmail.com", role: "User", date: "07 Jul 2026", lastLogin: "2 jam lalu", avatar: "https://i.pravatar.cc/150?img=18", isBanned: false },
-]
+import { DEFAULT_USER_ACCOUNTS } from "@/modules/account-manage/constants/default-accounts"
 
 export function ManageUser() {
     const navigate = useNavigate()
-    const [users, setUsers] = useState(initialUsers)
+    const [users, setUsers] = useState(DEFAULT_USER_ACCOUNTS)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -100,7 +48,7 @@ export function ManageUser() {
         setConfirmPassword("")
     }
 
-    const openBanConfirm = (user: typeof initialUsers[0]) => {
+    const openBanConfirm = (user: typeof DEFAULT_USER_ACCOUNTS[number]) => {
         setConfirmModal({
             open: true,
             userId: user.id,

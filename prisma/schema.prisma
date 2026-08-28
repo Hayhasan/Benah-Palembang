@@ -8,6 +8,38 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+model User {
+  id                  String    @id @default(uuid()) @db.Uuid
+  name                String    @db.VarChar(160)
+  email               String    @unique @db.VarChar(255)
+  originalEmail       String?   @db.VarChar(255)
+  password            String    @db.Text
+  role                UserRole  @default(USER)
+  avatarUrl           String?   @db.Text
+  bannerUrl           String?   @db.Text
+  bio                 String?   @db.Text
+  whatsappCountryCode String?   @db.VarChar(8)
+  whatsappNumber      String?   @db.VarChar(32)
+  instagramUrl        String?   @db.Text
+  xUrl                String?   @db.Text
+  linkedinUrl         String?   @db.Text
+  isBanned            Boolean   @default(false)
+  bannedAt            DateTime? @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt           DateTime? @db.Timestamptz(6)
+
+  @@index([role, deletedAt, createdAt])
+  @@index([isBanned, deletedAt])
+  @@map("users")
+}
+
 enum WebsiteArticleSectionTheme {
   DEFAULT
   RED

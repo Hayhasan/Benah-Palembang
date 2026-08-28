@@ -9,63 +9,11 @@ import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
 import { useState, useMemo } from "react"
 import { toast } from "sonner"
-
-const initialAdmins = [
-    { id: "ADM-001", name: "Dina Kirana", email: "dina.kirana@benahpalembang.id", role: "SuperAdmin", date: "01 Jan 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=9", isBanned: false },
-    { id: "ADM-002", name: "Agus Supriyadi", email: "agus.s@benahpalembang.id", role: "SuperAdmin", date: "01 Jan 2026", lastLogin: "2 jam lalu", avatar: "https://i.pravatar.cc/150?img=12", isBanned: false },
-    { id: "ADM-003", name: "Fajar Pratama", email: "fajar.p@benahpalembang.id", role: "Admin", date: "15 Jan 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=15", isBanned: false },
-    { id: "ADM-004", name: "Nurul Aini", email: "nurul.aini@benahpalembang.id", role: "Admin", date: "20 Jan 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=20", isBanned: false },
-    { id: "ADM-005", name: "Rian Hidayat", email: "rian.h@benahpalembang.id", role: "Admin", date: "01 Feb 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=60", isBanned: false },
-    { id: "ADM-006", name: "Siti Rahmawati", email: "siti.rahma@benahpalembang.id", role: "Admin", date: "10 Feb 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=47", isBanned: false },
-    { id: "ADM-007", name: "Bayu Anggara", email: "bayu.a@benahpalembang.id", role: "Admin", date: "15 Feb 2026", lastLogin: "3 jam lalu", avatar: "https://i.pravatar.cc/150?img=33", isBanned: false },
-    { id: "ADM-008", name: "Mega Puspita", email: "mega.p@benahpalembang.id", role: "Admin", date: "01 Mar 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=25", isBanned: false },
-    { id: "ADM-009", name: "Ilham Kurniawan", email: "ilham.k@benahpalembang.id", role: "Admin", date: "10 Mar 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=52", isBanned: false },
-    { id: "ADM-010", name: "Kartika Sari", email: "kartika.s@benahpalembang.id", role: "Admin", date: "20 Mar 2026", lastLogin: "4 jam lalu", avatar: "https://i.pravatar.cc/150?img=32", isBanned: true },
-    { id: "ADM-011", name: "Doni Prasetyo", email: "doni.p@benahpalembang.id", role: "Admin", date: "01 Apr 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=68", isBanned: false },
-    { id: "ADM-012", name: "Tania Wijaya", email: "tania.w@benahpalembang.id", role: "Admin", date: "15 Apr 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=49", isBanned: false },
-    { id: "ADM-013", name: "Hendra Saputra", email: "hendra.s@benahpalembang.id", role: "SuperAdmin", date: "01 May 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=59", isBanned: false },
-    { id: "ADM-014", name: "Bagus Triadi", email: "bagus.t@benahpalembang.id", role: "Admin", date: "15 May 2026", lastLogin: "6 jam lalu", avatar: "https://i.pravatar.cc/150?img=57", isBanned: false },
-    { id: "ADM-015", name: "Nadia Utami", email: "nadia.u@benahpalembang.id", role: "Admin", date: "01 Jun 2026", lastLogin: "3 hari lalu", avatar: "https://i.pravatar.cc/150?img=45", isBanned: false },
-    { id: "ADM-016", name: "Aris Munandar", email: "aris.m@benahpalembang.id", role: "Admin", date: "15 Jun 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=56", isBanned: false },
-    { id: "ADM-017", name: "Maya Dewi", email: "maya.d@benahpalembang.id", role: "Admin", date: "01 Jul 2026", lastLogin: "2 jam lalu", avatar: "https://i.pravatar.cc/150?img=23", isBanned: false },
-    { id: "ADM-018", name: "Eko Wahyudi", email: "eko.w@benahpalembang.id", role: "Admin", date: "15 Jul 2026", lastLogin: "1 minggu lalu", avatar: "https://i.pravatar.cc/150?img=53", isBanned: false },
-    { id: "ADM-019", name: "Rina Oktavia", email: "rina.o@benahpalembang.id", role: "Admin", date: "01 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=44", isBanned: false },
-    { id: "ADM-020", name: "Zulqarnain", email: "zulqarnain@benahpalembang.id", role: "Admin", date: "05 Aug 2026", lastLogin: "4 jam lalu", avatar: "https://i.pravatar.cc/150?img=65", isBanned: false },
-    { id: "ADM-021", name: "Annisa Permata", email: "annisa.p@benahpalembang.id", role: "Admin", date: "10 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=28", isBanned: false },
-    { id: "ADM-022", name: "Gilang Ramadhan", email: "gilang.r@benahpalembang.id", role: "Admin", date: "15 Aug 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=54", isBanned: false },
-    { id: "ADM-023", name: "Devi Anggraini", email: "devi.a@benahpalembang.id", role: "Admin", date: "18 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=36", isBanned: false },
-    { id: "ADM-024", name: "Farhan Hakim", email: "farhan.h@benahpalembang.id", role: "Admin", date: "20 Aug 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=61", isBanned: false },
-    { id: "ADM-025", name: "Cindy Claudia", email: "cindy.c@benahpalembang.id", role: "SuperAdmin", date: "22 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=38", isBanned: false },
-    { id: "ADM-026", name: "Rahmat Hidayat", email: "rahmat.h@benahpalembang.id", role: "Admin", date: "21 Aug 2026", lastLogin: "1 jam lalu", avatar: "https://i.pravatar.cc/150?img=59", isBanned: false },
-    { id: "ADM-027", name: "Siti Nurhaliza", email: "siti.n@benahpalembang.id", role: "Admin", date: "20 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=47", isBanned: false },
-    { id: "ADM-028", name: "Teguh Prakoso", email: "teguh.p@benahpalembang.id", role: "Admin", date: "19 Aug 2026", lastLogin: "3 jam lalu", avatar: "https://i.pravatar.cc/150?img=60", isBanned: false },
-    { id: "ADM-029", name: "Utami Dewi", email: "utami.d@benahpalembang.id", role: "Admin", date: "18 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=48", isBanned: false },
-    { id: "ADM-030", name: "Vicky Prasetya", email: "vicky.p@benahpalembang.id", role: "Admin", date: "17 Aug 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=61", isBanned: false },
-    { id: "ADM-031", name: "Winda Amalia", email: "winda.a@benahpalembang.id", role: "Admin", date: "16 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=49", isBanned: false },
-    { id: "ADM-032", name: "Yogi Pratama", email: "yogi.p@benahpalembang.id", role: "Admin", date: "15 Aug 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=62", isBanned: false },
-    { id: "ADM-033", name: "Zahra Salsabila", email: "zahra.s@benahpalembang.id", role: "Admin", date: "14 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=26", isBanned: false },
-    { id: "ADM-034", name: "Aditya Pratama", email: "aditya.p@benahpalembang.id", role: "Admin", date: "13 Aug 2026", lastLogin: "4 jam lalu", avatar: "https://i.pravatar.cc/150?img=63", isBanned: false },
-    { id: "ADM-035", name: "Bella Safira", email: "bella.s@benahpalembang.id", role: "Admin", date: "12 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=25", isBanned: false },
-    { id: "ADM-036", name: "Candra Wijaya", email: "candra.w@benahpalembang.id", role: "Admin", date: "11 Aug 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=64", isBanned: false },
-    { id: "ADM-037", name: "Diah Permata", email: "diah.p@benahpalembang.id", role: "Admin", date: "10 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=24", isBanned: false },
-    { id: "ADM-038", name: "Erwin Saputra", email: "erwin.s@benahpalembang.id", role: "Admin", date: "09 Aug 2026", lastLogin: "6 jam lalu", avatar: "https://i.pravatar.cc/150?img=65", isBanned: false },
-    { id: "ADM-039", name: "Fanny Anggraini", email: "fanny.a@benahpalembang.id", role: "Admin", date: "08 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=22", isBanned: false },
-    { id: "ADM-040", name: "Gunawan Santoso", email: "gunawan.s@benahpalembang.id", role: "Admin", date: "07 Aug 2026", lastLogin: "3 jam lalu", avatar: "https://i.pravatar.cc/150?img=67", isBanned: false },
-    { id: "ADM-041", name: "Hesti Purwanti", email: "hesti.p@benahpalembang.id", role: "Admin", date: "06 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=21", isBanned: false },
-    { id: "ADM-042", name: "Irfan Hakim", email: "irfan.h@benahpalembang.id", role: "Admin", date: "05 Aug 2026", lastLogin: "2 hari lalu", avatar: "https://i.pravatar.cc/150?img=68", isBanned: false },
-    { id: "ADM-043", name: "Jihan Fahira", email: "jihan.f@benahpalembang.id", role: "Admin", date: "04 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=20", isBanned: false },
-    { id: "ADM-044", name: "Kurniawan Dwi", email: "kurniawan.d@benahpalembang.id", role: "Admin", date: "03 Aug 2026", lastLogin: "4 jam lalu", avatar: "https://i.pravatar.cc/150?img=69", isBanned: false },
-    { id: "ADM-045", name: "Larasati Dewi", email: "larasati.d@benahpalembang.id", role: "Admin", date: "02 Aug 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=70", isBanned: false },
-    { id: "ADM-046", name: "Maulana Malik", email: "maulana.m@benahpalembang.id", role: "Admin", date: "01 Aug 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=14", isBanned: false },
-    { id: "ADM-047", name: "Novita Sari", email: "novita.s@benahpalembang.id", role: "Admin", date: "31 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=16", isBanned: false },
-    { id: "ADM-048", name: "Oki Setiana", email: "oki.s@benahpalembang.id", role: "Admin", date: "30 Jul 2026", lastLogin: "1 hari lalu", avatar: "https://i.pravatar.cc/150?img=17", isBanned: false },
-    { id: "ADM-049", name: "Putra Mahardika", email: "putra.m@benahpalembang.id", role: "Admin", date: "29 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=18", isBanned: false },
-    { id: "ADM-050", name: "Qanita Lutfia", email: "qanita.l@benahpalembang.id", role: "SuperAdmin", date: "28 Jul 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=19", isBanned: false },
-]
+import { DEFAULT_ADMIN_ACCOUNTS } from "@/modules/account-manage/constants/default-accounts"
 
 export function ManageAdmin() {
     const navigate = useNavigate()
-    const [admins, setAdmins] = useState(initialAdmins)
+    const [admins, setAdmins] = useState(DEFAULT_ADMIN_ACCOUNTS)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -100,7 +48,7 @@ export function ManageAdmin() {
         setConfirmPassword("")
     }
 
-    const openBanConfirm = (admin: typeof initialAdmins[0]) => {
+    const openBanConfirm = (admin: typeof DEFAULT_ADMIN_ACCOUNTS[number]) => {
         setConfirmModal({
             open: true,
             adminId: admin.id,

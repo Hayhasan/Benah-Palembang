@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
+    "seed:account-manage": "tsx prisma/seed.ts account-manage",
     "seed:website-content": "tsx prisma/seed.ts website-content"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "@tiptap/extension-youtube": "^3.30.5",
     "@tiptap/react": "^3.30.5",
     "@tiptap/starter-kit": "^3.30.5",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.11.0",
     "clsx": "^2.1.1",
