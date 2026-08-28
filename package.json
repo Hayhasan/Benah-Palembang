@@ -13,6 +13,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "seed:account-manage": "tsx prisma/seed.ts account-manage",
+    "seed:article": "tsx prisma/seed.ts article",
     "seed:event": "tsx prisma/seed.ts event",
     "seed:website-content": "tsx prisma/seed.ts website-content"
   },

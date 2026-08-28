@@ -3,6 +3,7 @@ import "dotenv/config"
 import { PrismaClient } from "@prisma/client"
 
 import { seedAccountManage } from "./seeders/account-manage.seeder"
+import { seedArticle } from "./seeders/article.seeder"
 import { seedEvent } from "./seeders/event.seeder"
 import { seedWebsiteContent } from "./seeders/website-content.seeder"
 
@@ -12,6 +13,7 @@ const seeders = {
   "account-manage": seedAccountManage,
   "website-content": seedWebsiteContent,
   event: seedEvent,
+  article: seedArticle,
 } as const
 
 type SeederName = keyof typeof seeders

@@ -114,9 +114,20 @@ TAKEN_DOWN -> PUBLISHED
 Tombol publish pada halaman author berarti submit review, bukan langsung
 menampilkan Article pada halaman publik.
 
+POV author mengikuti aturan status owner pada Event:
+
+- Article `DRAFT` mempunyai tombol **Post** untuk berpindah ke
+  `PENDING_REVIEW`.
+- Article `PUBLISHED` mempunyai tombol **Archive** untuk menjalankan soft
+  delete.
+- Article `PENDING_REVIEW`, `REJECTED`, dan `TAKEN_DOWN` tidak mempunyai tombol
+  perubahan status.
+- Tombol **Takedown** dan **Restore** hanya menjadi bagian flow moderasi Manage
+  Content dan tidak tersedia pada halaman author.
+
 ## 5. Database
 
-Schema yang direncanakan:
+Schema yang sudah diimplementasikan:
 
 ```prisma
 model Article {
@@ -182,7 +193,8 @@ sesuai untuk author dan kategori Article.
 
 ## 6. Soft delete
 
-Delete dari dashboard author selalu soft delete.
+Archive dari dashboard author selalu menggunakan soft delete dan hanya tersedia
+untuk Article `PUBLISHED`.
 
 Dalam satu transaction:
 
@@ -192,7 +204,7 @@ Dalam satu transaction:
 - Isi `deletedAt` seluruh ArticleTag aktif.
 
 Takedown hanya mengubah status menjadi `TAKEN_DOWN`. Record tidak dihapus dan
-dapat dipulihkan menjadi `PUBLISHED`.
+aksi tersebut tidak tersedia pada POV author.
 
 ## 7. Sumber mock canonical
 
@@ -381,18 +393,38 @@ Query category option dapat menggunakan query publik yang diekspos module
 
 ## 12. Implementation plan Article
 
-1. Finalisasi dokumen Article setelah Event foundation tersedia.
-2. Tambahkan model, relation User, relation WebsiteArticleSection, dan migration.
-3. Buat default Article canonical dan seeder idempotent.
-4. Jalankan seeder dua kali untuk memastikan create lalu skip.
-5. Integrasikan Article database ke landing page.
-6. Integrasikan Article database ke `/<categorySlug>`.
-7. Implementasikan detail `/artikel/[slug]` dengan `notFound()`.
-8. Implementasikan list Article milik current user.
-9. Implementasikan editor dan Server Action ownership.
-10. Pindahkan komponen Article yang sudah terhubung backend ke module Article.
-11. Hapus dependency Article terhadap mock lama yang sudah digantikan.
-12. Jalankan validasi Prisma, TypeScript, lint, build, dan smoke check.
+- [x] Finalisasi dokumen Article setelah Event foundation tersedia.
+- [x] Tambahkan model, relation User, relation WebsiteArticleSection, dan
+  migration.
+- [x] Buat default Article canonical dan seeder idempotent.
+- [x] Jalankan seeder dua kali untuk memastikan create lalu skip.
+- [ ] Integrasikan Article database ke landing page.
+- [ ] Integrasikan Article database ke `/<categorySlug>`.
+- [ ] Implementasikan detail `/artikel/[slug]` dengan `notFound()`.
+- [ ] Implementasikan list Article milik current user.
+- [ ] Implementasikan editor dan Server Action ownership.
+- [ ] Pindahkan komponen Article yang sudah terhubung backend ke module Article.
+- [ ] Hapus dependency Article terhadap mock lama yang sudah digantikan.
+- [ ] Jalankan validasi frontend, build, dan smoke check setelah integrasi
+  route.
+
+### Status schema dan seeding
+
+- Migration `20260828141609_add_article_module` sudah dibuat dan diterapkan.
+- Model `Article` berelasi ke `User` melalui relation `ArticleAuthor` dan ke
+  `WebsiteArticleSection` melalui `websiteArticleSectionId`.
+- Actor dan waktu review tidak disimpan pada Article karena nantinya berasal
+  dari central activity log.
+- Canonical data berisi 100 Article: 50 mock public dan 50 mock dashboard owner.
+- Distribusi awal terdiri dari 95 `PUBLISHED`, 4 `DRAFT`, dan 1 `TAKEN_DOWN`.
+- Seluruh lima category section terisi: 12 `cerita-warga`, 24 `gaya-hidup`, 18
+  `ruang-kota`, 16 `industri-kreatif`, dan 30 `kebudayaan`.
+- Seeder memilih author secara random hanya dari User aktif, tidak banned, dan
+  mempunyai role `USER`.
+- Eksekusi pertama membuat 100 Article; eksekusi kedua melewati seluruh data
+  tanpa duplicate atau overwrite.
+- Query verifikasi menemukan 0 Article dengan author yang tidak memenuhi aturan
+  active `USER`.
 
 ## 13. Kriteria selesai
 

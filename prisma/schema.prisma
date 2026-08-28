@@ -42,6 +42,7 @@ model User {
   createdAt           DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @db.Timestamptz(6)
   deletedAt           DateTime? @db.Timestamptz(6)
+  authoredArticles    Article[] @relation("ArticleAuthor")
   ownedEvents         Event[]   @relation("EventOwner")
 
   @@index([role, deletedAt, createdAt])
@@ -169,6 +170,7 @@ model WebsiteArticleSection {
   createdAt                   DateTime                    @default(now()) @db.Timestamptz(6)
   updatedAt                   DateTime                    @updatedAt @db.Timestamptz(6)
   deletedAt                   DateTime?                   @db.Timestamptz(6)
+  articles                    Article[]
   websiteContent              WebsiteContent              @relation(fields: [websiteContentId], references: [id])
 
   @@unique([websiteContentId, sectionKey])
@@ -370,4 +372,46 @@ model EventTag {
 
   @@index([eventId, deletedAt, position])
   @@map("event_tags")
+}
+
+model Article {
+  id                      Int                   @id @default(autoincrement())
+  authorId                String                @db.Uuid
+  websiteArticleSectionId Int
+  slug                    String                @unique @db.VarChar(180)
+  originalSlug            String?               @db.VarChar(180)
+  title                   String                @db.VarChar(255)
+  excerpt                 String                @db.Text
+  content                 String                @db.Text
+  coverImageUrl           String                @db.Text
+  readingTime             Int
+  isFeatured              Boolean               @default(false)
+  status                  ContentStatus         @default(DRAFT)
+  moderationNote          String?               @db.Text
+  submittedAt             DateTime?             @db.Timestamptz(6)
+  publishedAt             DateTime?             @db.Timestamptz(6)
+  createdAt               DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime              @updatedAt @db.Timestamptz(6)
+  deletedAt               DateTime?             @db.Timestamptz(6)
+  author                  User                  @relation("ArticleAuthor", fields: [authorId], references: [id])
+  websiteArticleSection   WebsiteArticleSection @relation(fields: [websiteArticleSectionId], references: [id])
+  tags                    ArticleTag[]
+
+  @@index([authorId, deletedAt, updatedAt])
+  @@index([websiteArticleSectionId, status, deletedAt, publishedAt])
+  @@map("articles")
+}
+
+model ArticleTag {
+  id        Int       @id @default(autoincrement())
+  articleId Int
+  label     String    @db.VarChar(80)
+  position  Int
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt DateTime? @db.Timestamptz(6)
+  article   Article   @relation(fields: [articleId], references: [id])
+
+  @@index([articleId, deletedAt, position])
+  @@map("article_tags")
 }
