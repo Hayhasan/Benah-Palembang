@@ -3,6 +3,8 @@
 import type { UserRole } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
+import { revokeUserSessions } from "@/modules/auth/data/session"
 
 import { ACCOUNT_ROUTE_CONFIG } from "../constants/account-route-role"
 import { accountMutationSchema } from "../schemas/account-manage.schema"
@@ -12,7 +14,8 @@ import { revalidateAccountRoutes } from "./revalidate-account-routes"
 export async function softDeleteAccountAction(
   input: unknown,
 ): Promise<AccountActionResult> {
-  // TODO(auth): Require a server session with account-management permission.
+  await requireRole(["SUPERADMIN"])
+
   const parsed = accountMutationSchema.safeParse(input)
   if (!parsed.success) {
     return {
@@ -75,6 +78,8 @@ export async function softDeleteAccountAction(
         message: "SuperAdmin tidak dapat dihapus.",
       }
     }
+
+    await revokeUserSessions(id)
 
     revalidateAccountRoutes(routeRole, id)
 

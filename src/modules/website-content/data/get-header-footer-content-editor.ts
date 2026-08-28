@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_HEADER_FOOTER_CONTENT } from "../constants/default-header-footer-content"
 import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
@@ -117,6 +118,7 @@ export async function readHeaderFooterContentEditor(): Promise<HeaderFooterConte
 }
 
 export async function getHeaderFooterContentEditor(): Promise<HeaderFooterContentEditorData> {
+  await requireRole(["ADMIN", "SUPERADMIN"])
   await connection()
   return readHeaderFooterContentEditor()
 }

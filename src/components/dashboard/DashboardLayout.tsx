@@ -1,14 +1,11 @@
 "use client"
 
-import { Navigate } from "@/lib/navigation"
-import { useAuth } from "@/context/AuthContext"
 import { Sidebar } from "./Sidebar"
 import * as React from "react"
 import { useEffect, useState } from "react"
 import { UnsavedChangesProvider } from "@/context/UnsavedChangesContext"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth()
     const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
@@ -17,10 +14,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
-
-    if (!user) {
-        return <Navigate href="/login" replace />
-    }
 
     return (
         <UnsavedChangesProvider>

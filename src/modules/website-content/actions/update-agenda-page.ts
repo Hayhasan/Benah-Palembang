@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { readAgendaPageEditor } from "../data/get-agenda-page-editor"
 import { agendaPageEditorSchema } from "../schemas/agenda-page.schema"
@@ -24,8 +25,8 @@ function agendaContentData(data: AgendaPageEditorData) {
 export async function updateAgendaPageAction(
   input: unknown,
 ): Promise<UpdateAgendaPageResult> {
-  // TODO(auth): Require an authenticated admin/superadmin server session here.
-  // The current AuthContext is client-only and cannot secure this mutation.
+  await requireRole(["ADMIN", "SUPERADMIN"])
+
   const parsed = agendaPageEditorSchema.safeParse(input)
   if (!parsed.success) {
     const issue = parsed.error.issues[0]

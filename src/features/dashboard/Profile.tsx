@@ -4,7 +4,7 @@ import { useNavigate } from "@/lib/navigation"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useAuth } from "@/context/AuthContext"
+import { useCurrentUser } from "@/modules/auth/hooks/use-current-user"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { InternationalPhoneInput } from "@/components/dashboard/InternationalPhoneInput"
 import { Edit2, MessageCircle, Heart, Eye, Save, X, Camera } from "lucide-react"
@@ -18,14 +18,14 @@ const dummyGallery = [
 
 export function Profile() {
     const navigate = useNavigate()
-    const { user } = useAuth()
+    const user = useCurrentUser()
     const { setIsDirty, registerSaveHandler } = useUnsavedChanges()
     const [isEditing, setIsEditing] = useState(false)
     
     // State form
     const [bannerUrl, setBannerUrl] = useState("https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop")
-    const [avatarUrl, setAvatarUrl] = useState(user?.role === 'superadmin' ? 'https://i.pravatar.cc/150?img=33' : 'https://i.pravatar.cc/150?img=11')
-    const [name, setName] = useState(user?.name || "")
+    const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || (user.role === 'SUPERADMIN' ? 'https://i.pravatar.cc/150?img=33' : 'https://i.pravatar.cc/150?img=11'))
+    const [name, setName] = useState(user.name)
     const [bio, setBio] = useState("Penulis dan kreator konten yang berfokus pada kebudayaan dan ruang kota Palembang. Tertarik pada hal-hal kecil yang sering terlewatkan dari hiruk-pikuk kota besar. Mari berkolaborasi untuk Palembang yang lebih baik.")
     const [igUrl, setIgUrl] = useState("https://instagram.com/user")
     const [twUrl, setTwUrl] = useState("https://twitter.com/user")
@@ -69,8 +69,6 @@ export function Profile() {
             setIsDirty(false)
         }
     }, [isEditing, registerSaveHandler, setIsDirty])
-
-    if (!user) return null
 
     const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]

@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { readHeaderFooterContentEditor } from "../data/get-header-footer-content-editor"
 import { headerFooterContentEditorSchema } from "../schemas/header-footer-content.schema"
@@ -160,8 +161,8 @@ async function updateHeaderFooterContent(
 export async function updateHeaderFooterContentAction(
   input: unknown,
 ): Promise<UpdateHeaderFooterContentResult> {
-  // TODO(auth): Require an authenticated admin/superadmin server session here.
-  // The current AuthContext is client-only and cannot secure this mutation.
+  await requireRole(["ADMIN", "SUPERADMIN"])
+
   const parsed = headerFooterContentEditorSchema.safeParse(input)
   if (!parsed.success) {
     const issue = parsed.error.issues[0]

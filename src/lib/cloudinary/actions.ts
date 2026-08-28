@@ -1,11 +1,13 @@
 "use server"
 
 import { getCloudinary } from "./cloudinary"
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 const WEBSITE_CONTENT_FOLDER = "benah-palembang/website-content"
 
 export async function createImageUploadSignature() {
-  // TODO(auth): Require an authenticated dashboard user after server auth exists.
+  await requireCurrentUser()
+
   try {
     const { client, config } = getCloudinary()
     const timestamp = Math.floor(Date.now() / 1000)

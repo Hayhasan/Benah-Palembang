@@ -3,6 +3,7 @@ import "server-only"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_ARTICLE_CATEGORY_PAGES } from "../constants/default-article-category-pages"
 import { DEFAULT_LANDING_PAGE } from "../constants/default-landing-page"
@@ -59,6 +60,7 @@ export async function readArticleCategoryPageEditor(): Promise<ArticleCategoryPa
 }
 
 export async function getArticleCategoryPageEditor(): Promise<ArticleCategoryPagesEditorData> {
+  await requireRole(["ADMIN", "SUPERADMIN"])
   await connection()
   return readArticleCategoryPageEditor()
 }

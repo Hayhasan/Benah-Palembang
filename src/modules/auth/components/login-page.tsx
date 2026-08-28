@@ -1,33 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { useState, type FormEvent } from "react"
+import { useActionState, useState } from "react"
 import { ArrowRight, Eye, EyeOff } from "lucide-react"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/context/AuthContext"
-import { useNavigate } from "@/lib/navigation"
 
+import { loginAction } from "../actions/login"
+import { INITIAL_AUTH_ACTION_STATE } from "../types/auth-action-state"
 import { AuthPageShell } from "./auth-page-shell"
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const { login } = useAuth()
-  const navigate = useNavigate()
-
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (login(email, password)) {
-      navigate("/dashboard")
-      return
-    }
-
-    toast.error("Email atau password salah")
-  }
+  const [state, formAction, isPending] = useActionState(
+    loginAction,
+    INITIAL_AUTH_ACTION_STATE,
+  )
 
   return (
     <AuthPageShell asideDescription="Masuk untuk menyimpan cerita dan mengikuti agenda pilihanmu.">
@@ -37,27 +26,36 @@ export function LoginPage() {
       <p className="mt-3 text-sm leading-6 text-white/60">
         Masuk ke ruang personalmu di Benah Palembang.
       </p>
-      <form onSubmit={handleLogin} className="mt-8 space-y-4">
+      <form action={formAction} className="mt-8 space-y-4" noValidate>
         <label className="block text-xs font-semibold text-white/80">
           Email
           <input
+            name="email"
             type="email"
             required
+            autoComplete="email"
             placeholder="nama@email.com"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => setEmail(event.target.value.toLowerCase())}
+            aria-invalid={Boolean(state.fieldErrors?.email)}
             className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
           />
+          {state.fieldErrors?.email?.[0] && (
+            <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+              {state.fieldErrors.email[0]}
+            </span>
+          )}
         </label>
         <label className="block text-xs font-semibold text-white/80">
           Password
           <div className="relative mt-2">
             <input
+              name="password"
               type={showPassword ? "text" : "password"}
               required
+              autoComplete="current-password"
               placeholder="••••••••"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              aria-invalid={Boolean(state.fieldErrors?.password)}
               className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
             />
             <button
@@ -73,6 +71,11 @@ export function LoginPage() {
               )}
             </button>
           </div>
+          {state.fieldErrors?.password?.[0] && (
+            <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+              {state.fieldErrors.password[0]}
+            </span>
+          )}
         </label>
         <div className="flex justify-end">
           <Link
@@ -82,11 +85,21 @@ export function LoginPage() {
             Lupa password?
           </Link>
         </div>
+        {state.message && (
+          <p
+            role="alert"
+            className="rounded-md border border-red-400/20 bg-red-400/10 px-3 py-2.5 text-xs leading-5 text-red-200"
+          >
+            {state.message}
+          </p>
+        )}
         <Button
           type="submit"
+          disabled={isPending}
           className="mt-1 h-11 w-full bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
         >
-          Masuk <ArrowRight className="size-4" />
+          {isPending ? "Memproses..." : "Masuk"}{" "}
+          {!isPending && <ArrowRight className="size-4" />}
         </Button>
       </form>
       <p className="mt-8 text-center text-xs text-white/50">

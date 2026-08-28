@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import {
   collaborationAspectRatioToDatabase,
@@ -178,8 +179,8 @@ async function updateCollaborationPage(
 export async function updateCollaborationPageAction(
   input: unknown,
 ): Promise<UpdateCollaborationPageResult> {
-  // TODO(auth): Require an authenticated admin/superadmin server session here.
-  // The current AuthContext is client-only and cannot secure this mutation.
+  await requireRole(["ADMIN", "SUPERADMIN"])
+
   const parsed = collaborationPageEditorSchema.safeParse(input)
   if (!parsed.success) {
     const issue = parsed.error.issues[0]

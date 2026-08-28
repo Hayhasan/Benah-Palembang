@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Ban, Eye, Search, ShieldCheck, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -44,12 +44,37 @@ function roleClassName(role: ManagedAccountListItem["role"]) {
   return "bg-blue-50 text-blue-600"
 }
 
+function formatRelativeActivity(timestamp: string | null, now: number) {
+  if (!timestamp) return "-"
+
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((now - new Date(timestamp).getTime()) / 1000),
+  )
+  if (elapsedSeconds < 60) return "Baru saja"
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60)
+  if (elapsedMinutes < 60) return `${elapsedMinutes} menit lalu`
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60)
+  if (elapsedHours < 24) return `${elapsedHours} jam lalu`
+
+  const elapsedDays = Math.floor(elapsedHours / 24)
+  return `${elapsedDays} hari lalu`
+}
+
 export function AccountList({ routeRole, data }: AccountListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const config = ACCOUNT_ROUTE_CONFIG[routeRole]
   const [confirmation, setConfirmation] = useState<ConfirmationState>(null)
   const [isPending, startTransition] = useTransition()
+  const [now, setNow] = useState(() => new Date(data.generatedAt).getTime())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   function buildHref(page: number, query = data.query) {
     const params = new URLSearchParams()
@@ -153,7 +178,7 @@ export function AccountList({ routeRole, data }: AccountListProps) {
                 <th className="px-6 py-4 font-semibold">Email</th>
                 <th className="px-6 py-4 font-semibold">Role / Status</th>
                 <th className="px-6 py-4 font-semibold">Date Created</th>
-                <th className="px-6 py-4 font-semibold">Last Login</th>
+                <th className="px-6 py-4 font-semibold">Last Activity</th>
                 <th className="px-6 py-4 text-right font-semibold">Action</th>
               </tr>
             </thead>
@@ -209,7 +234,17 @@ export function AccountList({ routeRole, data }: AccountListProps) {
                       {account.createdAtLabel}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-xs text-muted-foreground">
-                      {account.lastLoginAt ?? "-"}
+                      {account.isOnline &&
+                      (!account.lastActivityAt ||
+                        now - new Date(account.lastActivityAt).getTime() <
+                          10 * 60 * 1000) ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">
+                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          Online
+                        </span>
+                      ) : (
+                        formatRelativeActivity(account.lastActivityAt, now)
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

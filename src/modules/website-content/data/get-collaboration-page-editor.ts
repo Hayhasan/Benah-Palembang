@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_COLLABORATION_PAGE } from "../constants/default-collaboration-page"
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
@@ -127,6 +128,7 @@ export async function readCollaborationPageEditor(): Promise<CollaborationPageEd
 }
 
 export async function getCollaborationPageEditor(): Promise<CollaborationPageEditorData> {
+  await requireRole(["ADMIN", "SUPERADMIN"])
   await connection()
   return readCollaborationPageEditor()
 }

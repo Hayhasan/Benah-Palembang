@@ -57,7 +57,8 @@ export function mapManagedAccountListItem(
     isBanned: account.isBanned,
     createdAt: account.createdAt.toISOString(),
     createdAtLabel: dateFormatter.format(account.createdAt),
-    lastLoginAt: null,
+    lastActivityAt: null,
+    isOnline: false,
   }
 }
 
@@ -66,6 +67,7 @@ export function mapManagedAccountDetail(
 ): ManagedAccountDetail {
   return {
     ...mapManagedAccountListItem(account),
+    lastLoginAt: null,
     bannerUrl: account.bannerUrl,
     bio: account.bio,
     whatsappCountryCode: account.whatsappCountryCode,

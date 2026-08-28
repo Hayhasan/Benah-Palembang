@@ -11,10 +11,12 @@ export interface ManagedAccountListItem {
   isBanned: boolean
   createdAt: string
   createdAtLabel: string
-  lastLoginAt: string | null
+  lastActivityAt: string | null
+  isOnline: boolean
 }
 
 export interface ManagedAccountDetail extends ManagedAccountListItem {
+  lastLoginAt: string | null
   bannerUrl: string | null
   bio: string | null
   whatsappCountryCode: string | null
@@ -29,6 +31,7 @@ export interface ManagedAccountDetail extends ManagedAccountListItem {
 
 export interface ManagedAccountList {
   items: ManagedAccountListItem[]
+  generatedAt: string
   page: number
   pageSize: number
   totalItems: number

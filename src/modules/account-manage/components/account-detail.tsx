@@ -54,6 +54,16 @@ const DUMMY_ARTICLES = [
   },
 ]
 
+const activityDateFormatter = new Intl.DateTimeFormat("id-ID", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Asia/Jakarta",
+})
+
+function formatActivityDate(value: string | null) {
+  return value ? activityDateFormatter.format(new Date(value)) : "-"
+}
+
 interface AccountDetailProps {
   routeRole: AccountRouteRole
   account: ManagedAccountDetail
@@ -235,7 +245,7 @@ export function AccountDetail({ routeRole, account }: AccountDetailProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xl border bg-background p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <CalendarDays className="size-4 text-palembang-red" /> Dibuat
@@ -257,7 +267,15 @@ export function AccountDetail({ routeRole, account }: AccountDetailProps) {
             <Clock3 className="size-4 text-palembang-red" /> Last Login
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            {account.lastLoginAt ?? "-"}
+            {formatActivityDate(account.lastLoginAt)}
+          </p>
+        </div>
+        <div className="rounded-xl border bg-background p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Clock3 className="size-4 text-palembang-red" /> Last Activity
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {account.isOnline ? "Online" : formatActivityDate(account.lastActivityAt)}
           </p>
         </div>
       </div>

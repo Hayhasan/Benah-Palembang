@@ -4,6 +4,8 @@ import type { Prisma, UserRole } from "@prisma/client"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { getAccountActivities } from "@/modules/auth/data/activity"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { ACCOUNT_ROUTE_CONFIG } from "../constants/account-route-role"
 import { accountListQuerySchema } from "../schemas/account-manage.schema"
@@ -27,6 +29,7 @@ interface GetManagedAccountsInput {
 export async function getManagedAccounts(
   input: GetManagedAccountsInput,
 ): Promise<ManagedAccountList> {
+  await requireRole(["SUPERADMIN"])
   await connection()
 
   const query = accountListQuerySchema.parse({ q: input.q, page: input.page })
@@ -54,7 +57,7 @@ export async function getManagedAccounts(
       : {}),
   }
 
-  return prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const totalItems = await transaction.user.count({ where })
     const totalPages = Math.ceil(totalItems / ACCOUNT_PAGE_SIZE)
     const page = totalPages === 0 ? 1 : Math.min(query.page, totalPages)
@@ -75,4 +78,18 @@ export async function getManagedAccounts(
       query: query.q,
     }
   })
+
+  const activities = await getAccountActivities(result.items.map(({ id }) => id))
+  return {
+    ...result,
+    generatedAt: new Date().toISOString(),
+    items: result.items.map((account) => {
+      const activity = activities.get(account.id)
+      return {
+        ...account,
+        lastActivityAt: activity?.lastActivityAt ?? null,
+        isOnline: activity?.isOnline ?? false,
+      }
+    }),
+  }
 }

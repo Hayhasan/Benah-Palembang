@@ -24,7 +24,7 @@ User dari database, bukan code seperti `USR-001` atau `ADM-001`.
 - Mengubah role dari `USER` menjadi `ADMIN`.
 - Melakukan ban dan unban akun.
 - Melakukan soft delete melalui confirmation dialog.
-- Mempertahankan kolom Last Login sebagai future integration module Auth.
+- Mempertahankan kolom activity sebagai future integration module Auth.
 - Menampilkan artikel milik user setelah module Article tersedia.
 
 Halaman edit user tidak termasuk scope. Data profil ditampilkan pada detail,
@@ -58,7 +58,7 @@ Frontend saat ini mempunyai dua komponen terpisah, `ManageUser` dan
 - Search.
 - Pagination 25 item.
 - Create account.
-- Table ID, profile, email, role/status, created date, dan Last Login.
+- Table ID, profile, email, role/status, created date, dan Last Activity.
 - View account.
 - Ban atau unban.
 - Edit account.
@@ -97,7 +97,7 @@ Detail menampilkan data berikut:
 - URL Instagram, X/Twitter, dan LinkedIn.
 - Status ban.
 - Tanggal dibuat dan diperbarui.
-- Last Login jika integrasi Auth dan Redis sudah tersedia.
+- Last Login dan Last Activity jika integrasi Auth dan Redis sudah tersedia.
 - Galeri artikel beserta view dan like setelah module Article tersedia.
 
 Tombol `Ubah Role` pada detail hanya mendukung transisi berikut:
@@ -170,8 +170,8 @@ model User {
   `8123456789`.
 - `deletedAt` menandai soft delete. Semua query normal wajib memakai
   `deletedAt = null`.
-- `lastLoginAt` tidak dibuat pada PostgreSQL karena Last Login akan disimpan di
-  Upstash Redis oleh module Auth.
+- `lastLoginAt` dan `lastActivityAt` tidak dibuat pada PostgreSQL karena metadata
+  tersebut disimpan di Upstash Redis oleh module Auth.
 
 Foreign key dari Article, Event, Comment, atau business table lain ke User harus
 bertipe `String @db.Uuid` agar sesuai dengan primary key User.
@@ -248,9 +248,10 @@ mengambil ulang data dan mengarahkan pagination ke halaman terakhir yang masih
 valid. Search dan page disimpan pada URL supaya refresh serta tombol Back tidak
 menghilangkan state.
 
-Kolom Last Login tetap dirender. Sampai Auth dan Redis tersedia, nilainya
-ditampilkan sebagai `-` atau state unavailable. Setelah tersedia, hanya 25 UUID
-pada halaman aktif yang dibaca secara batch dari Redis.
+Kolom list sementara tetap menampilkan `-`. Setelah Auth dan Redis tersedia,
+semantic kolom berubah menjadi Last Activity. Hanya 25 UUID pada halaman aktif
+yang dibaca secara batch dari Redis. Presence aktif menampilkan `Online`,
+sedangkan account offline menampilkan relative Last Activity.
 
 ## Mutation dashboard
 
@@ -315,10 +316,10 @@ tidak membuat atau mengirim password baru secara langsung.
 
 ## Data turunan lintas module
 
-- Last Login disimpan di Upstash Redis oleh future Auth, bukan pada table
-  `users`.
-- Status `Online` nantinya berasal dari presence/session dengan TTL, bukan dari
-  string database.
+- Last Login dan Last Activity disimpan di Upstash Redis oleh future Auth, bukan
+  pada table `users`.
+- Status `Online` berasal dari Presence dengan TTL 10 menit, bukan dari string
+  database.
 - Galeri artikel berasal dari relasi author milik module Article.
 - View dan like artikel juga dihitung oleh module Article.
 - Avatar dan banner disimpan sebagai URL permanen Cloudinary. Browser `blob:`
@@ -390,7 +391,8 @@ ulang dan tidak melakukan `deleteMany` atau reset data.
 
 Auth dan permission belum diimplementasikan. Role pada tahap ini merupakan data
 domain, bukan security boundary. Referensi future Auth, password bcryptjs, dan
-Last Login Upstash dijelaskan pada `docs/module/auth.md`.
+Last Login, Last Activity, dan Presence Upstash dijelaskan pada
+`docs/module/auth.md`.
 
 Saat Auth tersedia, seluruh Server Action Account Manage harus memvalidasi
 session dan permission di server. Role atau identity pelaku dari client tidak

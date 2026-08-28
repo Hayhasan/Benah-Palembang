@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { getDefaultArticleCategoryPage } from "../constants/default-article-category-pages"
 import { DEFAULT_LANDING_PAGE } from "../constants/default-landing-page"
@@ -129,8 +130,8 @@ async function updateArticleCategoryPages(
 export async function updateArticleCategoryPagesAction(
   input: unknown,
 ): Promise<UpdateArticleCategoryPagesResult> {
-  // TODO(auth): Require an authenticated admin/superadmin server session here.
-  // The current AuthContext is client-only and cannot secure this mutation.
+  await requireRole(["ADMIN", "SUPERADMIN"])
+
   const parsed = articleCategoryPagesEditorSchema.safeParse(input)
   if (!parsed.success) {
     const issue = parsed.error.issues[0]

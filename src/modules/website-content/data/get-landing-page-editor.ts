@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_LANDING_PAGE } from "../constants/default-landing-page"
 import type { LandingPageEditorData } from "../types/landing-page-editor"
@@ -200,6 +201,7 @@ export async function readLandingPageEditor(): Promise<LandingPageEditorData> {
 }
 
 export async function getLandingPageEditor(): Promise<LandingPageEditorData> {
+  await requireRole(["ADMIN", "SUPERADMIN"])
   await connection()
   return readLandingPageEditor()
 }

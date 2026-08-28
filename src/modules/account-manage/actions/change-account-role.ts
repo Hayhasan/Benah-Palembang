@@ -3,6 +3,8 @@
 import type { UserRole } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
+import { requireRole } from "@/modules/auth/data/session-dal"
+import { revokeUserSessions } from "@/modules/auth/data/session"
 
 import { ACCOUNT_ROUTE_CONFIG } from "../constants/account-route-role"
 import { changeAccountRoleSchema } from "../schemas/account-manage.schema"
@@ -15,7 +17,8 @@ import { revalidateAccountRoutes } from "./revalidate-account-routes"
 export async function changeAccountRoleAction(
   input: unknown,
 ): Promise<AccountActionResult> {
-  // TODO(auth): Require a server session with account-management permission.
+  await requireRole(["SUPERADMIN"])
+
   const parsed = changeAccountRoleSchema.safeParse(input)
   if (!parsed.success) {
     return {
@@ -62,6 +65,8 @@ export async function changeAccountRoleAction(
           "Perubahan role hanya tersedia antara User dan Admin. SuperAdmin tidak dapat diubah.",
       }
     }
+
+    await revokeUserSessions(id)
 
     revalidateAccountRoutes(routeRole, id)
     revalidateAccountRoutes(nextRouteRole, id)

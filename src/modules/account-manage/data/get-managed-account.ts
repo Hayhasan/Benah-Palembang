@@ -4,6 +4,8 @@ import type { UserRole } from "@prisma/client"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
+import { getAccountActivities } from "@/modules/auth/data/activity"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { ACCOUNT_ROUTE_CONFIG } from "../constants/account-route-role"
 import { accountMutationSchema } from "../schemas/account-manage.schema"
@@ -20,6 +22,7 @@ export async function getManagedAccount(
   routeRole: AccountRouteRole,
   id: string,
 ): Promise<ManagedAccountDetail | null> {
+  await requireRole(["SUPERADMIN"])
   await connection()
 
   const parsed = accountMutationSchema.safeParse({ routeRole, id })
@@ -36,5 +39,15 @@ export async function getManagedAccount(
     select: managedAccountDetailSelect,
   })
 
-  return account ? mapManagedAccountDetail(account) : null
+  if (!account) return null
+
+  const mappedAccount = mapManagedAccountDetail(account)
+  const activity = (await getAccountActivities([account.id])).get(account.id)
+
+  return {
+    ...mappedAccount,
+    lastLoginAt: activity?.lastLoginAt ?? null,
+    lastActivityAt: activity?.lastActivityAt ?? null,
+    isOnline: activity?.isOnline ?? false,
+  }
 }

@@ -44,7 +44,7 @@ untuk menentukan role.
 - Mengubah role `ADMIN` menjadi `USER`.
 - Melakukan ban dan unban.
 - Melakukan soft delete dengan confirmation dialog.
-- Mempertahankan kolom Last Login untuk future Auth dan Upstash Redis.
+- Mempertahankan kolom activity untuk future Auth dan Upstash Redis.
 
 ## Perbedaan dari User Manage
 
@@ -82,11 +82,11 @@ Table tetap menampilkan:
 - Email.
 - Role dan status ban.
 - Date Created.
-- Last Login.
+- Last Activity.
 
-Last Login belum diimplementasikan pada tahap Account Manage. Kolom sementara
-menampilkan `-`, kemudian future Auth akan membaca data secara batch dari
-Upstash Redis.
+Last Activity belum diimplementasikan pada tahap Account Manage. Kolom sementara
+menampilkan `-`, kemudian future Auth membaca Last Activity dan Presence secara
+batch dari Upstash Redis. Presence aktif menampilkan `Online`.
 
 ## Create admin
 

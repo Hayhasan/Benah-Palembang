@@ -1,7 +1,7 @@
 "use client"
 
 import { useLocation } from "@/lib/navigation"
-import { useAuth } from "@/context/AuthContext"
+import { useCurrentUser } from "@/modules/auth/hooks/use-current-user"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { 
     LayoutDashboard, Monitor, Users, FileText, 
@@ -12,7 +12,7 @@ import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 export function Sidebar() {
-    const { user } = useAuth()
+    const user = useCurrentUser()
     const { requestNavigation } = useUnsavedChanges()
     const [collapsed, setCollapsed] = useState(false)
     const location = useLocation()
@@ -33,22 +33,20 @@ export function Sidebar() {
         setMobileOpen(false)
     }, [location.pathname])
 
-    if (!user) return null
-
     const menuItems = [
-        { title: "Overview", icon: LayoutDashboard, path: "/dashboard", roles: ["superadmin", "admin"] },
-        { title: "Manage Website", icon: Monitor, path: "/dashboard/website", roles: ["superadmin"] },
+        { title: "Overview", icon: LayoutDashboard, path: "/dashboard", roles: ["SUPERADMIN", "ADMIN"] },
+        { title: "Manage Website", icon: Monitor, path: "/dashboard/website", roles: ["SUPERADMIN", "ADMIN"] },
         { 
-            title: "Manage Account", icon: Users, path: "/dashboard/account", roles: ["superadmin"],
+            title: "Manage Account", icon: Users, path: "/dashboard/account", roles: ["SUPERADMIN"],
             subItems: [
                 { title: "User", path: "/dashboard/account/user" },
                 { title: "Admin", path: "/dashboard/account/admin" }
             ]
         },
-        { title: "Manage Content", icon: FileText, path: "/dashboard/content", roles: ["superadmin", "admin"] },
-        { title: "Create Article", icon: PenTool, path: "/dashboard/create-article", roles: ["superadmin", "admin", "user"] },
-        { title: "Create Event", icon: CalendarPlus, path: "/dashboard/create-event", roles: ["superadmin", "admin", "user"] },
-        { title: "Log Activities", icon: Activity, path: "/dashboard/logs", roles: ["superadmin"] },
+        { title: "Manage Content", icon: FileText, path: "/dashboard/content", roles: ["SUPERADMIN", "ADMIN"] },
+        { title: "Create Article", icon: PenTool, path: "/dashboard/create-article", roles: ["SUPERADMIN", "ADMIN", "USER"] },
+        { title: "Create Event", icon: CalendarPlus, path: "/dashboard/create-event", roles: ["SUPERADMIN", "ADMIN", "USER"] },
+        { title: "Log Activities", icon: Activity, path: "/dashboard/logs", roles: ["SUPERADMIN"] },
     ]
 
     const filteredMenu = menuItems.filter(item => item.roles.includes(user.role))

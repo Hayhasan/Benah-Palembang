@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
 import { hashPassword } from "@/modules/auth/data/password"
+import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { createAccountSchema } from "../schemas/account-manage.schema"
 import type { AccountActionResult } from "../types/managed-account"
@@ -12,7 +13,8 @@ import { revalidateAccountRoutes } from "./revalidate-account-routes"
 export async function createAccountAction(
   input: unknown,
 ): Promise<AccountActionResult> {
-  // TODO(auth): Require a server session with account-management permission.
+  await requireRole(["SUPERADMIN"])
+
   const parsed = createAccountSchema.safeParse(input)
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
