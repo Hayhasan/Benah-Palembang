@@ -49,7 +49,8 @@ function renderActionIcon(iconName: ActivityLogItem["iconName"]) {
 
 export function ActivityLogList({ data }: ActivityLogListProps) {
   const router = useRouter()
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname ?? ""
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
@@ -58,7 +59,7 @@ export function ActivityLogList({ data }: ActivityLogListProps) {
   const [searchInput, setSearchInput] = useState(data.query)
 
   const updateUrl = (newPage: number, newQuery: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams?.toString() ?? "")
 
     if (newQuery.trim()) {
       params.set("q", newQuery.trim())
@@ -74,7 +75,7 @@ export function ActivityLogList({ data }: ActivityLogListProps) {
 
     startTransition(() => {
       const qs = params.toString()
-      router.push(qs ? `${pathname}?${qs}` : pathname)
+      router.push(qs ? `${pathname}?${qs}` : pathname || "/")
     })
   }
 

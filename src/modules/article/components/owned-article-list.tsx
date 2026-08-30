@@ -41,11 +41,12 @@ function statusClassName(status: OwnedArticleListItem["status"]) {
 
 export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname ?? ""
   const [confirmation, setConfirmation] = useState<ConfirmationState>(null)
   const [isPending, startTransition] = useTransition()
 
-  function buildHref(page: number, query = data.query) {
+  function buildHref(page: number, query = data.query): string {
     const params = new URLSearchParams()
     const normalizedQuery = query.trim()
 
@@ -53,7 +54,7 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
     if (page > 1) params.set("page", String(page))
 
     const search = params.toString()
-    return search ? `${pathname}?${search}` : pathname
+    return search ? `${pathname}?${search}` : pathname || "/"
   }
 
   function handleSearch(event: React.FormEvent<HTMLFormElement>) {

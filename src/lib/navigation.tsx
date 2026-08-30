@@ -158,7 +158,7 @@ const emptyServerSnapshot = () => ""
  * seluruh halaman.
  */
 export function useLocation<S = unknown>(): Location<S> {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
 
   const search = React.useSyncExternalStore(
     subscribeToHistory,
@@ -212,11 +212,12 @@ type SetSearchParams = (
  */
 export function useSearchParams(): [URLSearchParams, SetSearchParams] {
   const router = useRouter()
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname ?? ""
   const nextSearchParams = useNextSearchParams()
 
   const params = React.useMemo(
-    () => new URLSearchParams(nextSearchParams.toString()),
+    () => new URLSearchParams(nextSearchParams?.toString() ?? ""),
     [nextSearchParams]
   )
 
@@ -237,7 +238,8 @@ export function useSearchParams(): [URLSearchParams, SetSearchParams] {
       }
 
       const query = next.toString()
-      const href = query ? `${pathname}?${query}` : pathname
+      const targetPath = pathname || "/"
+      const href = query ? `${targetPath}?${query}` : targetPath
       // react-router menambah entri history secara default; `replace: true`
       // baru menggantinya. Perilaku itu dipertahankan agar tombol Back tetap
       // mengembalikan query sebelumnya.

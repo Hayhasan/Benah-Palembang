@@ -39,7 +39,8 @@ export function ManageContentList({
   data: ManagedContentListResult
 }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname ?? ""
   const searchParams = useSearchParams()
 
   const [searchTerm, setSearchTerm] = useState(data.query)
@@ -56,7 +57,7 @@ export function ManageContentList({
   })
 
   function updateQuery(nextPage: number, nextQuery?: string) {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams?.toString() ?? "")
 
     if (nextPage > 1) {
       params.set("page", String(nextPage))
@@ -72,7 +73,7 @@ export function ManageContentList({
     }
 
     const queryString = params.toString()
-    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname || "/", {
       scroll: false,
     })
   }
