@@ -42,16 +42,16 @@ export function ArticleCategoryPage({
           <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
         </div>
         <div className="relative z-10 mx-auto max-w-[1240px]">
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
+          <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
             Category / {data.category}
           </p>
-          <h1 className="mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">
+          <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">
             {data.hero.title}
           </h1>
-          <p className="mt-8 max-w-lg text-base leading-7 text-white/65">
+          <p className="reveal-on-scroll reveal-delay-150 mt-8 max-w-lg text-base leading-7 text-white/65">
             {data.hero.description}
           </p>
-          <div className="mt-10 flex max-w-xl items-center gap-3 border-b border-white/30 pb-3">
+          <div className="reveal-on-scroll reveal-delay-200 mt-10 flex max-w-xl items-center gap-3 border-b border-white/30 pb-3">
             <Search className="size-4 text-white/50" />
             <input
               value={query}
@@ -67,7 +67,7 @@ export function ArticleCategoryPage({
         <div className="mx-auto max-w-[1240px]">
           {filtered.length > 0 ? (
             <div className="relative">
-              <div className="columns-2 gap-3 sm:columns-2 sm:gap-6 lg:columns-4">
+              <div className="reveal-stagger columns-2 gap-3 sm:columns-2 sm:gap-6 lg:columns-4">
                 {visibleArticles.map((article) => (
                   <PublicArticleCard
                     key={article.id}
@@ -77,7 +77,7 @@ export function ArticleCategoryPage({
                 ))}
               </div>
               {hasMore ? (
-                <div className="absolute inset-x-0 -bottom-8 flex h-64 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
+                <div className="reveal-on-scroll absolute inset-x-0 -bottom-8 flex h-64 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
                   <button
                     type="button"
                     onClick={() => setShowAll(true)}
@@ -90,7 +90,7 @@ export function ArticleCategoryPage({
               ) : null}
             </div>
           ) : (
-            <div className="py-20 text-center">
+            <div className="reveal-on-scroll py-20 text-center">
               <p className="font-display text-3xl">Cerita tidak ditemukan.</p>
               <p className="mt-3 text-sm text-muted-foreground">
                 Coba kata kunci lain.

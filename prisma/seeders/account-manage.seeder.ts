@@ -43,11 +43,36 @@ function parseCreatedAt(value: string) {
   return new Date(Date.UTC(Number(year), monthIndex, Number(day)))
 }
 
-function toSeedData(account: AccountMock, password: string) {
+function seedUsernameFromEmail(email: string) {
+  return email
+    .split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9._]+/g, "_")
+    .replace(/^\.+|\.+$/g, "")
+    .replace(/\.\.+/g, ".")
+    .slice(0, 30) || "user"
+}
+
+function reserveUsername(base: string, occupiedUsernames: Set<string>) {
+  let username = base
+  let suffixNumber = 2
+
+  while (occupiedUsernames.has(username)) {
+    const suffix = `_${suffixNumber}`
+    username = `${base.slice(0, 30 - suffix.length)}${suffix}`
+    suffixNumber += 1
+  }
+
+  occupiedUsernames.add(username)
+  return username
+}
+
+function toSeedData(account: AccountMock, password: string, username: string) {
   const createdAt = parseCreatedAt(account.date)
 
   return {
     name: account.name,
+    username,
     email: account.email.toLowerCase(),
     password,
     role: roleToDatabase[account.role],
@@ -79,6 +104,7 @@ export async function seedAccountManage(prisma: PrismaClient) {
     select: {
       email: true,
       originalEmail: true,
+      username: true,
     },
   })
   const occupiedEmails = new Set(
@@ -87,6 +113,9 @@ export async function seedAccountManage(prisma: PrismaClient) {
         (email): email is string => email !== null,
       ),
     ),
+  )
+  const occupiedUsernames = new Set(
+    existingAccounts.map((account) => account.username),
   )
   const missingAccounts = accounts.filter(
     (account) => !occupiedEmails.has(account.email.toLowerCase()),
@@ -103,7 +132,13 @@ export async function seedAccountManage(prisma: PrismaClient) {
 
   const password = await hashPassword(DEFAULT_ACCOUNT_PASSWORD)
   const result = await prisma.user.createMany({
-    data: missingAccounts.map((account) => toSeedData(account, password)),
+    data: missingAccounts.map((account) => {
+      const username = reserveUsername(
+        seedUsernameFromEmail(account.email),
+        occupiedUsernames,
+      )
+      return toSeedData(account, password, username)
+    }),
   })
 
   console.log(

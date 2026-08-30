@@ -8,6 +8,7 @@ import { recordActivityLog } from "@/modules/activity-log/data/record-activity-l
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { readHeaderFooterContentEditor } from "../data/get-header-footer-content-editor"
+import { footerConnectPlatformToDatabase } from "../data/header-footer-content.mapper"
 import { headerFooterContentEditorSchema } from "../schemas/header-footer-content.schema"
 import type {
   HeaderFooterContentEditorData,
@@ -19,24 +20,30 @@ function rootData(data: HeaderFooterContentEditorData) {
     logoImageUrl: data.logo.imageUrl,
     logoImageAlt: data.logo.imageAlt,
     logoLinkUrl: data.logo.linkUrl,
+    footerBackgroundText: data.footer.backgroundText,
     footerDescription: data.footer.description,
-    exploreDescription: data.footer.exploreDescription,
-    contactEmail: data.footer.contactEmail,
-    contactPhone: data.footer.contactPhone,
-    contactAddress: data.footer.contactAddress,
     copyrightText: data.footer.copyrightText,
-    closingText: data.footer.closingText,
   }
 }
 
-function footerLinkData(
-  link:
-    | HeaderFooterContentEditorData["footer"]["exploreLinks"][number]
-    | HeaderFooterContentEditorData["footer"]["connectLinks"][number],
+function footerExploreLinkData(
+  link: HeaderFooterContentEditorData["footer"]["exploreLinks"][number],
   position: number,
 ) {
   return {
     label: link.label,
+    linkUrl: link.linkUrl,
+    position,
+    isVisible: link.isVisible,
+  }
+}
+
+function footerConnectLinkData(
+  link: HeaderFooterContentEditorData["footer"]["connectLinks"][number],
+  position: number,
+) {
+  return {
+    platform: footerConnectPlatformToDatabase[link.platform],
     linkUrl: link.linkUrl,
     position,
     isVisible: link.isVisible,
@@ -68,12 +75,12 @@ async function createHeaderFooterContent(
       ...rootData(data),
       footerExploreLinks: {
         create: data.footer.exploreLinks.map((link, index) =>
-          footerLinkData(link, index + 1),
+          footerExploreLinkData(link, index + 1),
         ),
       },
       footerConnectLinks: {
         create: data.footer.connectLinks.map((link, index) =>
-          footerLinkData(link, index + 1),
+          footerConnectLinkData(link, index + 1),
         ),
       },
     },
@@ -131,7 +138,7 @@ async function updateHeaderFooterContent(
   })
 
   for (const [index, link] of data.footer.exploreLinks.entries()) {
-    const values = footerLinkData(link, index + 1)
+    const values = footerExploreLinkData(link, index + 1)
     if (link.id === null) {
       await tx.websiteFooterExploreLink.create({
         data: { headerFooterContentId: existing.id, ...values },
@@ -145,7 +152,7 @@ async function updateHeaderFooterContent(
   }
 
   for (const [index, link] of data.footer.connectLinks.entries()) {
-    const values = footerLinkData(link, index + 1)
+    const values = footerConnectLinkData(link, index + 1)
     if (link.id === null) {
       await tx.websiteFooterConnectLink.create({
         data: { headerFooterContentId: existing.id, ...values },

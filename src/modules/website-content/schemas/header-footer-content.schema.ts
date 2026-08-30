@@ -7,12 +7,6 @@ const requiredText = (label: string, max: number) =>
     .min(1, `${label} wajib diisi.`)
     .max(max, `${label} maksimal ${max} karakter.`)
 
-const optionalText = (label: string, max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max, `${label} maksimal ${max} karakter.`)
-
 const linkUrlSchema = z
   .string()
   .trim()
@@ -50,6 +44,24 @@ const footerLinkSchema = z.object({
   isVisible: z.boolean(),
 })
 
+const footerConnectLinkSchema = z.object({
+  ...editorRecordSchema,
+  platform: z.enum([
+    "instagram",
+    "whatsapp",
+    "youtube",
+    "tiktok",
+    "linkedin",
+    "x",
+    "facebook",
+    "mail",
+    "website",
+  ]),
+  linkUrl: linkUrlSchema,
+  position: z.number().int().positive(),
+  isVisible: z.boolean(),
+})
+
 export const headerFooterContentEditorSchema = z
   .object({
     key: z.literal("header-footer"),
@@ -59,19 +71,11 @@ export const headerFooterContentEditorSchema = z
       linkUrl: linkUrlSchema,
     }),
     footer: z.object({
+      backgroundText: requiredText("Background text footer", 160),
       description: requiredText("Deskripsi footer", 5000),
-      exploreDescription: optionalText("Deskripsi Explore", 5000),
-      contactEmail: z
-        .string()
-        .trim()
-        .email("Email kontak tidak valid.")
-        .max(255, "Email kontak terlalu panjang."),
-      contactPhone: requiredText("Nomor HP / WhatsApp", 50),
-      contactAddress: requiredText("Alamat", 255),
       copyrightText: requiredText("Copyright", 255),
-      closingText: requiredText("Teks penutup", 255),
       exploreLinks: z.array(footerLinkSchema).max(30),
-      connectLinks: z.array(footerLinkSchema).max(30),
+      connectLinks: z.array(footerConnectLinkSchema).max(30),
     }),
   })
   .superRefine((data, context) => {

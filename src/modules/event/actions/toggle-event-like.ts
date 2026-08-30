@@ -77,7 +77,7 @@ export async function toggleEventLikeAction(
     })
 
     revalidatePath(`/agenda/${event.id}`)
-    revalidatePath("/dashboard/content")
+    revalidatePath("/dashboard/content/event")
     revalidatePath("/dashboard/create-event")
 
     return {

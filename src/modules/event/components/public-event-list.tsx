@@ -114,13 +114,13 @@ export function PublicEventList({
           <div className="absolute inset-0 bg-gradient-to-b from-palembang-red/40 via-transparent to-palembang-red" />
         </div>
         <div className="relative z-10 mx-auto max-w-[1240px]">
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/80">
+          <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-white/80">
             {content.hero.eyebrow}
           </p>
-          <h1 className="mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">
+          <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">
             <AgendaHeroTitle title={content.hero.title} />
           </h1>
-          <p className="mt-8 max-w-lg text-base leading-7 text-white/85">
+          <p className="reveal-on-scroll reveal-delay-150 mt-8 max-w-lg text-base leading-7 text-white/85">
             {content.hero.description}
           </p>
         </div>
@@ -128,7 +128,7 @@ export function PublicEventList({
 
       <main className="px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
         <div className="mx-auto max-w-[1240px]">
-          <div className="mb-12 flex gap-4 overflow-x-auto border-b border-border pb-px">
+          <div className="reveal-on-scroll mb-12 flex gap-4 overflow-x-auto border-b border-border pb-px">
             {[
               ["this-month", "This Month"],
               ["upcoming", "Upcoming"],
@@ -151,7 +151,7 @@ export function PublicEventList({
 
           {visibleEvents.length > 0 ? (
             <div className="relative">
-              <div className="grid gap-8">
+              <div className="reveal-stagger grid gap-8">
                 {visibleEvents.map((event) => (
                   <Link
                     key={event.id}
@@ -206,7 +206,7 @@ export function PublicEventList({
               </div>
 
               {hasMore ? (
-                <div className="absolute inset-x-0 -bottom-8 flex h-64 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
+                <div className="reveal-on-scroll absolute inset-x-0 -bottom-8 flex h-64 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
                   <button
                     type="button"
                     onClick={() => setShowAll(true)}
@@ -219,7 +219,7 @@ export function PublicEventList({
               ) : null}
             </div>
           ) : (
-            <div className="rounded-[1.5rem] border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
+            <div className="reveal-on-scroll rounded-[1.5rem] border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
               <CalendarDays className="mx-auto size-8 text-palembang-red" />
               <h2 className="mt-5 font-display text-2xl font-bold">
                 Belum ada agenda pada periode ini

@@ -7,7 +7,9 @@ model `User` yang juga digunakan module User Manage, Admin Manage, dan Auth.
 ## Scope
 
 - Menampilkan profil account yang sedang login pada `/dashboard/profile`.
-- Mengubah nama, foto profil, banner, bio, WhatsApp, dan link media sosial.
+- Mengubah nama, username, foto profil, banner, bio, WhatsApp, dan link media sosial.
+- Menyediakan halaman publik `/penulis/[username]` yang menampilkan profil,
+  statistik, artikel published, dan Event published milik pengguna.
 - Menampilkan email dan role sebagai informasi read-only.
 - Mengirim email reset password ke email account yang sedang login.
 - Mempertahankan Galeri Artikel sebagai fixed dummy sampai module Article
@@ -34,13 +36,16 @@ src/modules/profile/
     update-profile.ts
   components/
     profile-page.tsx
+    public-profile-page.tsx
   data/
     get-current-profile.ts
+    get-public-profile.ts
     profile.mapper.ts
   schemas/
     profile.schema.ts
   types/
     profile.ts
+    public-profile.ts
 ```
 
 Page membaca initial profile melalui Server Component dan hanya memberikan DTO
@@ -56,6 +61,7 @@ digunakan adalah:
 | --- | --- |
 | `id` | UUID read-only; target selalu berasal dari session server |
 | `name` | Editable |
+| `username` | Editable, mandatory, unique, lowercase, maksimal 30 karakter |
 | `email` | Read-only dan tidak pernah diterima sebagai input update |
 | `role` | Read-only |
 | `avatarUrl` | Editable, nullable |
@@ -70,7 +76,10 @@ digunakan adalah:
 | `isBanned`, `deletedAt` | Dipakai auth guard dan tidak dapat diubah di Profile |
 | `createdAt`, `updatedAt` | Dikelola Prisma; `updatedAt` berubah saat save |
 
-Tidak ada schema atau migration baru untuk module ini.
+Migration `20260830230000_add_user_username` menambahkan `username` sebagai
+nullable, melakukan backfill dari nama dalam format lowercase underscore,
+menyelesaikan collision dengan suffix `_2`, `_3`, dan seterusnya, lalu memasang
+`NOT NULL`, unique index, dan database check constraint.
 
 ## Query profile
 
@@ -97,6 +106,10 @@ Server Action update mengikuti `docs/rules/auth-rules.md`:
 Validasi dan normalisasi:
 
 - Nama di-trim, minimal 2 dan maksimal 160 karakter.
+- Username dinormalisasi lowercase, mandatory, maksimal 30 karakter, serta hanya
+  menerima huruf `a-z`, angka, titik, dan underscore.
+- Titik tidak boleh berada di awal/akhir atau digunakan berurutan. Username
+  diperiksa unique oleh database; collision menghasilkan field error khusus.
 - String opsional di-trim; string kosong disimpan sebagai `null`.
 - Bio maksimal 2.000 karakter.
 - URL avatar, banner, dan media sosial maksimal 2.048 karakter dan wajib HTTPS.
@@ -108,6 +121,25 @@ Validasi dan normalisasi:
 Form terhubung ke `UnsavedChangesContext`. Tombol Simpan Profil dan aksi
 "Simpan Sekarang" dari confirmation navigasi memakai fungsi save yang sama.
 Cancel mengembalikan draft ke data terakhir yang berhasil disimpan.
+
+## Galeri Article dashboard
+
+- `/dashboard/profile` mengambil maksimal enam Article aktif terbaru milik
+  actor melalui relasi `authoredArticles` pada query User yang sama.
+- Total Article aktif dihitung melalui filtered relation count; card menampilkan
+  status, update terakhir, views, dan likes dari database.
+- Klik card membuka `/dashboard/create-article/preview/[id]`, sehingga Article
+  draft, pending, rejected, published, dan taken down tetap dapat dipreview oleh
+  owner sesuai ownership guard.
+- Presentasi memakai komponen reusable module Article yang juga dipakai detail
+  Manage Account. Tidak ada dummy article atau data statistik hard-coded.
+
+## Animasi profil public
+
+Halaman `/penulis/[username]` memakai scale reveal pada banner, reveal bertahap
+pada card identitas dan statistik, stagger pada masonry Article, serta stagger
+pada Event terkait. Seluruh animasi mengikuti primitive global public, berjalan
+satu kali ketika masuk viewport, dan dinonaktifkan saat reduced motion aktif.
 
 ## Upload avatar dan banner
 
@@ -164,3 +196,17 @@ oleh module Article tanpa menambahkan field article ke table `users`.
 - [x] Tombol reset password memakai token, Redis, rate limit, dan mailer Auth.
 - [x] Nama/avatar Sidebar diperbarui setelah save.
 - [x] Galeri Artikel dummy dipertahankan.
+- [x] Username mandatory dan unique dengan backfill aman untuk account existing.
+- [x] Halaman `/penulis/[username]` membaca profil dan karya published dari database.
+
+## Halaman Penulis Publik
+
+Route `/penulis/[username]` hanya menerima username valid dan mencari User yang
+aktif, tidak banned, serta tidak soft-deleted. Username yang invalid atau tidak
+ditemukan menghasilkan `notFound()`.
+
+Halaman mengikuti UI referensi dengan banner gelap, kartu profil transparan,
+avatar, bio, sosial media, CTA WhatsApp, tombol bagikan, statistik Article,
+galeri masonry, dan Event published terkait. Statistik views dan likes dihitung
+dari Article published milik penulis; tidak ada data draft atau moderasi yang
+dikirim ke halaman publik.

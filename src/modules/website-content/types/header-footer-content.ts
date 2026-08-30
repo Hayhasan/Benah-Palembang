@@ -5,6 +5,24 @@ export interface WebsiteFooterLinkData {
   isVisible: boolean
 }
 
+export type FooterConnectPlatform =
+  | "instagram"
+  | "whatsapp"
+  | "youtube"
+  | "tiktok"
+  | "linkedin"
+  | "x"
+  | "facebook"
+  | "mail"
+  | "website"
+
+export interface WebsiteFooterConnectLinkData {
+  platform: FooterConnectPlatform
+  linkUrl: string
+  position: number
+  isVisible: boolean
+}
+
 export interface HeaderFooterContentData {
   key: "header-footer"
   logo: {
@@ -13,14 +31,10 @@ export interface HeaderFooterContentData {
     linkUrl: string
   }
   footer: {
+    backgroundText: string
     description: string
-    exploreDescription: string
-    contactEmail: string
-    contactPhone: string
-    contactAddress: string
     copyrightText: string
-    closingText: string
     exploreLinks: WebsiteFooterLinkData[]
-    connectLinks: WebsiteFooterLinkData[]
+    connectLinks: WebsiteFooterConnectLinkData[]
   }
 }

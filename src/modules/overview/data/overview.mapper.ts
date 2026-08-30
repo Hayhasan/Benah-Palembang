@@ -1,4 +1,4 @@
-import type { ActivityAction, ActivityModule, ContentStatus } from "@prisma/client"
+import type { ContentStatus } from "@prisma/client"
 
 export const INDONESIAN_MONTHS = [
   "Januari",
@@ -83,37 +83,4 @@ export function mapContentStatusToOverviewStatus(
     default:
       return "Request"
   }
-}
-
-const ACTION_MAP: Record<ActivityAction, string> = {
-  CREATE: "Create",
-  UPDATE: "Edit",
-  DELETE: "Delete",
-  LOGIN: "Login",
-  LOGOUT: "Logout",
-  APPROVE: "Approve",
-  REJECT: "Reject",
-  TAKEDOWN: "Takedown",
-  RESTORE: "Restore",
-  BAN: "Ban",
-  UNBAN: "Unban",
-  CHANGE_ROLE: "Change Role",
-}
-
-const MODULE_MAP: Record<ActivityModule, string> = {
-  AUTH: "Auth",
-  PROFILE: "Profile",
-  ACCOUNT: "ManageAccount",
-  WEBSITE: "ManageWebsite",
-  ARTICLE: "Article",
-  EVENT: "Event",
-  CONTENT: "ManageContent",
-}
-
-export function mapActivityActionToLabel(action: ActivityAction): string {
-  return ACTION_MAP[action] ?? action
-}
-
-export function mapActivityModuleToLabel(module: ActivityModule): string {
-  return MODULE_MAP[module] ?? module
 }

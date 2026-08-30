@@ -12,16 +12,25 @@ interface OverviewRecentContentProps {
 
 export function OverviewRecentContent({ items }: OverviewRecentContentProps) {
   return (
-    <Card className="col-span-1 md:col-span-1 lg:col-span-4 shadow-xs border-border overflow-hidden flex flex-col">
+    <Card className="flex w-full flex-col overflow-hidden border-border shadow-sm">
       <CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between py-3.5 px-6">
         <CardTitle className="text-base font-bold">Manage Content (Menunggu Persetujuan)</CardTitle>
-        <Link
-          href="/dashboard/content"
-          className="text-xs font-semibold text-palembang-red hover:underline inline-flex items-center gap-0.5"
-        >
-          Lihat Semua
-          <ArrowUpRight className="size-3.5" />
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/content/article"
+            className="inline-flex items-center gap-0.5 text-xs font-semibold text-palembang-red hover:underline"
+          >
+            Article
+            <ArrowUpRight className="size-3.5" />
+          </Link>
+          <Link
+            href="/dashboard/content/event"
+            className="inline-flex items-center gap-0.5 text-xs font-semibold text-palembang-red hover:underline"
+          >
+            Event
+            <ArrowUpRight className="size-3.5" />
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-x-auto">
         {items.length === 0 ? (
@@ -34,6 +43,7 @@ export function OverviewRecentContent({ items }: OverviewRecentContentProps) {
               <tr>
                 <th className="px-6 py-3 font-semibold">Tipe</th>
                 <th className="px-6 py-3 font-semibold">Judul Konten</th>
+                <th className="px-6 py-3 font-semibold">Penulis</th>
                 <th className="px-6 py-3 font-semibold text-right">Status</th>
               </tr>
             </thead>
@@ -52,9 +62,16 @@ export function OverviewRecentContent({ items }: OverviewRecentContentProps) {
                     </span>
                   </td>
                   <td className="px-6 py-3 font-medium min-w-[200px] text-foreground">
-                    <div className="truncate max-w-[280px]" title={c.title}>
+                    <Link
+                      href={`/dashboard/content/${c.type === "Article" ? "article" : "event"}/${c.id}`}
+                      className="block max-w-[280px] truncate hover:text-palembang-red hover:underline"
+                      title={c.title}
+                    >
                       {c.title}
-                    </div>
+                    </Link>
+                  </td>
+                  <td className="px-6 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    {c.author}
                   </td>
                   <td className="px-6 py-3 text-right whitespace-nowrap">
                     <span

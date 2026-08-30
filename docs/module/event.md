@@ -23,15 +23,9 @@ schema dan migration -> seeding -> halaman publik -> dashboard pemilik
   sendiri.
 - Menyediakan status yang nantinya dapat dimoderasi melalui Manage Content.
 
-Sistem interaksi belum termasuk scope awal. Nilai berikut tetap berupa mock atau
-hardcoded pada UI dan belum disimpan ke database:
-
-- Views.
-- Likes.
-- Participants atau jumlah pendaftar.
-
-Event tidak mempunyai statistik comments. Implementasi Event tidak membuat
-model Like, View, Participant, Registration, atau Comment.
+Event mempunyai views counter dan relasi like yang tersimpan di database. Event
+tidak mempunyai comments maupun participants. Klik CTA pendaftaran dan tombol
+Tanya WhatsApp hanya membuka URL tujuan dan tidak dilacak sebagai pendaftaran.
 
 ## 2. Batasan permission sementara
 
@@ -120,6 +114,8 @@ model Event {
   location             String        @db.VarChar(255)
   organizer            String        @db.VarChar(255)
   registrationUrl      String?       @db.Text
+  whatsappUrl          String        @db.Text
+  views                 Int           @default(0)
   status               ContentStatus @default(DRAFT)
   moderationNote       String?       @db.Text
   submittedAt          DateTime?     @db.Timestamptz(6)
@@ -129,6 +125,7 @@ model Event {
   deletedAt            DateTime?     @db.Timestamptz(6)
   owner                User          @relation("EventOwner", fields: [ownerId], references: [id])
   tags                 EventTag[]
+  likes                EventLike[]
 
   @@index([ownerId, deletedAt, updatedAt])
   @@index([status, deletedAt, startsAt])
@@ -166,7 +163,10 @@ menghubungkan Event dengan account pembuatnya.
 - DateTime disimpan sebagai timestamp dan ditampilkan memakai timezone
   `Asia/Jakarta`.
 - Rich content disanitasi di server sebelum disimpan atau dirender.
-- Statistik interaksi tidak menjadi column pada tahap awal.
+- `whatsappUrl` wajib memakai URL langsung WhatsApp dengan format
+  `https://wa.me/628...` agar CTA Tanya selalu mempunyai tujuan valid.
+- Views disimpan sebagai counter pada Event dan like disimpan melalui relasi
+  `EventLike`; Event tidak mempunyai relasi participant atau comment.
 - Actor dan waktu proses review tidak diduplikasi pada Event. Informasi
   `reviewedBy` dan `reviewedAt` nantinya berasal dari central activity log.
 - Event tetap menyimpan current status, optional `moderationNote`, serta
@@ -211,8 +211,8 @@ Normalisasi dilakukan sebagai berikut:
   data yang tersedia, bukan dari state komponen.
 - Mock Manage Content bukan aggregate baru. Baris Event pada Manage Content
   nantinya berasal dari query Event yang sama.
-- Nilai views, likes, dan participants tetap berada pada helper mock UI dan tidak
-  ikut menjadi data bisnis hasil seed.
+- Field WhatsApp yang tidak tersedia pada mock lama diisi dengan URL default
+  valid agar seluruh Event hasil seed dapat memakai tombol Tanya.
 
 Target file:
 
@@ -280,10 +280,15 @@ tanggal yang sesuai untuk Event lampau.
 - ID divalidasi sebagai integer positif.
 - Query hanya mengambil Event published yang belum soft-deleted.
 - Record tidak ditemukan menghasilkan `notFound()`.
-- Related Event berasal dari database dan tidak memakai fallback record pertama.
+- Related Event berasal dari seluruh Event published aktif, mengecualikan Event
+  yang sedang dibuka, dan tidak memakai fallback record pertama.
+- Kandidat diacak pada request time lalu dibatasi dua item.
 - Share button tetap Client Component karena memakai browser API.
 - Tombol registrasi memakai `registrationUrl`; jika kosong, UI menampilkan
   fallback informasi tanpa membuat URL pendaftaran palsu.
+- Tombol Tanya memakai `whatsappUrl` wajib dan menambahkan pesan berisi judul,
+  tanggal, serta lokasi Event melalui query `text` WhatsApp.
+- Hero tidak menampilkan participants maupun box penjelasan kategori komunitas.
 
 ## 9. Dashboard owner
 
@@ -296,7 +301,8 @@ Route `/dashboard/create-event` membaca initial data di server.
 - Pagination sebanyak 25 item per halaman.
 - Search dan page disimpan pada URL.
 - Seluruh status milik owner dapat tampil.
-- Statistik views, likes, dan participants memakai nilai mock UI.
+- Statistik list hanya menampilkan views dan likes; participants tidak lagi
+  menjadi bagian domain Event.
 
 ### Editor Event
 
@@ -309,6 +315,7 @@ Input editor:
 - Location.
 - Organizer.
 - Registration URL.
+- WhatsApp URL wajib untuk tombol Tanya.
 - Rich content.
 - Banner URL.
 - Category.
@@ -427,16 +434,24 @@ tetap tipis dan tidak mengakses Prisma langsung.
 
 - `/agenda` membaca hero dari `website-content` dan Event `PUBLISHED` aktif dari
   database secara paralel pada Server Component.
+- Shortcut `Agenda Kota` pada `/` membaca count Event dengan filter publik yang
+  sama (`status = PUBLISHED`, `deletedAt = null`) dan menampilkannya sebagai
+  `<count> Agenda`.
 - Filter This Month, Upcoming, dan Past Event memakai timestamp database dengan
   acuan timezone `Asia/Jakarta`.
 - `/agenda/[id]` memvalidasi ID integer positif, hanya membaca Event
   `PUBLISHED` aktif, dan menghasilkan `notFound()` untuk ID invalid atau record
   yang tidak tersedia.
-- Related Event berasal dari Event published dengan kategori yang sama.
+- Related Event diacak dari seluruh Event published aktif dan hanya dua item
+  ditampilkan dalam grid dua kolom yang mengikuti light/dark mode.
 - CTA pendaftaran hanya menjadi link ketika `registrationUrl` tersedia.
-- Views, likes, dan participants ditampilkan dari helper mock deterministic;
-  tidak ada interaction table dan tidak ada comments Event.
+- CTA Tanya selalu memakai `whatsappUrl` Event yang valid.
+- Views dan likes berasal dari database; tidak ada participants maupun comments
+  Event.
 - Public Agenda sudah tidak membaca `agendaItems` dari `src/data/mockData.ts`.
+- `/agenda` menjalankan staged hero reveal, lalu reveal pada filter dan stagger
+  daftar Event. `/agenda/[id]` menjalankan staged hero, scale pada gambar utama,
+  reveal content/detail card, dan stagger dua Related Event.
 
 ### Status dashboard owner
 
@@ -461,7 +476,7 @@ tetap tipis dan tidak mengakses Prisma langsung.
 - Gambar yang ditambahkan melalui rich-text editor di-upload ke Cloudinary
   terlebih dahulu. HTML hanya menyimpan URL HTTPS hasil upload, bukan URL
   browser sementara berformat `blob:`.
-- Statistik views, likes, dan participants tetap memakai mock deterministic.
+- Statistik views dan likes berasal dari database; participants sudah dihapus.
 
 ## 13. Sistem Like Event
 
@@ -475,8 +490,8 @@ Event like diimplementasikan menggunakan table relasional `EventLike`:
   - User guest/unauthenticated akan menerima notifikasi toast ramah untuk login ke `/login?redirect=/agenda/[id]`.
   - State optimis interaktif: icon hati merah menyala saat aktif, teks tombol menyesuaikan (`Disukai` / `Suka`), dan jumlah like pada hero header ter-update instan.
 - **Dashboard Synchronization:**
-  - `/dashboard/content` menampilkan jumlah like riil database pada kolom statistik tipe Event.
-  - `/dashboard/content/[id]/event` menampilkan jumlah like riil pada metadata hero event.
+  - `/dashboard/content/event` menampilkan jumlah like riil database pada kolom statistik Event.
+  - `/dashboard/content/event/[id]` menampilkan jumlah like riil pada metadata hero event.
   - `/dashboard/create-event` menampilkan jumlah like riil pada tabel event milik author.
   - `/dashboard/create-event/preview/[id]` menampilkan jumlah like riil pada metadata preview owner.
 
@@ -496,19 +511,21 @@ Sistem view agenda/event mencatat pembacaan riil secara atomic dengan proteksi d
 - **Sinkronisasi UI:**
   - Halaman detail publik `/agenda/[id]`, dashboard author `/dashboard/create-event`, author preview, dan manage content membaca angka `views` riil dari database.
 
-## 15. Sistem Partisipan Event (CTA Tracking)
+## 15. CTA Tanya WhatsApp dan Penghapusan Participant Tracking
 
-Sistem partisipan agenda/event mencatat pengunjung yang mengklik tombol CTA **"Daftar Sekarang"** secara persistent dan unik selamanya di database PostgreSQL:
-
-- **Model Prisma:** `EventParticipant` dengan kolom `eventId`, `userId?`, `deviceId?`, `identifier` (`user:<userId>` atau `device:<deviceId>`), serta constraint unik `@@unique([eventId, identifier])`.
-- **Server Action:** `registerEventParticipantAction({ eventId })` yang mencatat pendaftaran jika `identifier` belum pernah terdaftar untuk acara terkait.
-- **Halaman Publik (`/agenda/[id]`):**
-  - Tombol CTA *"Daftar Sekarang"* membuka tautan pendaftaran eksternal (`registrationUrl`) di tab baru.
-  - State optimis langsung menambahkan jumlah partisipan `+1` di hero header dan menandai status terdaftar.
-- **Agregasi & Sinkronisasi Dashboard:**
-  - Menghitung jumlah partisipan aktif secara riil menggunakan agregasi Prisma `_count: { select: { participants: { where: { deletedAt: null } } } }`.
-  - `/dashboard/content` menampilkan jumlah partisipan riil pada kolom statistik event.
-  - `/dashboard/create-event` menampilkan jumlah partisipan riil pada tabel event milik author.
-  - `/dashboard/create-event/preview/[id]` dan preview Manage Content menampilkan jumlah partisipan riil.
-
-
+- **Database:** model Event mempunyai `whatsappUrl String @db.Text` yang wajib
+  diisi. Migration
+  `20260830190000_add_event_whatsapp_remove_participants` melakukan backfill
+  Event existing sebelum constraint non-null diterapkan.
+- **Validasi editor:** create dan edit mewajibkan format
+  `https://wa.me/628xxxxxxxxxx`. URL pendaftaran tetap optional dan terpisah.
+- **UI:** tombol Tanya tersedia pada `/agenda/[id]`, preview owner, dan preview
+  Manage Content. URL diberi query `text` berisi konteks Event dan dibuka pada
+  tab baru.
+- **Tanpa tracking CTA:** model `EventParticipant`, tabel
+  `event_participants`, relasi User/Event, Server Action pendaftaran, dan seluruh
+  DTO/agregasi participant telah dihapus. Klik Daftar Sekarang atau Tanya tidak
+  menghasilkan record interaksi baru.
+- **Statistik:** halaman public dan dashboard hanya menampilkan views serta
+  likes untuk Event. Overview menghitung interaksi dari likes dan komentar yang
+  benar-benar masih menjadi bagian domain aplikasi.

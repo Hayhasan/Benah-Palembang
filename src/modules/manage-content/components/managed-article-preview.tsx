@@ -121,7 +121,7 @@ export function ManagedArticlePreview({
       <div className="sticky top-0 z-20 flex flex-col gap-4 border-b bg-background/90 px-4 py-3.5 shadow-sm backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/content">
+            <Link href="/dashboard/content/article">
               <ArrowLeft className="size-4" />
               Kembali
             </Link>

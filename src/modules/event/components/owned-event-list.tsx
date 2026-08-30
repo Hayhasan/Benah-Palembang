@@ -8,7 +8,6 @@ import {
   Plus,
   Search,
   Send,
-  Users,
 } from "lucide-react"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
@@ -190,10 +189,6 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
                         <span className="flex items-center gap-1 font-medium">
                           <Heart className="size-3.5 text-palembang-red" />
                           {event.likes.toLocaleString("id-ID")}
-                        </span>
-                        <span className="flex items-center gap-1 font-medium">
-                          <Users className="size-3.5 text-orange-500" />
-                          {event.participants.toLocaleString("id-ID")}
                         </span>
                       </div>
                     </td>

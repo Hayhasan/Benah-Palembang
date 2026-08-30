@@ -1,5 +1,6 @@
 "use server"
 
+import { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 import { prisma } from "@/lib/db/prisma"
@@ -26,7 +27,7 @@ export async function updateProfileAction(
   }
 
   try {
-    const profile = await prisma.$transaction(async (transaction) => {
+    const result = await prisma.$transaction(async (transaction) => {
       const current = await transaction.user.findFirst({
         where: {
           id: actor.id,
@@ -69,11 +70,13 @@ export async function updateProfileAction(
             description: `Mengubah data personal profil akun '${updated.name}'`,
             beforeState: {
               name: current.name,
+              username: current.username,
               bio: current.bio,
               whatsappNumber: current.whatsappNumber,
             },
             afterState: {
               name: updated.name,
+              username: updated.username,
               bio: updated.bio,
               whatsappNumber: updated.whatsappNumber,
             },
@@ -83,9 +86,11 @@ export async function updateProfileAction(
       }
 
       return updated
+        ? { profile: updated, previousUsername: current.username }
+        : null
     })
 
-    if (!profile) {
+    if (!result) {
       return {
         success: false,
         message: "Profil tidak tersedia atau session sudah tidak valid.",
@@ -93,13 +98,26 @@ export async function updateProfileAction(
     }
 
     revalidatePath("/dashboard/profile")
+    revalidatePath(`/penulis/${result.previousUsername}`)
+    revalidatePath(`/penulis/${result.profile.username}`)
 
     return {
       success: true,
       message: "Profil berhasil diperbarui.",
-      data: mapProfile(profile),
+      data: mapProfile(result.profile),
     }
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        success: false,
+        message: "Username sudah digunakan oleh pengguna lain.",
+        fieldErrors: { username: ["Username sudah digunakan."] },
+      }
+    }
+
     console.error("Failed to update profile:", error)
     return {
       success: false,

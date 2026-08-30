@@ -8,14 +8,10 @@ export const DEFAULT_HEADER_FOOTER_CONTENT = {
     linkUrl: "/",
   },
   footer: {
+    backgroundText: "PALEMBANG",
     description:
-      "Platform editorial yang merekam, merayakan, dan menggerakkan kota.",
-    exploreDescription: "",
-    contactEmail: "halo@benahpalembang.id",
-    contactPhone: "+62 711 123 456",
-    contactAddress: "Palembang, Sumatera Selatan",
-    copyrightText: "© 2025 Benah Palembang",
-    closingText: "Made with care in Palembang",
+      "Platform editorial yang merekam, merayakan, dan menggerakkan kota Palembang.",
+    copyrightText: "© 2026 Benah Palembang. All rights reserved.",
     exploreLinks: [
       {
         label: "Cerita Warga",
@@ -42,34 +38,46 @@ export const DEFAULT_HEADER_FOOTER_CONTENT = {
         isVisible: true,
       },
       {
+        label: "Kebudayaan",
+        linkUrl: "/kebudayaan",
+        position: 5,
+        isVisible: true,
+      },
+      {
         label: "Agenda",
         linkUrl: "/agenda",
-        position: 5,
+        position: 6,
+        isVisible: true,
+      },
+      {
+        label: "Kolaborasi",
+        linkUrl: "/kolaborasi",
+        position: 7,
         isVisible: true,
       },
     ],
     connectLinks: [
       {
-        label: "Instagram",
-        linkUrl: "#instagram",
+        platform: "instagram",
+        linkUrl: "https://instagram.com/benahpalembang",
         position: 1,
         isVisible: true,
       },
       {
-        label: "TikTok",
-        linkUrl: "#tiktok",
+        platform: "whatsapp",
+        linkUrl: "https://wa.me/628551241878",
         position: 2,
         isVisible: true,
       },
       {
-        label: "YouTube",
-        linkUrl: "#youtube",
+        platform: "youtube",
+        linkUrl: "https://youtube.com/@benahpalembang",
         position: 3,
         isVisible: true,
       },
       {
-        label: "LinkedIn",
-        linkUrl: "#linkedin",
+        platform: "mail",
+        linkUrl: "mailto:halo@benahpalembang.id",
         position: 4,
         isVisible: true,
       },

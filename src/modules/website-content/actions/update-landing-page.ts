@@ -32,6 +32,9 @@ function rootData(data: LandingPageEditorData) {
     ctaDescription: data.cta.description,
     ctaButtonLabel: data.cta.buttonLabel,
     ctaButtonUrl: data.cta.buttonUrl,
+    ctaBackgroundImageUrl: data.cta.backgroundImageUrl,
+    ctaContactLabel: data.cta.contactLabel,
+    ctaContactEmail: data.cta.contactEmail,
   }
 }
 
@@ -77,11 +80,80 @@ function articleSectionData(
     description: section.description,
     backgroundImageUrl: section.backgroundImageUrl,
     linkLabel: section.linkLabel,
-    theme: section.theme,
-    layout: section.layout,
-    maxItems: section.maxItems,
     position,
     isVisible: section.isVisible,
+  }
+}
+
+async function syncLandingArticlePins(
+  tx: Prisma.TransactionClient,
+  websiteContentId: number,
+  sections: LandingPageEditorData["articleSections"],
+) {
+  const storedSections = await tx.websiteArticleSection.findMany({
+    where: { websiteContentId, deletedAt: null },
+    select: { id: true, sectionKey: true },
+  })
+  const storedSectionsByKey = new Map(
+    storedSections.map((section) => [section.sectionKey, section]),
+  )
+  const submittedArticleIds = sections.flatMap(
+    (section) => section.pinnedArticleIds,
+  )
+
+  if (new Set(submittedArticleIds).size !== submittedArticleIds.length) {
+    throw new Error("Satu artikel hanya dapat dipin pada satu section.")
+  }
+
+  const articles = await tx.article.findMany({
+    where: {
+      id: { in: submittedArticleIds },
+      status: "PUBLISHED",
+      publishedAt: { not: null },
+      deletedAt: null,
+    },
+    select: { id: true, websiteArticleSectionId: true },
+  })
+  const articlesById = new Map(articles.map((article) => [article.id, article]))
+
+  if (articles.length !== submittedArticleIds.length) {
+    throw new Error("Salah satu artikel pin tidak tersedia atau belum published.")
+  }
+
+  for (const section of sections) {
+    const storedSection = storedSectionsByKey.get(section.sectionKey)
+    if (!storedSection) {
+      throw new Error(`Section artikel ${section.sectionKey} tidak ditemukan.`)
+    }
+
+    for (const articleId of section.pinnedArticleIds) {
+      if (
+        articlesById.get(articleId)?.websiteArticleSectionId !== storedSection.id
+      ) {
+        throw new Error("Artikel pin harus berasal dari kategori section yang sama.")
+      }
+    }
+  }
+
+  await tx.websiteArticleSectionPin.deleteMany({
+    where: {
+      websiteArticleSectionId: { in: storedSections.map(({ id }) => id) },
+    },
+  })
+
+  const pins = sections.flatMap((section) => {
+    const storedSection = storedSectionsByKey.get(section.sectionKey)
+    if (!storedSection) return []
+
+    return section.pinnedArticleIds.map((articleId, index) => ({
+      websiteArticleSectionId: storedSection.id,
+      articleId,
+      position: index + 1,
+    }))
+  })
+
+  if (pins.length > 0) {
+    await tx.websiteArticleSectionPin.createMany({ data: pins })
   }
 }
 
@@ -399,6 +471,16 @@ export async function updateLandingPageAction(
       } else {
         await createLandingPage(tx, parsed.data)
       }
+
+      const websiteContent = await tx.websiteContent.findFirstOrThrow({
+        where: { key: "home", deletedAt: null },
+        select: { id: true },
+      })
+      await syncLandingArticlePins(
+        tx,
+        websiteContent.id,
+        parsed.data.articleSections,
+      )
 
       await recordActivityLog(
         {

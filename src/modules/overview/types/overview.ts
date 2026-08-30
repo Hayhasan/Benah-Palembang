@@ -15,32 +15,37 @@ export interface OverviewRecentContentItem {
   id: number
   type: "Article" | "Event"
   title: string
+  author: string
   status: "Request" | "Posted" | "Rejected" | "Takedown"
   timeAgo: string
 }
 
-export interface OverviewRecentLogItem {
-  id: number
-  user: string
-  action: string
-  module: string
-  timeAgo: string
-}
-
-export interface OverviewData {
+interface OverviewBaseData {
   periodType: OverviewFilterType
   periodLabel: string
   selectedMonth: string
   availableMonths: string[]
+  viewerName: string
+  chartData: OverviewChartPoint[]
+}
+
+export interface ManagementOverviewData extends OverviewBaseData {
+  audience: "MANAGEMENT"
   metrics: {
     users: OverviewMetricItem
     articles: OverviewMetricItem
     events: OverviewMetricItem
-    views: OverviewMetricItem
-    clicks: OverviewMetricItem
-    logs: OverviewMetricItem
+    requests: OverviewMetricItem
   }
-  chartData: OverviewChartPoint[]
   recentContents: OverviewRecentContentItem[]
-  recentLogs: OverviewRecentLogItem[]
 }
+
+export interface CreatorOverviewData extends OverviewBaseData {
+  audience: "CREATOR"
+  metrics: {
+    publications: OverviewMetricItem
+    views: OverviewMetricItem
+  }
+}
+
+export type OverviewData = ManagementOverviewData | CreatorOverviewData

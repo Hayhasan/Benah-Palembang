@@ -14,7 +14,6 @@ import type { OverviewData, OverviewFilterType } from "../types/overview"
 import { OverviewChart } from "./overview-chart"
 import { OverviewMetricCards } from "./overview-metric-cards"
 import { OverviewRecentContent } from "./overview-recent-content"
-import { OverviewRecentLogs } from "./overview-recent-logs"
 
 interface OverviewPageProps {
   initialData: OverviewData
@@ -55,7 +54,10 @@ export function OverviewPage({ initialData }: OverviewPageProps) {
         <div>
           <h2 className="text-3xl font-bold tracking-tight font-display">Overview</h2>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Ringkasan aktivitas dan performa website •{" "}
+            {initialData.audience === "CREATOR"
+              ? "Ringkasan performa publikasi Anda"
+              : "Ringkasan performa & konten website"}{" "}
+            •{" "}
             <span className="font-semibold text-foreground">{initialData.periodLabel}</span>
           </p>
         </div>
@@ -119,8 +121,7 @@ export function OverviewPage({ initialData }: OverviewPageProps) {
         </div>
       </div>
 
-      {/* 6 Metric Overview Cards */}
-      <OverviewMetricCards metrics={initialData.metrics} />
+      <OverviewMetricCards data={initialData} />
 
       {/* Interactive Analytics Graph */}
       <OverviewChart
@@ -128,11 +129,9 @@ export function OverviewPage({ initialData }: OverviewPageProps) {
         periodLabel={initialData.periodLabel}
       />
 
-      {/* Bottom Section: Content Approval & Logs */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+      {initialData.audience === "MANAGEMENT" ? (
         <OverviewRecentContent items={initialData.recentContents} />
-        <OverviewRecentLogs logs={initialData.recentLogs} />
-      </div>
+      ) : null}
     </div>
   )
 }

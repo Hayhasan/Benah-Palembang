@@ -7,8 +7,8 @@ import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { managedContentListQuerySchema } from "../schemas/manage-content.schema"
 import type {
-  ManagedContentListItem,
   ManagedContentListResult,
+  ManagedContentType,
 } from "../types/managed-content"
 import {
   mapArticleToManagedContent,
@@ -17,10 +17,13 @@ import {
 
 const PAGE_SIZE = 25
 
-export async function getManagedContent(input: {
-  page?: string | number | null
-  q?: string | null
-}): Promise<ManagedContentListResult> {
+export async function getManagedContent(
+  contentType: ManagedContentType,
+  input: {
+    page?: string | number | null
+    q?: string | null
+  },
+): Promise<ManagedContentListResult> {
   await connection()
   await requireRole(["ADMIN", "SUPERADMIN"])
 
@@ -32,99 +35,95 @@ export async function getManagedContent(input: {
   const page = parsed.success ? parsed.data.page : 1
   const searchQuery = parsed.success ? parsed.data.q?.trim() : undefined
 
-  const isTypeArticle = searchQuery?.toLowerCase() === "article"
-  const isTypeEvent = searchQuery?.toLowerCase() === "event"
-
-  const [articles, events] = await Promise.all([
-    isTypeEvent
-      ? Promise.resolve([])
-      : prisma.article.findMany({
-          where: {
-            deletedAt: null,
-            status: { not: "DRAFT" },
-            ...(searchQuery && !isTypeArticle
-              ? {
-                  OR: [
-                    { title: { contains: searchQuery, mode: "insensitive" } },
-                    { excerpt: { contains: searchQuery, mode: "insensitive" } },
-                    {
-                      author: {
-                        name: { contains: searchQuery, mode: "insensitive" },
-                      },
-                    },
-                  ],
-                }
-              : {}),
-          },
-          include: {
-            author: {
-              select: { id: true, name: true, avatarUrl: true },
+  const articleWhere = {
+    deletedAt: null,
+    status: { not: "DRAFT" as const },
+    ...(searchQuery
+      ? {
+          OR: [
+            { title: { contains: searchQuery, mode: "insensitive" as const } },
+            { excerpt: { contains: searchQuery, mode: "insensitive" as const } },
+            {
+              author: {
+                name: { contains: searchQuery, mode: "insensitive" as const },
+              },
             },
-            _count: {
-              select: {
-                likes: true,
-                comments: {
-                  where: { deletedAt: null },
+          ],
+        }
+      : {}),
+  }
+  const eventWhere = {
+    deletedAt: null,
+    status: { not: "DRAFT" as const },
+    ...(searchQuery
+      ? {
+          OR: [
+            { title: { contains: searchQuery, mode: "insensitive" as const } },
+            {
+              description: {
+                contains: searchQuery,
+                mode: "insensitive" as const,
+              },
+            },
+            {
+              owner: {
+                name: { contains: searchQuery, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  }
+
+  const totalItems =
+    contentType === "ARTICLE"
+      ? await prisma.article.count({ where: articleWhere })
+      : await prisma.event.count({ where: eventWhere })
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
+  const safePage = Math.min(Math.max(1, page), totalPages)
+  const skip = (safePage - 1) * PAGE_SIZE
+
+  const items =
+    contentType === "ARTICLE"
+      ? (
+          await prisma.article.findMany({
+            where: articleWhere,
+            orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
+            skip,
+            take: PAGE_SIZE,
+            include: {
+              author: {
+                select: { id: true, name: true, avatarUrl: true },
+              },
+              _count: {
+                select: {
+                  likes: true,
+                  comments: {
+                    where: { deletedAt: null },
+                  },
                 },
               },
             },
-          },
-        }),
-    isTypeArticle
-      ? Promise.resolve([])
-      : prisma.event.findMany({
-          where: {
-            deletedAt: null,
-            status: { not: "DRAFT" },
-            ...(searchQuery && !isTypeEvent
-              ? {
-                  OR: [
-                    { title: { contains: searchQuery, mode: "insensitive" } },
-                    {
-                      description: {
-                        contains: searchQuery,
-                        mode: "insensitive",
-                      },
-                    },
-                    {
-                      owner: {
-                        name: { contains: searchQuery, mode: "insensitive" },
-                      },
-                    },
-                  ],
-                }
-              : {}),
-          },
-          include: {
-            owner: {
-              select: { id: true, name: true, avatarUrl: true },
-            },
-            _count: {
-              select: {
-                likes: true,
-                participants: { where: { deletedAt: null } },
+          })
+        ).map(mapArticleToManagedContent)
+      : (
+          await prisma.event.findMany({
+            where: eventWhere,
+            orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
+            skip,
+            take: PAGE_SIZE,
+            include: {
+              owner: {
+                select: { id: true, name: true, avatarUrl: true },
+              },
+              _count: {
+                select: {
+                  likes: true,
+                },
               },
             },
-          },
-        }),
-  ])
-
-  const allItems: ManagedContentListItem[] = [
-    ...articles.map(mapArticleToManagedContent),
-    ...events.map(mapEventToManagedContent),
-  ]
-
-  allItems.sort((a, b) => {
-    const dateA = new Date(a.submittedAt || a.updatedAt).getTime()
-    const dateB = new Date(b.submittedAt || b.updatedAt).getTime()
-    return dateB - dateA
-  })
-
-  const totalItems = allItems.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
-  const safePage = Math.min(Math.max(1, page), totalPages)
-  const startIndex = (safePage - 1) * PAGE_SIZE
-  const items = allItems.slice(startIndex, startIndex + PAGE_SIZE)
+          })
+        ).map(mapEventToManagedContent)
 
   return {
     items,

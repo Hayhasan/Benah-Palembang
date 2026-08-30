@@ -8,24 +8,18 @@ import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_COLLABORATION_PAGE } from "../constants/default-collaboration-page"
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
-import {
-  collaborationAspectRatioFromDatabase,
-  collaborationPlatformFromDatabase,
-} from "./collaboration-content.mapper"
+import { collaborationPlatformFromDatabase } from "./collaboration-content.mapper"
 
 export const collaborationPageEditorSelect = {
   key: true,
   heroImageUrl: true,
   heroImageAlt: true,
-  heroEyebrow: true,
   heroTitle: true,
   heroDescription: true,
   contactEmail: true,
   contactPhone: true,
   emailUrl: true,
   whatsappUrl: true,
-  formTitle: true,
-  formDescription: true,
   partnerLogos: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -43,10 +37,7 @@ export const collaborationPageEditorSelect = {
     select: {
       id: true,
       platform: true,
-      title: true,
-      thumbnailUrl: true,
       contentUrl: true,
-      aspectRatio: true,
       position: true,
       isVisible: true,
     },
@@ -66,7 +57,6 @@ export function mapCollaborationContentToEditor(
     hero: {
       imageUrl: content.heroImageUrl,
       imageAlt: content.heroImageAlt,
-      eyebrow: content.heroEyebrow,
       title: content.heroTitle,
       description: content.heroDescription,
     },
@@ -76,10 +66,6 @@ export function mapCollaborationContentToEditor(
       emailUrl: content.emailUrl,
       whatsappUrl: content.whatsappUrl,
     },
-    form: {
-      title: content.formTitle,
-      description: content.formDescription,
-    },
     partnerLogos: content.partnerLogos.map((logo) => ({
       ...logo,
       clientKey: `collaboration-logo-${logo.id}`,
@@ -87,7 +73,6 @@ export function mapCollaborationContentToEditor(
     partnerContents: content.partnerContents.map((item) => ({
       ...item,
       platform: collaborationPlatformFromDatabase(item.platform),
-      aspectRatio: collaborationAspectRatioFromDatabase(item.aspectRatio),
       clientKey: `collaboration-content-${item.id}`,
     })),
   }

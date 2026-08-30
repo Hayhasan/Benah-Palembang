@@ -8,11 +8,11 @@ import {
   Eye,
   Heart,
   MapPin,
+  MessageCircle,
   RotateCcw,
   Sparkles,
   Ticket,
   Trash2,
-  Users,
   XCircle,
 } from "lucide-react"
 import Image from "next/image"
@@ -23,6 +23,8 @@ import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
+import { EventOrganizerCard } from "@/modules/event/components/event-organizer-card"
+import { EventShareButton } from "@/modules/event/components/event-share-button"
 import type { OwnedEventEditorData } from "@/modules/event/types/owned-event"
 
 import { approveContentAction } from "../actions/approve-content"
@@ -37,6 +39,9 @@ export function ManagedEventPreview({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const whatsappQuestionUrl = `${event.whatsappUrl}?text=${encodeURIComponent(
+    `Halo, saya ingin bertanya dan mendapatkan informasi lebih lanjut tentang acara:\n${event.title}\nTanggal: ${event.dateLabel}\nLokasi: ${event.location}`,
+  )}`
 
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean
@@ -98,7 +103,7 @@ export function ManagedEventPreview({
       <div className="sticky top-0 z-20 flex flex-col gap-4 border-b bg-background/90 px-4 py-3.5 shadow-sm backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/content">
+            <Link href="/dashboard/content/event">
               <ArrowLeft className="size-4" />
               Kembali
             </Link>
@@ -185,7 +190,7 @@ export function ManagedEventPreview({
             <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
           </div>
           <div className="relative z-10 mx-auto max-w-[1240px]">
-            <span className="inline-block rounded-full border border-palembang-gold/40 bg-palembang-gold/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-gold">
+            <span className="inline-block rounded-full border border-palembang-red/40 bg-palembang-red/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-red">
               {event.category}
             </span>
             <h1 className="mt-4 max-w-4xl font-display text-4xl font-black leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
@@ -194,18 +199,18 @@ export function ManagedEventPreview({
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
               {event.description}
             </p>
-            <div className="mt-8 flex flex-wrap gap-5 border-t border-white/15 pt-5 text-xs text-white/65">
+            <div className="mt-8 flex flex-wrap items-center gap-5 text-xs text-white/70">
               <span className="flex items-center gap-2">
-                <Eye className="size-4" />
-                {event.views.toLocaleString("id-ID")} views
+                <CalendarDays className="size-4 text-palembang-red" />
+                {event.dateLabel}
               </span>
               <span className="flex items-center gap-2">
                 <Heart className="size-4 text-palembang-red" />
                 {event.likesCount.toLocaleString("id-ID")} likes
               </span>
               <span className="flex items-center gap-2">
-                <Users className="size-4" />
-                {event.participantsCount.toLocaleString("id-ID")} participants
+                <Eye className="size-4 text-palembang-red" />
+                {event.views.toLocaleString("id-ID")} views
               </span>
             </div>
           </div>
@@ -252,11 +257,9 @@ export function ManagedEventPreview({
             </div>
 
             <aside className="space-y-6">
+              <EventOrganizerCard organizer={event.organizer} />
               <div className="rounded-[1.5rem] border bg-card p-6 shadow-sm sm:p-8">
-                <h3 className="flex items-center gap-2 font-display text-lg font-bold">
-                  <Sparkles className="size-4 text-palembang-red" />
-                  Informasi Penting
-                </h3>
+                <h3 className="font-display text-lg font-bold">Detail Acara</h3>
                 <div className="mt-6 space-y-4 text-sm text-muted-foreground">
                   <div className="flex items-start gap-3">
                     <CalendarDays className="mt-0.5 size-4 shrink-0 text-foreground" />
@@ -280,7 +283,7 @@ export function ManagedEventPreview({
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Users className="mt-0.5 size-4 shrink-0 text-foreground" />
+                    <Sparkles className="mt-0.5 size-4 shrink-0 text-foreground" />
                     <div>
                       <p className="font-semibold text-foreground">
                         Penyelenggara
@@ -290,30 +293,44 @@ export function ManagedEventPreview({
                   </div>
                 </div>
 
-                <div className="mt-8 border-t pt-6">
+                <div className="mt-8 space-y-3 border-t pt-6">
                   {event.registrationUrl ? (
-                    <Button
-                      asChild
-                      className="w-full gap-2 bg-palembang-red text-white hover:bg-palembang-red/90"
-                    >
-                      <a
-                        href={event.registrationUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                      >
-                        <Ticket className="size-4" />
-                        Tautan Pendaftaran
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button
-                      disabled
-                      className="w-full gap-2 bg-muted text-muted-foreground"
+                    <a
+                      href={event.registrationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white shadow-sm transition-colors hover:bg-palembang-red/90"
                     >
                       <Ticket className="size-4" />
-                      Pendaftaran Tidak Dibuka
-                    </Button>
+                      Daftar Sekarang
+                    </a>
+                  ) : (
+                    <div className="rounded-lg bg-muted px-4 py-3 text-center text-xs leading-5 text-muted-foreground">
+                      Informasi pendaftaran belum tersedia.
+                    </div>
                   )}
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex h-11 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-semibold text-muted-foreground">
+                      <Heart className="size-4" />
+                      Suka
+                    </div>
+                    <a
+                      href={whatsappQuestionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-11 items-center justify-center gap-1.5 rounded-md border border-emerald-600/30 bg-emerald-600/10 px-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-600 hover:text-white dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
+                    >
+                      <MessageCircle className="size-4" />
+                      Tanya
+                    </a>
+                    <EventShareButton
+                      title={event.title}
+                      url={`/agenda/${event.id}`}
+                      label="Bagikan"
+                      className="gap-1.5 px-2 text-xs"
+                    />
+                  </div>
                 </div>
               </div>
             </aside>

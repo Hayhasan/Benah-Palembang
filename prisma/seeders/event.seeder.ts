@@ -114,6 +114,7 @@ export async function seedEvent(prisma: PrismaClient) {
             location: event.location,
             organizer: event.organizer,
             registrationUrl: event.registrationUrl,
+            whatsappUrl: event.whatsappUrl,
             status,
             moderationNote:
               status === "TAKEN_DOWN"

@@ -29,7 +29,7 @@ export function LandingHero({ slides }: LandingHeroProps) {
   const current = slides[activeIndex] ?? slides[0]
 
   return (
-    <section className="relative h-[min(850px,100svh)] min-h-[680px] overflow-hidden bg-palembang-charcoal text-white">
+    <section className="relative h-svh min-h-svh w-full overflow-hidden bg-palembang-charcoal text-white sm:h-[min(850px,100svh)] sm:min-h-[680px]">
       <div className="absolute inset-0">
         <Image
           fill
@@ -37,38 +37,38 @@ export function LandingHero({ slides }: LandingHeroProps) {
           src={current.imageUrl}
           alt={current.imageAlt}
           sizes="100vw"
-          className="size-full object-cover opacity-80 transition-all duration-1000"
+          className="size-full object-cover opacity-65 transition-all duration-1000"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/75" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/40 to-black/85" />
       </div>
-      <div className="relative mx-auto flex h-full max-w-[1380px] flex-col items-center justify-center px-6 text-center">
-        <div className="mb-6 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-palembang-gold">
-          <span className="h-px w-8 bg-palembang-gold" />
+      <div className="relative mx-auto flex h-full max-w-[1380px] flex-col items-center justify-center px-6 pb-20 pt-12 text-center sm:pb-0 sm:pt-0">
+        <div className="reveal-on-scroll mb-4 flex items-center gap-3 text-[9px] font-bold uppercase tracking-[0.3em] text-palembang-red sm:mb-6 sm:text-[10px]">
+          <span className="h-px w-6 bg-palembang-red sm:w-8" />
           {current.eyebrow}
-          <span className="h-px w-8 bg-palembang-gold" />
+          <span className="h-px w-6 bg-palembang-red sm:w-8" />
         </div>
-        <h1 className="max-w-5xl whitespace-pre-line font-display text-[clamp(2rem,5.5vw,5rem)] font-black leading-[0.82] tracking-[-0.075em]">
+        <h1 className="reveal-on-scroll reveal-delay-100 max-w-5xl whitespace-pre-line font-display text-[clamp(2.15rem,7.5vw,5rem)] font-black leading-[0.84] tracking-[-0.07em]">
           {current.title}
         </h1>
-        <p className="mt-8 max-w-md text-sm leading-6 text-white/75 sm:text-base">
+        <p className="reveal-on-scroll reveal-delay-200 mt-5 max-w-md text-xs leading-5 text-white/75 sm:mt-8 sm:text-base sm:leading-6">
           {current.description}
         </p>
         <Link
           href={current.buttonUrl}
-          className="mt-8 flex items-center gap-3 rounded-full bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-palembang-charcoal transition-transform hover:-translate-y-1"
+          className="reveal-on-scroll reveal-delay-300 mt-6 flex items-center gap-3 rounded-full bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-palembang-charcoal transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:mt-8"
         >
           {current.buttonLabel} <ArrowRight className="size-4" />
         </Link>
       </div>
       {slides.length > 1 ? (
-        <div className="absolute bottom-10 left-6 right-6 mx-auto flex max-w-[1380px] items-end justify-between">
+        <div className="reveal-fade reveal-delay-400 absolute bottom-6 left-6 right-6 z-10 mx-auto flex max-w-[1380px] items-end justify-between sm:bottom-10">
           <div className="flex gap-2">
             {slides.map((slide, index) => (
               <button
                 key={`${slide.position}-${slide.imageUrl}`}
                 aria-label={`Slide ${index + 1}`}
                 onClick={() => setActiveIndex(index)}
-                className={`h-1 transition-all ${index === activeIndex ? "w-12 bg-palembang-gold" : "w-5 bg-white/40"}`}
+                className={`h-1 transition-all ${index === activeIndex ? "w-10 bg-palembang-red sm:w-12" : "w-4 bg-white/40 sm:w-5"}`}
               />
             ))}
           </div>
@@ -81,9 +81,9 @@ export function LandingHero({ slides }: LandingHeroProps) {
                     (currentIndex - 1 + slides.length) % slides.length,
                 )
               }
-              className="rounded-full border border-white/30 p-2 transition-colors hover:bg-white/15"
+              className="rounded-full border border-white/30 p-1.5 transition-colors hover:bg-white/15 sm:p-2"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-3.5 sm:size-4" />
             </button>
             <button
               aria-label="Slide berikutnya"
@@ -92,9 +92,9 @@ export function LandingHero({ slides }: LandingHeroProps) {
                   (currentIndex) => (currentIndex + 1) % slides.length,
                 )
               }
-              className="rounded-full border border-white/30 p-2 transition-colors hover:bg-white/15"
+              className="rounded-full border border-white/30 p-1.5 transition-colors hover:bg-white/15 sm:p-2"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-3.5 sm:size-4" />
             </button>
           </div>
         </div>

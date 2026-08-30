@@ -6,7 +6,7 @@ export function revalidateArticleRoutes(params?: {
   categorySlug?: string
 }) {
   revalidatePath("/")
-  revalidatePath("/dashboard/content")
+  revalidatePath("/dashboard/content/article")
   revalidatePath("/dashboard/create-article")
 
   if (params?.id) {

@@ -8,6 +8,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { useSession } from '@/modules/auth/hooks/use-session'
 import { useHeaderFooterContent } from '@/modules/website-content/components/header-footer-content-provider'
+import { ModeToggle } from '@/components/mode-toggle'
 
 const categories = [
     { name: 'Cerita Warga', href: '/cerita-warga' },
@@ -26,6 +27,18 @@ export const Header = () => {
     const [articleOpen, setArticleOpen] = useState(false)
     const location = useLocation()
     const isHome = location.pathname === "/"
+    const isArticlePage = categories.some((category) => location.pathname === category.href)
+      || location.pathname.startsWith("/artikel/")
+    const hasDarkHero = isHome
+      || isArticlePage
+      || location.pathname.startsWith("/agenda")
+      || location.pathname === "/kolaborasi"
+      || location.pathname === "/login"
+      || location.pathname === "/register"
+      || location.pathname.startsWith("/lupa-password")
+      || location.pathname === "/first-time-setup"
+      || location.pathname.startsWith("/penulis/")
+    const isOverDarkHero = !isScrolled && hasDarkHero && !menuState
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const handleDropdownEnter = useCallback(() => { 
@@ -58,35 +71,51 @@ export const Header = () => {
             <nav
                 data-state={menuState ? 'active' : 'inactive'}
                 className="fixed left-0 top-0 w-full z-50 px-2">
-                <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-background/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5 shadow-sm', !isScrolled && isHome && 'bg-transparent text-white', !isScrolled && !isHome && 'bg-transparent text-foreground')}>
+                <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-background/85 max-w-4xl rounded-2xl border border-border/80 backdrop-blur-xl lg:px-5 shadow-sm text-foreground', !isScrolled && isOverDarkHero && 'bg-transparent text-white', !isScrolled && !isOverDarkHero && 'bg-transparent text-foreground')}>
                     <div className="relative flex flex-wrap items-center justify-between gap-6 lg:gap-0 py-2">
-                        <div className="flex w-full justify-between lg:w-auto">
+                        <div className="flex w-full items-center justify-between lg:w-auto">
                             <Link
                                 href={logo.linkUrl}
                                 aria-label="home"
                                 className="flex gap-2 items-center">
-                                <img src={logo.imageUrl} alt={logo.imageAlt} className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
+                                <img
+                                    src={logo.imageUrl}
+                                    alt={logo.imageAlt}
+                                    className={cn(
+                                        "object-contain brightness-0 transition-all duration-300 dark:invert",
+                                        isScrolled ? "h-6" : "h-7",
+                                        isOverDarkHero && "invert"
+                                    )}
+                                />
                             </Link>
 
-                            <button
-                                onClick={() => setMenuState(!menuState)}
-                                aria-label={menuState ? 'Close Menu' : 'Open Menu'}
-                                className={cn("relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden", !isScrolled && isHome && !menuState ? "text-white" : "text-foreground")}>
-                                {menuState ? <X className="size-6" /> : <Equal className="size-6" />}
-                            </button>
+                            <div className="flex items-center gap-2 lg:hidden">
+                                <ModeToggle
+                                    className={cn(
+                                        "size-8",
+                                        isOverDarkHero && "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                                    )}
+                                />
+                                <button
+                                    onClick={() => setMenuState(!menuState)}
+                                    aria-label={menuState ? 'Close Menu' : 'Open Menu'}
+                                    className={cn("relative z-20 block cursor-pointer p-1.5", isOverDarkHero ? "text-white" : "text-foreground")}>
+                                    {menuState ? <X className="size-6" /> : <Equal className="size-6" />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="absolute inset-0 m-auto hidden size-fit lg:block">
                             <ul className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.16em]">
                                 <li>
-                                    <Link href="/" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link href="/" className={cn("duration-150 transition-opacity hover:opacity-100", isOverDarkHero ? "text-white/80" : "text-muted-foreground")}>
                                         Home
                                     </Link>
                                 </li>
                                 <li className="relative" onMouseEnter={handleDropdownEnter} onMouseLeave={handleDropdownLeave}>
                                     <button 
                                         onClick={() => setArticleOpen((value) => !value)} 
-                                        className={cn("flex items-center gap-1 duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}
+                                        className={cn("flex items-center gap-1 duration-150 transition-opacity hover:opacity-100", isOverDarkHero ? "text-white/80" : "text-muted-foreground")}
                                     >
                                         Article <ChevronDown className={cn("size-3 transition-transform duration-300", articleOpen && "rotate-180")} />
                                     </button>
@@ -107,12 +136,12 @@ export const Header = () => {
                                     </div>
                                 </li>
                                 <li>
-                                    <Link href="/agenda" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link href="/agenda" className={cn("duration-150 transition-opacity hover:opacity-100", isOverDarkHero ? "text-white/80" : "text-muted-foreground")}>
                                         Agenda
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/kolaborasi" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link href="/kolaborasi" className={cn("duration-150 transition-opacity hover:opacity-100", isOverDarkHero ? "text-white/80" : "text-muted-foreground")}>
                                         Collaboration
                                     </Link>
                                 </li>
@@ -153,12 +182,18 @@ export const Header = () => {
                                     </li>
                                 </ul>
                             </div>
-                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit text-foreground mt-4 lg:mt-0">
+                            <div className="flex w-full flex-col items-center space-y-3 text-foreground sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit lg:mt-0">
+                                <ModeToggle
+                                    className={cn(
+                                        "hidden size-9 lg:inline-flex",
+                                        isOverDarkHero && "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                                    )}
+                                />
                                 {user ? (
                                     <div className="relative">
                                         <button 
                                             onClick={() => setProfileOpen(!profileOpen)}
-                                            className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", !isScrolled && isHome ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
+                                            className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", isOverDarkHero ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
                                         >
                                             <img src={user.avatarUrl || "https://i.pravatar.cc/150?img=0"} alt={user.name} className="size-7 rounded-full object-cover" />
                                             <span className="text-sm font-semibold">{user.name}</span>

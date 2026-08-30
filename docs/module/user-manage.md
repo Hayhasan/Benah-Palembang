@@ -17,7 +17,8 @@ User dari database, bukan code seperti `USR-001` atau `ADM-001`.
 ## Scope awal
 
 - Menampilkan daftar akun dengan role `USER`.
-- Pencarian berdasarkan UUID, nama, atau email.
+- Pencarian berdasarkan UUID, nama, atau email. Username dibuat otomatis saat
+  account dibuat dan dapat diubah oleh pemilik melalui halaman Profile.
 - Pagination server-side sebanyak 25 item per halaman.
 - Membuat akun user baru.
 - Melihat detail user dalam mode read-only.

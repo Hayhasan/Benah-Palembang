@@ -13,27 +13,33 @@ import {
 export async function getLandingArticles(): Promise<LandingArticlesBySection> {
   await connection()
 
-  const articles = await prisma.article.findMany({
+  const pins = await prisma.websiteArticleSectionPin.findMany({
     where: {
-      status: "PUBLISHED",
-      publishedAt: { not: null },
-      deletedAt: null,
       websiteArticleSection: {
         deletedAt: null,
         isVisible: true,
         websiteContent: { key: "home", deletedAt: null },
       },
+      article: {
+        status: "PUBLISHED",
+        publishedAt: { not: null },
+        deletedAt: null,
+      },
     },
     orderBy: [
-      { isFeatured: "desc" },
-      { publishedAt: "desc" },
-      { id: "desc" },
+      { websiteArticleSection: { position: "asc" } },
+      { position: "asc" },
     ],
-    select: publicArticleCardSelect,
+    select: {
+      websiteArticleSection: { select: { sectionKey: true } },
+      article: { select: publicArticleCardSelect },
+    },
   })
 
-  return articles.reduce<LandingArticlesBySection>((grouped, article) => {
-    const item = mapPublicArticleCard(article)
+  return pins.reduce<LandingArticlesBySection>((grouped, pin) => {
+    const item = mapPublicArticleCard(pin.article)
+    if (item.sectionKey !== pin.websiteArticleSection.sectionKey) return grouped
+
     const sectionArticles = grouped[item.sectionKey] ?? []
     sectionArticles.push(item)
     grouped[item.sectionKey] = sectionArticles

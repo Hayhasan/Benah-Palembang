@@ -7,9 +7,9 @@ import {
   Eye,
   Heart,
   MapPin,
+  MessageCircle,
   Sparkles,
   Ticket,
-  Users,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -22,9 +22,9 @@ import { PublicFooter as Footer } from "@/features/public/components/PublicFoote
 import { SectionHeading } from "@/features/public/components/SectionHeading"
 import { useSession } from "@/modules/auth/hooks/use-session"
 
-import { registerEventParticipantAction } from "../actions/register-event-participant"
 import { toggleEventLikeAction } from "../actions/toggle-event-like"
 import type { PublicEventDetailData } from "../types/public-event"
+import { EventOrganizerCard } from "./event-organizer-card"
 import { EventShareButton } from "./event-share-button"
 
 export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
@@ -33,18 +33,14 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
   const { user, status } = useSession()
   const isAuthenticated = status === "authenticated" && Boolean(user)
 
-  const [optimisticLike, setOptimisticLike] = useState<boolean | null>(null)
-  const [likesCountDelta, setLikesCountDelta] = useState(0)
-  const [hasRegistered, setHasRegistered] = useState(event.hasRegistered)
-  const [participantsDelta, setParticipantsDelta] = useState(0)
+  const [likeState, setLikeState] = useState({
+    hasLiked: event.hasLiked,
+    count: event.likesCount,
+  })
   const [, startTransition] = useTransition()
 
-  const isLiked = isAuthenticated ? (optimisticLike ?? event.hasLiked) : false
-  const likesCount = Math.max(0, event.likesCount + (isAuthenticated ? likesCountDelta : 0))
-  const participantsCount = Math.max(
-    0,
-    event.participantsCount + participantsDelta,
-  )
+  const isLiked = isAuthenticated && likeState.hasLiked
+  const likesCount = Math.max(0, likeState.count)
 
   function handleToggleLike() {
     if (!isAuthenticated) {
@@ -60,37 +56,30 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
       return
     }
 
+    const previousState = likeState
     const nextLiked = !isLiked
-    setOptimisticLike(nextLiked)
-    setLikesCountDelta((prev) => (nextLiked ? prev + 1 : prev - 1))
+    setLikeState({
+      hasLiked: nextLiked,
+      count: Math.max(0, likesCount + (nextLiked ? 1 : -1)),
+    })
 
     startTransition(async () => {
       const result = await toggleEventLikeAction({ eventId: event.id })
       if (!result.success) {
         toast.error(result.message)
-        setOptimisticLike(!nextLiked)
-        setLikesCountDelta((prev) => (nextLiked ? prev - 1 : prev + 1))
+        setLikeState(previousState)
         return
       }
-      setOptimisticLike(result.hasLiked ?? nextLiked)
-      setLikesCountDelta(0)
+      setLikeState({
+        hasLiked: result.hasLiked ?? nextLiked,
+        count: result.likesCount ?? previousState.count,
+      })
     })
   }
 
-  function handleRegisterClick() {
-    if (!hasRegistered) {
-      setHasRegistered(true)
-      setParticipantsDelta((prev) => prev + 1)
-      startTransition(async () => {
-        const result = await registerEventParticipantAction({
-          eventId: event.id,
-        })
-        if (!result.success) {
-          console.error(result.message)
-        }
-      })
-    }
-  }
+  const whatsappQuestionUrl = `${event.whatsappUrl}?text=${encodeURIComponent(
+    `Halo, saya ingin bertanya dan mendapatkan informasi lebih lanjut tentang acara:\n${event.title}\nTanggal: ${event.dateLabel}\nLokasi: ${event.location}`,
+  )}`
 
   return (
     <>
@@ -110,38 +99,40 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
         <div className="relative z-10 mx-auto max-w-[1240px]">
           <Link
             href="/agenda"
-            className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold hover:underline"
+            className="reveal-on-scroll inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red hover:underline"
           >
             <ArrowRight className="size-3 rotate-180" />
             Kembali ke Agenda
           </Link>
-          <div className="mt-6">
-            <span className="inline-block rounded-full border border-palembang-gold/40 bg-palembang-gold/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-gold">
+          <div className="reveal-on-scroll reveal-delay-100 mt-6">
+            <span className="inline-block rounded-full border border-palembang-red/40 bg-palembang-red/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-red">
               {event.category}
             </span>
           </div>
-          <h1 className="mt-4 max-w-4xl font-display text-5xl font-black leading-[0.92] tracking-[-0.06em] sm:text-7xl lg:text-8xl">
+          <h1 className="reveal-on-scroll reveal-delay-150 mt-4 max-w-4xl font-display text-5xl font-black leading-[0.92] tracking-[-0.06em] sm:text-7xl lg:text-8xl">
             {event.title}
           </h1>
-          <p className="mt-8 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
+          <p className="reveal-on-scroll reveal-delay-200 mt-8 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
             {event.description}
           </p>
-          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/15 pt-5 text-xs text-white/65">
+          <div className="reveal-on-scroll reveal-delay-250 mt-8 flex flex-wrap items-center gap-5 text-xs text-white/70">
             <span className="flex items-center gap-2">
-              <Eye className="size-4" />
-              {event.views.toLocaleString("id-ID")} views
+              <CalendarDays className="size-4 text-palembang-red" />
+              {event.dateLabel}
             </span>
             <span className="flex items-center gap-2">
               <Heart
                 className={`size-4 ${
-                  isLiked ? "fill-palembang-red text-palembang-red" : ""
+                  isLiked
+                    ? "fill-palembang-red text-palembang-red"
+                    : "text-palembang-red"
                 }`}
               />
               {likesCount.toLocaleString("id-ID")} likes
             </span>
             <span className="flex items-center gap-2">
-              <Users className="size-4" />
-              {participantsCount.toLocaleString("id-ID")} participants
+              <Eye className="size-4 text-palembang-red" />
+              {event.views.toLocaleString("id-ID")} views
             </span>
           </div>
         </div>
@@ -150,8 +141,8 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
       <main className="px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
         <div className="mx-auto max-w-[1240px]">
           <div className="grid gap-12 lg:grid-cols-[1fr_380px]">
-            <div>
-              <div className="relative aspect-[16/9] overflow-hidden rounded-[1.5rem]">
+            <div className="reveal-on-scroll">
+              <div className="reveal-scale relative aspect-[16/9] overflow-hidden rounded-[1.5rem]">
                 <Image
                   src={event.bannerUrl}
                   alt={event.title}
@@ -160,7 +151,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                   className="object-cover"
                 />
               </div>
-              <div className="mt-10">
+              <div className="reveal-on-scroll mt-10">
                 <h2 className="font-display text-2xl font-bold tracking-[-0.03em]">
                   Tentang Acara
                 </h2>
@@ -184,8 +175,9 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
             </div>
 
             <div>
-              <div className="sticky top-28 space-y-6">
-                <div className="rounded-[1.5rem] border border-border bg-background p-6 shadow-sm">
+              <div className="reveal-on-scroll sticky top-28 space-y-6">
+                <EventOrganizerCard organizer={event.organizer} />
+                <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-sm">
                   <h3 className="font-display text-lg font-bold">Detail Acara</h3>
                   <div className="mt-6 space-y-5">
                     <EventMeta
@@ -205,7 +197,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                     />
                     <EventMeta
                       icon={<Sparkles className="size-5" />}
-                      label="Penyelenggara"
+                      label="Penyelenggara / Publisher"
                       value={event.organizer}
                     />
                   </div>
@@ -216,8 +208,7 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                         href={event.registrationUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={handleRegisterClick}
-                        className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white transition-colors hover:bg-palembang-red/90"
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white shadow-sm transition-colors hover:bg-palembang-red/90"
                       >
                         <Ticket className="size-4" />
                         Daftar Sekarang
@@ -228,14 +219,14 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-3 gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleToggleLike}
-                        className={`h-11 w-full font-semibold ${
+                        className={`h-11 w-full gap-1.5 px-2 text-xs font-semibold transition-all ${
                           isLiked
-                            ? "border-palembang-red text-palembang-red hover:bg-red-50 hover:text-palembang-red"
+                            ? "border-palembang-red bg-palembang-red/10 text-palembang-red hover:bg-palembang-red/20 hover:text-palembang-red"
                             : "hover:border-palembang-red hover:text-palembang-red"
                         }`}
                       >
@@ -247,23 +238,23 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                         <span>{isLiked ? "Disukai" : "Suka"}</span>
                       </Button>
 
-                      <EventShareButton title={event.title} />
+                      <a
+                        href={whatsappQuestionUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-md border border-emerald-600/30 bg-emerald-600/10 px-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-600 hover:text-white dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
+                      >
+                        <MessageCircle className="size-4 shrink-0" />
+                        Tanya
+                      </a>
+
+                      <EventShareButton
+                        title={event.title}
+                        label="Bagikan"
+                        className="gap-1.5 px-2 text-xs"
+                      />
                     </div>
                   </div>
-                </div>
-
-                <div className="rounded-[1.5rem] border border-border bg-muted/40 p-6">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-palembang-charcoal px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-palembang-gold">
-                    <Sparkles className="size-3" />
-                    {event.category}
-                  </div>
-                  <h4 className="mt-3 font-display text-base font-bold text-foreground">
-                    Kategori: {event.category}
-                  </h4>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    Acara ini terbuka untuk kolaborasi komunitas dan publik.
-                    Hubungi penyelenggara untuk informasi lebih lanjut.
-                  </p>
                 </div>
               </div>
             </div>
@@ -272,38 +263,38 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
       </main>
 
       {relatedEvents.length > 0 ? (
-        <section className="bg-palembang-off-white px-6 py-20 text-palembang-charcoal sm:px-10 lg:px-16 lg:py-28">
+        <section className="reveal-on-scroll bg-background px-6 py-20 text-foreground sm:px-10 lg:px-16 lg:py-28">
           <div className="mx-auto max-w-[1240px]">
             <SectionHeading eyebrow="Jangan lewatkan" title="Agenda Lainnya" />
-            <div className="mt-12 grid gap-8 md:grid-cols-3">
+            <div className="reveal-stagger mt-12 grid gap-8 sm:grid-cols-2">
               {relatedEvents.map((relatedEvent) => (
                 <Link
                   key={relatedEvent.id}
                   href={`/agenda/${relatedEvent.id}`}
-                  className="group"
+                  className="group block"
                 >
-                  <div className="img-zoom relative aspect-[4/3] overflow-hidden rounded-[1.25rem]">
+                  <div className="img-zoom relative aspect-[16/9] overflow-hidden rounded-[1.25rem] border border-border/50 bg-muted sm:aspect-[4/3]">
                     <Image
                       src={relatedEvent.bannerUrl}
                       alt={relatedEvent.title}
                       fill
-                      sizes="(min-width: 768px) 33vw, 100vw"
+                      sizes="(min-width: 640px) 50vw, 100vw"
                       className="object-cover"
                     />
                   </div>
                   <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-palembang-red">
                     {relatedEvent.category}
                   </p>
-                  <h3 className="mt-2 font-display text-xl font-bold leading-tight tracking-[-0.03em] transition-colors group-hover:text-palembang-red">
+                  <h3 className="mt-2 font-display text-xl font-bold leading-tight tracking-[-0.03em] text-foreground transition-colors group-hover:text-palembang-red">
                     {relatedEvent.title}
                   </h3>
                   <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
-                      <CalendarDays className="size-3.5" />
+                      <CalendarDays className="size-3.5 text-palembang-red" />
                       {relatedEvent.dateLabel}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <MapPin className="size-3.5" />
+                      <MapPin className="size-3.5 text-palembang-red" />
                       {relatedEvent.location.split(",")[0]}
                     </span>
                   </div>

@@ -4,7 +4,10 @@ import { getAgendaPageEditor } from "@/modules/website-content/data/get-agenda-p
 import { getArticleCategoryPageEditor } from "@/modules/website-content/data/get-article-category-page-editor"
 import { getCollaborationPageEditor } from "@/modules/website-content/data/get-collaboration-page-editor"
 import { getHeaderFooterContentEditor } from "@/modules/website-content/data/get-header-footer-content-editor"
-import { getLandingPageEditor } from "@/modules/website-content/data/get-landing-page-editor"
+import {
+  getLandingArticlePinOptions,
+  getLandingPageEditor,
+} from "@/modules/website-content/data/get-landing-page-editor"
 
 export default async function Page() {
   await requireRole(["ADMIN", "SUPERADMIN"])
@@ -15,12 +18,14 @@ export default async function Page() {
     initialAgendaData,
     initialCollaborationData,
     initialHeaderFooterData,
+    articlePinOptions,
   ] = await Promise.all([
     getLandingPageEditor(),
     getArticleCategoryPageEditor(),
     getAgendaPageEditor(),
     getCollaborationPageEditor(),
     getHeaderFooterContentEditor(),
+    getLandingArticlePinOptions(),
   ])
 
   return (
@@ -30,6 +35,7 @@ export default async function Page() {
       initialAgendaData={initialAgendaData}
       initialCollaborationData={initialCollaborationData}
       initialHeaderFooterData={initialHeaderFooterData}
+      articlePinOptions={articlePinOptions}
     />
   )
 }

@@ -35,13 +35,15 @@ export function PublicArticleDetail({
   const { user, status } = useSession()
   const isAuthenticated = status === "authenticated" && Boolean(user)
 
-  const [optimisticLike, setOptimisticLike] = useState<boolean | null>(null)
-  const [likesCountDelta, setLikesCountDelta] = useState(0)
+  const [likeState, setLikeState] = useState({
+    hasLiked: article.hasLiked,
+    count: article.likesCount,
+  })
   const [copied, setCopied] = useState(false)
   const [, startTransition] = useTransition()
 
-  const isLiked = isAuthenticated ? (optimisticLike ?? article.hasLiked) : false
-  const likesCount = Math.max(0, article.likesCount + (isAuthenticated ? likesCountDelta : 0))
+  const isLiked = isAuthenticated && likeState.hasLiked
+  const likesCount = Math.max(0, likeState.count)
 
   async function copyLink() {
     await navigator.clipboard?.writeText(window.location.href)
@@ -71,28 +73,32 @@ export function PublicArticleDetail({
       return
     }
 
+    const previousState = likeState
     const nextLiked = !isLiked
-    setOptimisticLike(nextLiked)
-    setLikesCountDelta((prev) => (nextLiked ? prev + 1 : prev - 1))
+    setLikeState({
+      hasLiked: nextLiked,
+      count: Math.max(0, likesCount + (nextLiked ? 1 : -1)),
+    })
 
     startTransition(async () => {
       const result = await toggleArticleLikeAction({ articleId: article.id })
       if (!result.success) {
         toast.error(result.message)
-        setOptimisticLike(!nextLiked)
-        setLikesCountDelta((prev) => (nextLiked ? prev - 1 : prev + 1))
+        setLikeState(previousState)
         return
       }
-      setOptimisticLike(result.hasLiked ?? nextLiked)
-      setLikesCountDelta(0)
+      setLikeState({
+        hasLiked: result.hasLiked ?? nextLiked,
+        count: result.likesCount ?? previousState.count,
+      })
     })
   }
 
   return (
     <>
-      <main className="pt-24">
+      <main>
         <article>
-          <header className="relative overflow-hidden bg-palembang-charcoal px-6 pb-20 pt-28 text-white sm:px-10 lg:px-16">
+          <header className="relative overflow-hidden bg-palembang-charcoal px-6 pb-20 pt-40 text-white sm:px-10 lg:px-16">
             <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-45">
               <Image
                 fill
@@ -108,18 +114,21 @@ export function PublicArticleDetail({
             <div className="relative z-10 mx-auto max-w-[1040px]">
               <Link
                 href={`/${article.categorySlug}`}
-                className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold"
+                className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red"
               >
                 {article.category}
               </Link>
-              <h1 className="mt-6 max-w-4xl font-display text-4xl font-black leading-[1] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+              <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-4xl font-black leading-[1] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
                 {article.title}
               </h1>
-              <p className="mt-8 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
+              <p className="reveal-on-scroll reveal-delay-150 mt-8 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
                 {article.excerpt}
               </p>
-              <div className="mt-10 flex flex-wrap items-center justify-between gap-6 border-y border-white/15 py-5">
-                <div className="flex items-center gap-3">
+              <div className="reveal-on-scroll reveal-delay-200 mt-10 flex flex-wrap items-center justify-between gap-6 border-y border-white/15 py-5">
+                <Link
+                  href={`/penulis/${article.author.username}`}
+                  className="flex items-center gap-3 rounded-xl transition-opacity hover:opacity-80"
+                >
                   {/* Avatar profile may come from an external URL outside the cover image allowlist. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -135,7 +144,7 @@ export function PublicArticleDetail({
                       {article.author.roleLabel} · {article.publishedAtLabel}
                     </p>
                   </div>
-                </div>
+                </Link>
                 <div className="flex flex-wrap items-center gap-5 text-xs text-white/70">
                   <span className="flex items-center gap-2">
                     <Clock3 className="size-4" />
@@ -156,7 +165,7 @@ export function PublicArticleDetail({
 
           <div className="mx-auto grid max-w-[1040px] gap-12 px-6 py-16 sm:px-10 lg:grid-cols-[60px_1fr] lg:py-20">
             <aside className="hidden lg:block">
-              <div className="sticky top-28 flex flex-col items-center gap-3">
+              <div className="reveal-fade reveal-delay-200 sticky top-28 flex flex-col items-center gap-3">
                 <button
                   type="button"
                   aria-label="Sukai artikel"
@@ -188,7 +197,7 @@ export function PublicArticleDetail({
               </div>
             </aside>
 
-            <div>
+            <div className="reveal-on-scroll">
               <div
                 className="article-body"
                 dangerouslySetInnerHTML={{ __html: article.content }}
@@ -207,52 +216,88 @@ export function PublicArticleDetail({
                 </div>
               ) : null}
 
-              <div className="mt-12 flex flex-wrap gap-3 lg:hidden">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleToggleLike}
-                  className={isLiked ? "border-palembang-red text-palembang-red" : ""}
-                >
-                  <Heart
-                    className={`size-4 ${isLiked ? "fill-palembang-red text-palembang-red" : ""}`}
-                  />
-                  {isLiked ? "Disukai" : "Suka"} ({likesCount})
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void copyLink()}
-                >
-                  {copied ? (
-                    <Check className="size-4" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
-                  Salin tautan
-                </Button>
-              </div>
-
-              <div className="mt-16 rounded-[1.5rem] bg-muted/50 p-6 sm:p-8">
+              <Link
+                href={`/penulis/${article.author.username}`}
+                className="reveal-on-scroll mt-12 flex items-center gap-4 rounded-2xl border border-border bg-muted/30 p-5 transition-colors hover:border-palembang-red/40 hover:bg-muted/60"
+                aria-label={`Lihat profil penulis ${article.author.name}`}
+              >
                 <div className="flex items-center gap-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={article.author.avatarUrl}
                     alt={article.author.name}
-                    className="size-16 rounded-full object-cover"
+                    className="size-14 shrink-0 rounded-full object-cover ring-2 ring-palembang-red/30"
                   />
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-palembang-red">
-                      Tentang Penulis
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-palembang-red">
+                      Ditulis Oleh
                     </p>
-                    <h2 className="mt-1 font-display text-xl font-bold">
+                    <h2 className="font-display text-base font-bold">
                       {article.author.name}
                     </h2>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {article.author.bio}
+                    </p>
                   </div>
                 </div>
-                <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                  {article.author.bio}
-                </p>
+              </Link>
+
+              <div className="reveal-on-scroll mt-12 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-card/80 p-5 shadow-xs sm:flex-row">
+                <div className="flex w-full items-center gap-3 sm:w-auto">
+                  <Button
+                    type="button"
+                    onClick={handleToggleLike}
+                    className={`h-11 w-full gap-2 rounded-xl px-5 text-xs font-semibold transition-all sm:w-auto sm:text-sm ${
+                      isLiked
+                        ? "bg-palembang-red text-white shadow-sm hover:bg-palembang-red/90"
+                        : "border border-border bg-muted/80 text-foreground hover:border-palembang-red hover:bg-palembang-red hover:text-white"
+                    }`}
+                  >
+                    <Heart className={`size-4.5 ${isLiked ? "fill-current" : ""}`} />
+                    <span>{isLiked ? "Disukai" : "Sukai Artikel Ini"}</span>
+                    <span
+                      className={`ml-1.5 rounded-full px-2 py-0.5 text-xs font-bold ${
+                        isLiked
+                          ? "bg-white/20 text-white"
+                          : "bg-background text-muted-foreground"
+                      }`}
+                    >
+                      {likesCount.toLocaleString("id-ID")}
+                    </span>
+                  </Button>
+                  <p className="hidden text-xs text-muted-foreground md:block">
+                    {isLiked
+                      ? "Terima kasih telah mengapresiasi artikel ini!"
+                      : "Suka artikel ini? Berikan apresiasimu."}
+                  </p>
+                </div>
+
+                <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void copyLink()}
+                    className="h-11 flex-1 gap-2 rounded-xl border-border px-4 text-xs font-medium hover:border-palembang-red hover:text-palembang-red sm:flex-initial"
+                  >
+                    {copied ? (
+                      <Check className="size-4 text-emerald-600" />
+                    ) : (
+                      <Copy className="size-4" />
+                    )}
+                    <span>{copied ? "Disalin!" : "Salin Tautan"}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={shareArticle}
+                    className="h-11 flex-1 gap-2 rounded-xl border-border px-4 text-xs font-medium hover:border-palembang-red hover:text-palembang-red sm:flex-initial"
+                  >
+                    <Share2 className="size-4" />
+                    <span>Bagikan</span>
+                  </Button>
+                </div>
               </div>
 
               <ArticleComments
@@ -266,21 +311,21 @@ export function PublicArticleDetail({
       </main>
 
       {relatedArticles.length > 0 ? (
-        <section className="bg-palembang-off-white px-6 py-20 text-palembang-charcoal sm:px-10 lg:px-16 lg:py-28">
+        <section className="reveal-on-scroll bg-background px-6 py-20 text-foreground sm:px-10 lg:px-16 lg:py-28">
           <div className="mx-auto max-w-[1240px]">
-            <div className="flex items-end justify-between gap-6">
+            <div className="reveal-on-scroll flex items-end justify-between gap-6">
               <SectionHeading
                 eyebrow="Lanjutkan membaca"
                 title="More Stories"
               />
               <Link
                 href={`/${article.categorySlug}`}
-                className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] sm:flex"
+                className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground sm:flex"
               >
-                View all stories <ArrowRight className="size-4" />
+                View all stories <ArrowRight className="size-4 text-palembang-red" />
               </Link>
             </div>
-            <div className="mt-12 grid gap-8 md:grid-cols-3">
+            <div className="reveal-stagger mt-12 grid gap-8 sm:grid-cols-2">
               {relatedArticles.map((relatedArticle) => (
                 <PublicArticleCard
                   key={relatedArticle.id}

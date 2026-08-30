@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export function Sidebar() {
     const user = useCurrentUser()
@@ -20,9 +21,10 @@ export function Sidebar() {
     const location = useLocation()
     const [isMobile, setIsMobile] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
-    const [accountOpen, setAccountOpen] = useState(
-        location.pathname.startsWith("/dashboard/account"),
-    )
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+        "/dashboard/account": location.pathname.startsWith("/dashboard/account"),
+        "/dashboard/content": location.pathname.startsWith("/dashboard/content"),
+    })
     
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024)
@@ -36,7 +38,7 @@ export function Sidebar() {
     }, [location.pathname])
 
     const menuItems = [
-        { title: "Overview", icon: LayoutDashboard, path: "/dashboard", roles: ["SUPERADMIN", "ADMIN"] },
+        { title: "Overview", icon: LayoutDashboard, path: "/dashboard", roles: ["SUPERADMIN", "ADMIN", "USER"] },
         { title: "Manage Website", icon: Monitor, path: "/dashboard/website", roles: ["SUPERADMIN", "ADMIN"] },
         { 
             title: "Manage Account", icon: Users, path: "/dashboard/account", roles: ["SUPERADMIN"],
@@ -45,7 +47,13 @@ export function Sidebar() {
                 { title: "Admin", path: "/dashboard/account/admin" }
             ]
         },
-        { title: "Manage Content", icon: FileText, path: "/dashboard/content", roles: ["SUPERADMIN", "ADMIN"] },
+        {
+            title: "Manage Content", icon: FileText, path: "/dashboard/content", roles: ["SUPERADMIN", "ADMIN"],
+            subItems: [
+                { title: "Article", path: "/dashboard/content/article" },
+                { title: "Event", path: "/dashboard/content/event" }
+            ]
+        },
         { title: "Create Article", icon: PenTool, path: "/dashboard/create-article", roles: ["SUPERADMIN", "ADMIN", "USER"] },
         { title: "Create Event", icon: CalendarPlus, path: "/dashboard/create-event", roles: ["SUPERADMIN", "ADMIN", "USER"] },
         { title: "Log Activities", icon: Activity, path: "/dashboard/logs", roles: ["SUPERADMIN"] },
@@ -63,7 +71,7 @@ export function Sidebar() {
                 <div className={cn("flex h-16 items-center px-4", collapsed ? "justify-center" : "justify-between")}>
                     {!collapsed && (
                         <button onClick={() => handleNav("/")} className="flex items-center gap-2 text-left">
-                            <img src="/logo.png" alt="Benah Palembang" className="h-5" />
+                            <img src="/logo.png" alt="Benah Palembang" className="h-5 object-contain brightness-0 dark:invert" />
                         </button>
                     )}
                     {!isMobile && (
@@ -77,12 +85,22 @@ export function Sidebar() {
                     {filteredMenu.map((item, index) => {
                         const hasSub = !!item.subItems
                         const isActive = location.pathname === item.path || (hasSub && location.pathname.startsWith(item.path))
+                        const isExpanded = hasSub && (openSections[item.path] || isActive)
                         
                         return (
                             <div key={index}>
                                 {hasSub ? (
                                     <button
-                                        onClick={() => setAccountOpen(!accountOpen)}
+                                        onClick={() => {
+                                            if (collapsed) {
+                                                handleNav(item.subItems?.[0]?.path ?? item.path)
+                                                return
+                                            }
+                                            setOpenSections((current) => ({
+                                                ...current,
+                                                [item.path]: !current[item.path],
+                                            }))
+                                        }}
                                         className={cn(
                                             "flex w-full items-center justify-between rounded-lg px-3 py-2 transition-colors",
                                             isActive ? "bg-palembang-red/10 text-palembang-red" : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -94,7 +112,7 @@ export function Sidebar() {
                                             <item.icon className="size-4 shrink-0" />
                                             {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
                                         </div>
-                                        {!collapsed && <ChevronDown className={cn("size-4 transition-transform", accountOpen && "rotate-180")} />}
+                                        {!collapsed && <ChevronDown className={cn("size-4 transition-transform", isExpanded && "rotate-180")} />}
                                     </button>
                                 ) : (
                                     <button 
@@ -112,7 +130,7 @@ export function Sidebar() {
                                     </button>
                                 )}
 
-                                {hasSub && accountOpen && !collapsed && (
+                                {isExpanded && !collapsed && (
                                     <div className="mt-1 flex flex-col gap-1 pl-9 pr-2">
                                         {item.subItems?.map((sub, subIdx) => (
                                             <button
@@ -138,6 +156,13 @@ export function Sidebar() {
             </div>
             
             <div className="space-y-2 border-t p-3">
+                <ModeToggle
+                    showLabel
+                    className={cn(
+                        "h-9 w-full rounded-lg px-2",
+                        collapsed && "size-9 px-0"
+                    )}
+                />
                 <button 
                     type="button"
                     onClick={() => handleNav("/dashboard/profile")}
@@ -181,11 +206,14 @@ export function Sidebar() {
     return (
         <>
             {isMobile && (
-                <div className="fixed left-0 top-0 z-40 flex h-16 w-full items-center border-b bg-background px-4">
-                    <button onClick={() => setMobileOpen(true)} className="mr-4">
-                        <Menu className="size-6" />
-                    </button>
-                    <img src="/logo.png" alt="Benah Palembang" className="h-5" />
+                <div className="fixed left-0 top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background px-4">
+                    <div className="flex items-center">
+                        <button onClick={() => setMobileOpen(true)} className="mr-4">
+                            <Menu className="size-6" />
+                        </button>
+                        <img src="/logo.png" alt="Benah Palembang" className="h-5 object-contain brightness-0 dark:invert" />
+                    </div>
+                    <ModeToggle className="size-8" />
                 </div>
             )}
 

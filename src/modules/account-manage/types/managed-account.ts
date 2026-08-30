@@ -27,6 +27,7 @@ export interface ManagedAccountDetail extends ManagedAccountListItem {
   bannedAt: string | null
   updatedAt: string
   updatedAtLabel: string
+  articleGallery: ArticleGalleryData
 }
 
 export interface ManagedAccountList {
@@ -50,3 +51,4 @@ export type AccountActionResult =
       message: string
       field?: string
     }
+import type { ArticleGalleryData } from "@/modules/article/types/article-gallery"

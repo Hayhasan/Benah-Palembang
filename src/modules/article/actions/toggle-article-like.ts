@@ -77,7 +77,7 @@ export async function toggleArticleLikeAction(
     })
 
     revalidatePath(`/artikel/${article.slug}`)
-    revalidatePath("/dashboard/content")
+    revalidatePath("/dashboard/content/article")
     revalidatePath("/dashboard/create-article")
 
     return {

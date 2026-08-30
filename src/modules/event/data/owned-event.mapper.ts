@@ -51,7 +51,6 @@ export const ownedEventListSelect = {
   _count: {
     select: {
       likes: true,
-      participants: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.EventSelect
@@ -68,6 +67,7 @@ export const ownedEventEditorSelect = {
   location: true,
   organizer: true,
   registrationUrl: true,
+  whatsappUrl: true,
   views: true,
   status: true,
   tags: {
@@ -78,7 +78,6 @@ export const ownedEventEditorSelect = {
   _count: {
     select: {
       likes: true,
-      participants: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.EventSelect
@@ -121,7 +120,6 @@ export function mapOwnedEventListItem(
     statusLabel: ownedEventStatusLabel(event.status),
     views: event.views,
     likes: event._count.likes,
-    participants: event._count.participants,
   }
 }
 
@@ -143,11 +141,11 @@ export function mapOwnedEventEditor(
     location: event.location,
     organizer: event.organizer,
     registrationUrl: event.registrationUrl ?? "",
+    whatsappUrl: event.whatsappUrl,
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
     tags: event.tags.map((tag) => tag.label),
     views: event.views,
     likesCount: event._count.likes,
-    participantsCount: event._count.participants,
   }
 }

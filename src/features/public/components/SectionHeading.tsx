@@ -15,7 +15,9 @@ export function SectionHeading({
   const lineBg = dark ? "bg-palembang-gold" : "bg-palembang-red"
 
   return (
-    <div className={`flex flex-col gap-4 ${dark ? "text-white" : ""}`}>
+    <div
+      className={`reveal-on-scroll flex flex-col gap-4 ${dark ? "text-white" : ""}`}
+    >
       <p
         className={`flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.22em] ${eyebrowColor}`}
       >

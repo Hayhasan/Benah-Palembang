@@ -8,19 +8,16 @@ import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_HEADER_FOOTER_CONTENT } from "../constants/default-header-footer-content"
 import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
+import { footerConnectPlatformFromDatabase } from "./header-footer-content.mapper"
 
 export const headerFooterContentEditorSelect = {
   key: true,
   logoImageUrl: true,
   logoImageAlt: true,
   logoLinkUrl: true,
+  footerBackgroundText: true,
   footerDescription: true,
-  exploreDescription: true,
-  contactEmail: true,
-  contactPhone: true,
-  contactAddress: true,
   copyrightText: true,
-  closingText: true,
   footerExploreLinks: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -37,7 +34,7 @@ export const headerFooterContentEditorSelect = {
     orderBy: { position: "asc" },
     select: {
       id: true,
-      label: true,
+      platform: true,
       linkUrl: true,
       position: true,
       isVisible: true,
@@ -61,19 +58,16 @@ export function mapHeaderFooterContentToEditor(
       linkUrl: content.logoLinkUrl,
     },
     footer: {
+      backgroundText: content.footerBackgroundText,
       description: content.footerDescription,
-      exploreDescription: content.exploreDescription,
-      contactEmail: content.contactEmail,
-      contactPhone: content.contactPhone,
-      contactAddress: content.contactAddress,
       copyrightText: content.copyrightText,
-      closingText: content.closingText,
       exploreLinks: content.footerExploreLinks.map((link) => ({
         ...link,
         clientKey: `footer-explore-${link.id}`,
       })),
       connectLinks: content.footerConnectLinks.map((link) => ({
         ...link,
+        platform: footerConnectPlatformFromDatabase(link.platform),
         clientKey: `footer-connect-${link.id}`,
       })),
     },

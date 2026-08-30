@@ -6,9 +6,9 @@ import {
   Eye,
   Heart,
   MapPin,
+  MessageCircle,
   Sparkles,
   Ticket,
-  Users,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -16,8 +16,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 import type { OwnedEventEditorData } from "../types/owned-event"
+import { EventOrganizerCard } from "./event-organizer-card"
+import { EventShareButton } from "./event-share-button"
 
 export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
+  const whatsappQuestionUrl = `${event.whatsappUrl}?text=${encodeURIComponent(
+    `Halo, saya ingin bertanya dan mendapatkan informasi lebih lanjut tentang acara:\n${event.title}\nTanggal: ${event.dateLabel}\nLokasi: ${event.location}`,
+  )}`
 
   return (
     <div className="space-y-6 pb-16">
@@ -60,7 +65,7 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
             <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
           </div>
           <div className="relative z-10 mx-auto max-w-[1240px]">
-            <span className="inline-block rounded-full border border-palembang-gold/40 bg-palembang-gold/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-gold">
+            <span className="inline-block rounded-full border border-palembang-red/40 bg-palembang-red/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-red">
               {event.category}
             </span>
             <h1 className="mt-4 max-w-4xl font-display text-4xl font-black leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
@@ -69,18 +74,18 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
               {event.description}
             </p>
-            <div className="mt-8 flex flex-wrap gap-5 border-t border-white/15 pt-5 text-xs text-white/65">
+            <div className="mt-8 flex flex-wrap items-center gap-5 text-xs text-white/70">
               <span className="flex items-center gap-2">
-                <Eye className="size-4" />
-                {event.views.toLocaleString("id-ID")} views
+                <CalendarDays className="size-4 text-palembang-red" />
+                {event.dateLabel}
               </span>
               <span className="flex items-center gap-2">
                 <Heart className="size-4 text-palembang-red" />
                 {event.likesCount.toLocaleString("id-ID")} likes
               </span>
               <span className="flex items-center gap-2">
-                <Users className="size-4" />
-                {event.participantsCount.toLocaleString("id-ID")} participants
+                <Eye className="size-4 text-palembang-red" />
+                {event.views.toLocaleString("id-ID")} views
               </span>
             </div>
           </div>
@@ -123,6 +128,7 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
 
             <div>
               <div className="sticky top-24 space-y-6">
+                <EventOrganizerCard organizer={event.organizer} />
                 <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-sm">
                   <h3 className="font-display text-lg font-bold">Detail Acara</h3>
                   <div className="mt-6 space-y-5">
@@ -143,11 +149,11 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
                     />
                     <PreviewMeta
                       icon={<Sparkles className="size-5" />}
-                      label="Penyelenggara"
+                      label="Penyelenggara / Publisher"
                       value={event.organizer}
                     />
                   </div>
-                  <div className="mt-8">
+                  <div className="mt-8 space-y-3">
                     {event.registrationUrl ? (
                       <a
                         href={event.registrationUrl}
@@ -163,6 +169,28 @@ export function OwnedEventPreview({ event }: { event: OwnedEventEditorData }) {
                         Informasi pendaftaran belum tersedia.
                       </div>
                     )}
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex h-11 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-semibold text-muted-foreground">
+                        <Heart className="size-4" />
+                        Suka
+                      </div>
+                      <a
+                        href={whatsappQuestionUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-11 items-center justify-center gap-1.5 rounded-md border border-emerald-600/30 bg-emerald-600/10 px-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-600 hover:text-white dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
+                      >
+                        <MessageCircle className="size-4" />
+                        Tanya
+                      </a>
+                      <EventShareButton
+                        title={event.title}
+                        url={`/agenda/${event.id}`}
+                        label="Bagikan"
+                        className="gap-1.5 px-2 text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

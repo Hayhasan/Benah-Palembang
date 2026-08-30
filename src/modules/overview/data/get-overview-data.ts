@@ -1,8 +1,9 @@
 import "server-only"
 
 import { connection } from "next/server"
+
 import { prisma } from "@/lib/db/prisma"
-import { requireRole } from "@/modules/auth/data/session-dal"
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
 import { overviewQuerySchema } from "../schemas/overview-query.schema"
 import type {
@@ -10,7 +11,6 @@ import type {
   OverviewData,
   OverviewFilterType,
   OverviewRecentContentItem,
-  OverviewRecentLogItem,
 } from "../types/overview"
 import {
   formatCompactNumber,
@@ -18,105 +18,273 @@ import {
   formatRelativeTime,
   getAvailableMonthsList,
   INDONESIAN_MONTHS,
-  mapActivityActionToLabel,
-  mapActivityModuleToLabel,
   mapContentStatusToOverviewStatus,
 } from "./overview.mapper"
+
+function buildChartData(
+  periodType: OverviewFilterType,
+  totalViews: number,
+  totalInteractions: number,
+): OverviewChartPoint[] {
+  if (periodType === "daily") {
+    const baseViews = Math.max(totalViews, 100)
+    const weights = [0.05, 0.03, 0.18, 0.32, 0.24, 0.18]
+
+    return ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"].map(
+      (name, index) => ({
+        name,
+        views: Math.round(baseViews * (weights[index] ?? 0)),
+        interactions: Math.round(totalInteractions * (weights[index] ?? 0)),
+      }),
+    )
+  }
+
+  if (periodType === "weekly") {
+    const weights = [0.12, 0.14, 0.16, 0.15, 0.18, 0.15, 0.1]
+
+    return ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"].map(
+      (name, index) => ({
+        name,
+        views: Math.round(totalViews * (weights[index] ?? 0)),
+        interactions: Math.round(totalInteractions * (weights[index] ?? 0)),
+      }),
+    )
+  }
+
+  const weights = [0.22, 0.26, 0.28, 0.24]
+  return ["Minggu 1", "Minggu 2", "Minggu 3", "Minggu 4"].map(
+    (name, index) => ({
+      name,
+      views: Math.round(totalViews * (weights[index] ?? 0)),
+      interactions: Math.round(totalInteractions * (weights[index] ?? 0)),
+    }),
+  )
+}
+
+function getPeriodConfig(input?: {
+  period?: string | null
+  month?: string | null
+}) {
+  const parsed = overviewQuerySchema.safeParse({
+    period: input?.period ?? "monthly",
+    month: input?.month ?? undefined,
+  })
+  const periodType: OverviewFilterType = parsed.success
+    ? parsed.data.period
+    : "monthly"
+  const availableMonths = getAvailableMonthsList(2026)
+  const now = new Date()
+  const currentMonthName = INDONESIAN_MONTHS[now.getMonth()] ?? "Agustus"
+  const currentMonthYear = `${currentMonthName} 2026`
+  const selectedMonth =
+    parsed.success &&
+    parsed.data.month &&
+    availableMonths.includes(parsed.data.month)
+      ? parsed.data.month
+      : currentMonthYear
+
+  if (periodType === "daily") {
+    const periodEnd = new Date()
+    return {
+      periodType,
+      periodLabel: "Hari Ini",
+      selectedMonth,
+      availableMonths,
+      periodStart: new Date(periodEnd.getTime() - 24 * 60 * 60 * 1000),
+      periodEnd,
+    }
+  }
+
+  if (periodType === "weekly") {
+    const periodEnd = new Date()
+    return {
+      periodType,
+      periodLabel: "7 Hari Terakhir",
+      selectedMonth,
+      availableMonths,
+      periodStart: new Date(periodEnd.getTime() - 7 * 24 * 60 * 60 * 1000),
+      periodEnd,
+    }
+  }
+
+  const [monthName, yearValue] = selectedMonth.split(" ")
+  const monthIndex = INDONESIAN_MONTHS.indexOf(monthName ?? "Agustus")
+  const year = Number.parseInt(yearValue ?? "2026", 10)
+  const validMonth = monthIndex >= 0 ? monthIndex : 7
+
+  return {
+    periodType,
+    periodLabel: selectedMonth,
+    selectedMonth,
+    availableMonths,
+    periodStart: new Date(year, validMonth, 1, 0, 0, 0, 0),
+    periodEnd: new Date(year, validMonth + 1, 0, 23, 59, 59, 999),
+  }
+}
 
 export async function getOverviewData(input?: {
   period?: string | null
   month?: string | null
 }): Promise<OverviewData> {
   await connection()
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  const actor = await requireCurrentUser()
+  const period = getPeriodConfig(input)
 
-  const parsed = overviewQuerySchema.safeParse({
-    period: input?.period ?? "monthly",
-    month: input?.month ?? undefined,
-  })
+  if (actor.role === "USER") {
+    const [
+      totalPublishedArticles,
+      totalPublishedEvents,
+      newPublishedArticles,
+      newPublishedEvents,
+      articleViews,
+      eventViews,
+      articleLikes,
+      eventLikes,
+      articleComments,
+    ] = await Promise.all([
+      prisma.article.count({
+        where: { authorId: actor.id, status: "PUBLISHED", deletedAt: null },
+      }),
+      prisma.event.count({
+        where: { ownerId: actor.id, status: "PUBLISHED", deletedAt: null },
+      }),
+      prisma.article.count({
+        where: {
+          authorId: actor.id,
+          status: "PUBLISHED",
+          deletedAt: null,
+          publishedAt: { gte: period.periodStart, lte: period.periodEnd },
+        },
+      }),
+      prisma.event.count({
+        where: {
+          ownerId: actor.id,
+          status: "PUBLISHED",
+          deletedAt: null,
+          publishedAt: { gte: period.periodStart, lte: period.periodEnd },
+        },
+      }),
+      prisma.article.aggregate({
+        _sum: { views: true },
+        where: { authorId: actor.id, status: "PUBLISHED", deletedAt: null },
+      }),
+      prisma.event.aggregate({
+        _sum: { views: true },
+        where: { ownerId: actor.id, status: "PUBLISHED", deletedAt: null },
+      }),
+      prisma.articleLike.count({
+        where: {
+          article: {
+            authorId: actor.id,
+            status: "PUBLISHED",
+            deletedAt: null,
+          },
+        },
+      }),
+      prisma.eventLike.count({
+        where: {
+          event: {
+            ownerId: actor.id,
+            status: "PUBLISHED",
+            deletedAt: null,
+          },
+        },
+      }),
+      prisma.articleComment.count({
+        where: {
+          deletedAt: null,
+          article: {
+            authorId: actor.id,
+            status: "PUBLISHED",
+            deletedAt: null,
+          },
+        },
+      }),
+    ])
 
-  const periodType: OverviewFilterType = parsed.success
-    ? parsed.data.period
-    : "monthly"
-  const availableMonths = getAvailableMonthsList(2026)
+    const totalPublications = totalPublishedArticles + totalPublishedEvents
+    const newPublications = newPublishedArticles + newPublishedEvents
+    const totalViews =
+      (articleViews._sum.views ?? 0) + (eventViews._sum.views ?? 0)
+    const totalInteractions = articleLikes + eventLikes + articleComments
 
-  // Default month: Current month in 2026, e.g. "Agustus 2026"
-  const now = new Date()
-  const currentMonthName = INDONESIAN_MONTHS[now.getMonth()] ?? "Agustus"
-  const currentMonthYear = `${currentMonthName} 2026`
-  const selectedMonth =
-    parsed.success && parsed.data.month && availableMonths.includes(parsed.data.month)
-      ? parsed.data.month
-      : currentMonthYear
-
-  // Calculate period boundaries
-  let periodStart: Date
-  let periodEnd: Date
-  let periodLabel = ""
-
-  if (periodType === "daily") {
-    periodEnd = new Date()
-    periodStart = new Date(periodEnd.getTime() - 24 * 60 * 60 * 1000)
-    periodLabel = "Harian (24 Jam Terakhir)"
-  } else if (periodType === "weekly") {
-    periodEnd = new Date()
-    periodStart = new Date(periodEnd.getTime() - 7 * 24 * 60 * 60 * 1000)
-    periodLabel = "Mingguan (7 Hari Terakhir)"
-  } else {
-    // Monthly
-    const [monthName, yearStr] = selectedMonth.split(" ")
-    const monthIndex = INDONESIAN_MONTHS.indexOf(monthName ?? "Agustus")
-    const year = parseInt(yearStr ?? "2026", 10)
-    const validMonth = monthIndex >= 0 ? monthIndex : 7 // August fallback
-    periodStart = new Date(year, validMonth, 1, 0, 0, 0, 0)
-    periodEnd = new Date(year, validMonth + 1, 0, 23, 59, 59, 999)
-    periodLabel = `Bulan ${selectedMonth}`
+    return {
+      audience: "CREATOR",
+      viewerName: actor.name,
+      periodType: period.periodType,
+      periodLabel: period.periodLabel,
+      selectedMonth: period.selectedMonth,
+      availableMonths: period.availableMonths,
+      metrics: {
+        publications: {
+          total: formatNumber(totalPublications),
+          growth: `+${newPublications} publikasi baru`,
+        },
+        views: {
+          total: formatCompactNumber(totalViews),
+          growth: "Akumulasi pembaca konten Anda",
+        },
+      },
+      chartData: buildChartData(
+        period.periodType,
+        totalViews,
+        totalInteractions,
+      ),
+    }
   }
 
-  // Execute parallel Prisma aggregations
   const [
     totalUsers,
-    newUsersInPeriod,
+    newUsers,
     totalArticles,
-    newArticlesInPeriod,
+    newArticles,
     totalEvents,
-    newEventsInPeriod,
-    articleViewsAgg,
-    eventViewsAgg,
-    totalParticipants,
-    totalArticleLikes,
-    totalEventLikes,
-    totalArticleComments,
-    totalLogsInPeriod,
+    newEvents,
+    totalArticleRequests,
+    totalEventRequests,
+    pendingArticles,
+    pendingEvents,
+    articleViews,
+    eventViews,
+    articleLikes,
+    eventLikes,
+    articleComments,
     recentArticles,
     recentEvents,
-    recentActivityLogs,
   ] = await Promise.all([
-    // 1. Users
     prisma.user.count({ where: { deletedAt: null } }),
     prisma.user.count({
       where: {
         deletedAt: null,
-        createdAt: { gte: periodStart, lte: periodEnd },
+        createdAt: { gte: period.periodStart, lte: period.periodEnd },
       },
     }),
-    // 2. Articles
     prisma.article.count({ where: { deletedAt: null } }),
     prisma.article.count({
       where: {
         deletedAt: null,
-        createdAt: { gte: periodStart, lte: periodEnd },
+        createdAt: { gte: period.periodStart, lte: period.periodEnd },
       },
     }),
-    // 3. Events
     prisma.event.count({ where: { deletedAt: null } }),
     prisma.event.count({
       where: {
         deletedAt: null,
-        createdAt: { gte: periodStart, lte: periodEnd },
+        createdAt: { gte: period.periodStart, lte: period.periodEnd },
       },
     }),
-    // 4. Page Views
+    prisma.article.count({
+      where: { deletedAt: null, status: { not: "DRAFT" } },
+    }),
+    prisma.event.count({
+      where: { deletedAt: null, status: { not: "DRAFT" } },
+    }),
+    prisma.article.count({
+      where: { deletedAt: null, status: "PENDING_REVIEW" },
+    }),
+    prisma.event.count({
+      where: { deletedAt: null, status: "PENDING_REVIEW" },
+    }),
     prisma.article.aggregate({
       _sum: { views: true },
       where: { deletedAt: null },
@@ -125,23 +293,11 @@ export async function getOverviewData(input?: {
       _sum: { views: true },
       where: { deletedAt: null },
     }),
-    // 5. Interactions & CTA Clicks
-    prisma.eventParticipant.count({ where: { deletedAt: null } }),
     prisma.articleLike.count(),
     prisma.eventLike.count(),
     prisma.articleComment.count({ where: { deletedAt: null } }),
-    // 6. Logs in period
-    prisma.activityLog.count({
-      where: {
-        createdAt: { gte: periodStart, lte: periodEnd },
-      },
-    }),
-    // 7. Recent Moderation Articles
     prisma.article.findMany({
-      where: {
-        deletedAt: null,
-        status: { not: "DRAFT" },
-      },
+      where: { deletedAt: null, status: { not: "DRAFT" } },
       orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
       take: 5,
       select: {
@@ -150,14 +306,11 @@ export async function getOverviewData(input?: {
         status: true,
         submittedAt: true,
         updatedAt: true,
+        author: { select: { name: true } },
       },
     }),
-    // 8. Recent Moderation Events
     prisma.event.findMany({
-      where: {
-        deletedAt: null,
-        status: { not: "DRAFT" },
-      },
+      where: { deletedAt: null, status: { not: "DRAFT" } },
       orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
       take: 5,
       select: {
@@ -166,165 +319,74 @@ export async function getOverviewData(input?: {
         status: true,
         submittedAt: true,
         updatedAt: true,
+        owner: { select: { name: true } },
       },
-    }),
-    // 9. Recent Activity Logs
-    prisma.activityLog.findMany({
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      take: 4,
     }),
   ])
 
-  // Total Page Views & Interactions calculation
-  const totalViews = (articleViewsAgg._sum.views ?? 0) + (eventViewsAgg._sum.views ?? 0)
-  const totalInteractions =
-    totalParticipants + totalArticleLikes + totalEventLikes + totalArticleComments
-
-  // Generate Growth Strings based on Period
-  const userGrowthText =
-    periodType === "daily"
-      ? `+${newUsersInPeriod} hari ini`
-      : periodType === "weekly"
-        ? `+${newUsersInPeriod} minggu ini`
-        : `+${newUsersInPeriod} pada ${selectedMonth}`
-
-  const articleGrowthText =
-    periodType === "daily"
-      ? `+${newArticlesInPeriod} artikel hari ini`
-      : periodType === "weekly"
-        ? `+${newArticlesInPeriod} artikel minggu ini`
-        : `+${newArticlesInPeriod} artikel baru`
-
-  const eventGrowthText =
-    periodType === "daily"
-      ? `+${newEventsInPeriod} event hari ini`
-      : periodType === "weekly"
-        ? `+${newEventsInPeriod} event minggu ini`
-        : `+${newEventsInPeriod} event baru`
-
-  const viewsGrowthText =
-    periodType === "daily"
-      ? "+8.5% dibanding kemarin"
-      : periodType === "weekly"
-        ? "+15.2% dibanding pekan lalu"
-        : `Total views ${selectedMonth}`
-
-  const clicksGrowthText =
-    periodType === "daily"
-      ? "Hari ini"
-      : periodType === "weekly"
-        ? "Pekan ini"
-        : `Total ${selectedMonth}`
-
-  const logsGrowthText =
-    periodType === "daily"
-      ? "Log tercatat hari ini"
-      : periodType === "weekly"
-        ? "Log tercatat pekan ini"
-        : "Log tercatat"
-
-  // Build Recent Content items
   const combinedRecentContent = [
-    ...recentArticles.map((a) => ({
-      id: a.id,
+    ...recentArticles.map((article) => ({
+      id: article.id,
       type: "Article" as const,
-      title: a.title,
-      status: mapContentStatusToOverviewStatus(a.status),
-      date: new Date(a.submittedAt || a.updatedAt),
+      title: article.title,
+      author: article.author.name,
+      status: mapContentStatusToOverviewStatus(article.status),
+      date: article.submittedAt ?? article.updatedAt,
     })),
-    ...recentEvents.map((e) => ({
-      id: e.id,
+    ...recentEvents.map((event) => ({
+      id: event.id,
       type: "Event" as const,
-      title: e.title,
-      status: mapContentStatusToOverviewStatus(e.status),
-      date: new Date(e.submittedAt || e.updatedAt),
+      title: event.title,
+      author: event.owner.name,
+      status: mapContentStatusToOverviewStatus(event.status),
+      date: event.submittedAt ?? event.updatedAt,
     })),
-  ]
-  combinedRecentContent.sort((a, b) => b.date.getTime() - a.date.getTime())
+  ].sort((first, second) => second.date.getTime() - first.date.getTime())
 
   const recentContents: OverviewRecentContentItem[] = combinedRecentContent
-    .slice(0, 4)
-    .map((c) => ({
-      id: c.id,
-      type: c.type,
-      title: c.title,
-      status: c.status,
-      timeAgo: formatRelativeTime(c.date),
+    .slice(0, 5)
+    .map((content) => ({
+      id: content.id,
+      type: content.type,
+      title: content.title,
+      author: content.author,
+      status: content.status,
+      timeAgo: formatRelativeTime(content.date),
     }))
-
-  // Build Recent Logs items
-  const recentLogs: OverviewRecentLogItem[] = recentActivityLogs.map((log) => ({
-    id: log.id,
-    user: log.userName,
-    action: mapActivityActionToLabel(log.action),
-    module: mapActivityModuleToLabel(log.module),
-    timeAgo: formatRelativeTime(log.createdAt),
-  }))
-
-  // Build Chart Data Points
-  let chartData: OverviewChartPoint[] = []
-
-  if (periodType === "daily") {
-    const baseViews = Math.max(totalViews, 100)
-    chartData = [
-      { name: "00:00", views: Math.round(baseViews * 0.05), interactions: Math.round(totalInteractions * 0.08) },
-      { name: "04:00", views: Math.round(baseViews * 0.03), interactions: Math.round(totalInteractions * 0.04) },
-      { name: "08:00", views: Math.round(baseViews * 0.18), interactions: Math.round(totalInteractions * 0.22) },
-      { name: "12:00", views: Math.round(baseViews * 0.32), interactions: Math.round(totalInteractions * 0.36) },
-      { name: "16:00", views: Math.round(baseViews * 0.24), interactions: Math.round(totalInteractions * 0.20) },
-      { name: "20:00", views: Math.round(baseViews * 0.18), interactions: Math.round(totalInteractions * 0.10) },
-    ]
-  } else if (periodType === "weekly") {
-    const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-    const weights = [0.12, 0.14, 0.16, 0.15, 0.18, 0.15, 0.10]
-    chartData = days.map((day, idx) => ({
-      name: day,
-      views: Math.round(totalViews * (weights[idx] ?? 0.14)),
-      interactions: Math.round(totalInteractions * (weights[idx] ?? 0.14)),
-    }))
-  } else {
-    // Monthly (4 weeks)
-    const weights = [0.22, 0.26, 0.28, 0.24]
-    chartData = ["Minggu 1", "Minggu 2", "Minggu 3", "Minggu 4"].map((week, idx) => ({
-      name: week,
-      views: Math.round(totalViews * (weights[idx] ?? 0.25)),
-      interactions: Math.round(totalInteractions * (weights[idx] ?? 0.25)),
-    }))
-  }
+  const totalViews =
+    (articleViews._sum.views ?? 0) + (eventViews._sum.views ?? 0)
+  const totalInteractions = articleLikes + eventLikes + articleComments
 
   return {
-    periodType,
-    periodLabel,
-    selectedMonth,
-    availableMonths,
+    audience: "MANAGEMENT",
+    viewerName: actor.name,
+    periodType: period.periodType,
+    periodLabel: period.periodLabel,
+    selectedMonth: period.selectedMonth,
+    availableMonths: period.availableMonths,
     metrics: {
       users: {
         total: formatNumber(totalUsers),
-        growth: userGrowthText,
+        growth: `+${newUsers} user baru`,
       },
       articles: {
         total: formatNumber(totalArticles),
-        growth: articleGrowthText,
+        growth: `+${newArticles} artikel baru`,
       },
       events: {
         total: formatNumber(totalEvents),
-        growth: eventGrowthText,
+        growth: `+${newEvents} agenda baru`,
       },
-      views: {
-        total: formatCompactNumber(totalViews),
-        growth: viewsGrowthText,
-      },
-      clicks: {
-        total: formatCompactNumber(totalInteractions),
-        growth: clicksGrowthText,
-      },
-      logs: {
-        total: formatNumber(totalLogsInPeriod),
-        growth: logsGrowthText,
+      requests: {
+        total: formatNumber(totalArticleRequests + totalEventRequests),
+        growth: `${pendingArticles + pendingEvents} menunggu review`,
       },
     },
-    chartData,
+    chartData: buildChartData(
+      period.periodType,
+      totalViews,
+      totalInteractions,
+    ),
     recentContents,
-    recentLogs,
   }
 }

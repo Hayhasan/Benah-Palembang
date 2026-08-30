@@ -6,7 +6,6 @@ export const DEFAULT_COLLABORATION_PAGE = {
     imageUrl:
       "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop",
     imageAlt: "Background Kolaborasi",
-    eyebrow: "Collaboration",
     title: "Mari Benahi Palembang bersama.",
     description:
       "Kami terbuka untuk berkolaborasi dengan komunitas, brand, creative worker, organisasi, media, dan siapa pun yang ingin ikut membuat Palembang lebih hidup.",
@@ -16,11 +15,6 @@ export const DEFAULT_COLLABORATION_PAGE = {
     phone: "08551241878",
     emailUrl: "mailto:kolaborasi@benahpalembang.id?subject=Kolaborasi",
     whatsappUrl: "https://wa.me/628551241878",
-  },
-  form: {
-    title: "Hubungi Kami",
-    description:
-      "Punya ide proyek, inisiatif kreatif, liputan cerita, atau ingin bermitra bersama Benah Palembang? Kirimkan detail singkatmu dan mari diskusikan langkah selanjutnya.",
   },
   partnerLogos: [
     {
@@ -83,102 +77,28 @@ export const DEFAULT_COLLABORATION_PAGE = {
   partnerContents: [
     {
       platform: "youtube",
-      title: "Kolaborasi Benah x Grab Palembang",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "9:16",
+      contentUrl: "https://youtu.be/_EwNLB1VpvQ?si=ksb1vljQnsvvB1lJ",
       position: 1,
       isVisible: true,
     },
     {
       platform: "instagram",
-      title: "Kampanye Budaya Bersama Tokopedia",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "4:5",
+      contentUrl:
+        "https://www.instagram.com/reel/DZlnmuWoT0B/?utm_source=ig_web_copy_link&igsi=NTc4MTIwNjQ2YQ==",
       position: 2,
       isVisible: true,
     },
     {
       platform: "tiktok",
-      title: "Cerita Lorong — Viral Series",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/3321521/pexels-photo-3321521.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "9:16",
+      contentUrl:
+        "https://www.tiktok.com/@gyan.im/video/7679374541843402005?is_from_webapp=1&sender_device=pc",
       position: 3,
       isVisible: true,
     },
     {
       platform: "youtube",
-      title: "Documentary: Sriwijaya Heritage",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "16:9",
+      contentUrl: "https://youtu.be/vQicNbw04WM?si=bjMh3vBSxwpf8c0K",
       position: 4,
-      isVisible: true,
-    },
-    {
-      platform: "instagram",
-      title: "Reels — Kuliner Khas Palembang",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "4:5",
-      position: 5,
-      isVisible: true,
-    },
-    {
-      platform: "tiktok",
-      title: "Palembang Hidden Gems Challenge",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "9:16",
-      position: 6,
-      isVisible: true,
-    },
-    {
-      platform: "youtube",
-      title: "Pertamina x Benah — CSR Kota Hijau",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/3052361/pexels-photo-3052361.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "16:9",
-      position: 7,
-      isVisible: true,
-    },
-    {
-      platform: "instagram",
-      title: "Behind the Scenes — Tim Benah",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "1:1",
-      position: 8,
-      isVisible: true,
-    },
-    {
-      platform: "tiktok",
-      title: "Makeover Lorong Seni Palembang",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "9:16",
-      position: 9,
-      isVisible: true,
-    },
-    {
-      platform: "youtube",
-      title: "Talk Show: Masa Depan Kota Kreatif",
-      thumbnailUrl:
-        "https://images.pexels.com/photos/3184416/pexels-photo-3184416.jpeg?auto=compress&cs=tinysrgb&w=400",
-      contentUrl: "",
-      aspectRatio: "4:5",
-      position: 10,
       isVisible: true,
     },
   ],

@@ -21,6 +21,9 @@ export const landingPageSelect = {
   ctaDescription: true,
   ctaButtonLabel: true,
   ctaButtonUrl: true,
+  ctaBackgroundImageUrl: true,
+  ctaContactLabel: true,
+  ctaContactEmail: true,
   heroSlides: {
     where: { deletedAt: null, isVisible: true },
     orderBy: { position: "asc" },
@@ -58,9 +61,6 @@ export const landingPageSelect = {
       description: true,
       backgroundImageUrl: true,
       linkLabel: true,
-      theme: true,
-      layout: true,
-      maxItems: true,
       position: true,
       isVisible: true,
     },
@@ -114,6 +114,9 @@ export function mapWebsiteContentToLandingPage(
       description: content.ctaDescription,
       buttonLabel: content.ctaButtonLabel,
       buttonUrl: content.ctaButtonUrl,
+      backgroundImageUrl: content.ctaBackgroundImageUrl,
+      contactLabel: content.ctaContactLabel,
+      contactEmail: content.ctaContactEmail,
     },
   }
 }

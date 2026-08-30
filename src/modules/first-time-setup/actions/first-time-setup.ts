@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { recordLoginActivity } from "@/modules/auth/data/activity"
+import { generateUniqueUsername } from "@/modules/auth/data/generate-unique-username"
 import { hashPassword } from "@/modules/auth/data/password"
 import { createSession } from "@/modules/auth/data/session"
 
@@ -54,9 +55,11 @@ export async function firstTimeSetupAction(
         throw new Error("SETUP_ALREADY_COMPLETED")
       }
 
+      const username = await generateUniqueUsername(tx, name)
       const account = await tx.user.create({
         data: {
           name,
+          username,
           email,
           password: passwordHash,
           role: "SUPERADMIN",
@@ -74,6 +77,7 @@ export async function firstTimeSetupAction(
           description: "Inisialisasi sistem: Akun SuperAdmin pertama berhasil dibuat",
           afterState: {
             email,
+            username,
             role: "SUPERADMIN",
             name,
           },

@@ -7,10 +7,7 @@ import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
-import {
-  collaborationAspectRatioToDatabase,
-  collaborationPlatformToDatabase,
-} from "../data/collaboration-content.mapper"
+import { collaborationPlatformToDatabase } from "../data/collaboration-content.mapper"
 import { readCollaborationPageEditor } from "../data/get-collaboration-page-editor"
 import { collaborationPageEditorSchema } from "../schemas/collaboration-page.schema"
 import type {
@@ -22,15 +19,12 @@ function rootData(data: CollaborationPageEditorData) {
   return {
     heroImageUrl: data.hero.imageUrl,
     heroImageAlt: data.hero.imageAlt,
-    heroEyebrow: data.hero.eyebrow,
     heroTitle: data.hero.title,
     heroDescription: data.hero.description,
     contactEmail: data.contact.email,
     contactPhone: data.contact.phone,
     emailUrl: data.contact.emailUrl,
     whatsappUrl: data.contact.whatsappUrl,
-    formTitle: data.form.title,
-    formDescription: data.form.description,
   }
 }
 
@@ -52,10 +46,7 @@ function partnerContentData(
 ) {
   return {
     platform: collaborationPlatformToDatabase[item.platform],
-    title: item.title,
-    thumbnailUrl: item.thumbnailUrl,
     contentUrl: item.contentUrl,
-    aspectRatio: collaborationAspectRatioToDatabase[item.aspectRatio],
     position,
     isVisible: item.isVisible,
   }

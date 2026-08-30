@@ -1,16 +1,18 @@
 # Manage Content Module
 
 Manage Content adalah module dashboard untuk melihat dan memoderasi Article dan
-Event dalam satu halaman. Module ini tidak memiliki business table atau content
-record sendiri. Seluruh data tetap dimiliki module Article dan Event.
+Event melalui dua halaman terpisah. Module ini tidak memiliki business table
+atau content record sendiri. Seluruh data tetap dimiliki module Article dan
+Event.
 
 Manage Content dikerjakan terakhir setelah implementasi awal Event dan Article
 selesai.
 
 ## 1. Scope awal
 
-- Menampilkan Article dan Event dalam satu daftar pada `/dashboard/content`.
-- Search berdasarkan title, owner/author, dan content type.
+- Menampilkan Article pada `/dashboard/content/article`.
+- Menampilkan Event pada `/dashboard/content/event`.
+- Search berdasarkan title dan owner/author pada halaman aktif.
 - Pagination sebanyak 25 item per halaman.
 - Membuka preview Article atau Event.
 - Menyetujui content yang berstatus `PENDING_REVIEW`.
@@ -24,7 +26,7 @@ Manage Content tidak membuat:
 - Table `contents` atau model polymorphic baru.
 - Seeder khusus Manage Content.
 - Duplicate Article atau Event hanya untuk kebutuhan list admin.
-- Sistem likes, views, comments, atau participants.
+- Sistem likes, views, atau comments.
 - Permission system atau role matrix pada tahap awal.
 
 ## 2. Batasan permission sementara
@@ -77,36 +79,34 @@ belum diajukan oleh owner. Status yang ditampilkan:
 Manage Content tidak menyimpan copy title, owner, banner, status, atau tanggal.
 Semua field dibaca langsung dari record pemilik domain.
 
-## 4. Statistik UI sementara
+## 4. Statistik UI
 
-Sistem interaksi dikerjakan setelah implementasi awal content selesai. Statistik
-tetap hardcoded atau berasal dari helper mock presentasional.
+Statistik dibaca dari model canonical Article dan Event melalui query agregasi
+Prisma. Manage Content tidak menyimpan salinan statistik sendiri.
 
 Statistik per type:
 
 | Content type | Statistik yang ditampilkan |
 | --- | --- |
 | Article | Views, Likes, Comments |
-| Event | Views, Likes, Participants |
+| Event | Views, Likes |
 
 Aturan penting:
 
-- Article tidak menampilkan participants.
 - Event tidak menampilkan comments.
 - Statistik tidak menjadi filter atau sumber keputusan moderation.
-- Statistik tidak disimpan ke Article atau Event pada tahap awal.
-- Record baru yang tidak mempunyai entry mock dapat menampilkan nilai awal `0`.
-- Helper mock dapat menggunakan key `type + id` atau slug agar hasil stabil pada
-  setiap render.
+- Views berasal dari counter masing-masing content; likes dan comments berasal
+  dari count relasi database.
+- Record baru tanpa interaksi menampilkan nilai awal `0`.
 
 UI kolom Statistik menyesuaikan icon ketiga berdasarkan content type:
 
 ```text
 Article -> MessageCircle
-Event   -> Users
+Event   -> Tidak ada statistik ketiga
 ```
 
-## 5. DTO gabungan
+## 5. DTO bersama
 
 Manage Content memetakan Article dan Event ke DTO list yang sama:
 
@@ -135,13 +135,16 @@ interface ManagedContentListItem {
 }
 ```
 
-ID Article dan Event dapat mempunyai angka yang sama. Identitas row dan payload
-mutation selalu memakai pasangan `type + id`, bukan ID saja.
+ID Article dan Event dapat mempunyai angka yang sama. Tipe list ditentukan oleh
+route server, sedangkan payload mutation tetap memakai pasangan `type + id`.
+Kolom Type tidak perlu ditampilkan pada tabel karena satu halaman hanya memuat
+satu tipe content.
 
 ## 6. Query list
 
-Route `/dashboard/content` tetap tipis dan membaca initial data melalui data
-function server-only.
+Route `/dashboard/content/article` dan `/dashboard/content/event` tetap tipis
+dan membaca initial data melalui data function server-only. Route parent
+`/dashboard/content` mengalihkan moderator ke halaman Article.
 
 Query menerima:
 
@@ -156,29 +159,20 @@ Aturan query:
 - Page minimal 1.
 - Exclude record `deletedAt != null`.
 - Exclude status `DRAFT`.
-- Search title dan nama owner secara case-insensitive.
-- Search dapat menerima label `article` atau `event`.
+- Search title, deskripsi/excerpt, dan nama owner/author secara case-insensitive.
 - Urutan default `submittedAt desc`, kemudian `updatedAt desc`.
 - Search dan pagination disimpan pada URL.
 - DTO harus serializable dan tidak mengirim object Prisma mentah.
-
-Karena Article dan Event berada pada table berbeda, implementasi query dapat
-memakai salah satu pendekatan berikut:
-
-1. SQL `UNION ALL` terparameterisasi untuk count dan pagination global.
-2. Query summary dari kedua model lalu merge dan slice pada server untuk dataset
-   awal yang masih terbatas.
-
-Pendekatan pertama diprioritaskan jika implementasinya tetap jelas dan aman.
-Prisma raw query tidak boleh membangun SQL dari string input client.
+- Count dan pagination dijalankan langsung pada model yang sesuai dengan route;
+  data Article dan Event tidak digabung atau di-slice setelah query.
 
 ## 7. Preview Admin (Moderasi)
 
 Preview dari POV admin memakai route khusus Manage Content:
 
 ```text
-/dashboard/content/[id]/article
-/dashboard/content/[id]/event
+/dashboard/content/article/[id]
+/dashboard/content/event/[id]
 ```
 
 Aturan preview admin:
@@ -254,7 +248,7 @@ ketiga karena akan menghasilkan duplicate data yang tidak mempunyai ownership
 domain yang jelas.
 
 Setelah Event dan Article terhubung database, `initialContent` dihapus dan list
-Manage Content dibangun dari query gabungan.
+Manage Content dibangun dari query terpisah per model.
 
 ## 10. Struktur module
 
@@ -268,8 +262,6 @@ src/modules/manage-content/
   components/
     manage-content-list.tsx
     moderation-dialog.tsx
-  constants/
-    mock-content-statistics.ts
   data/
     get-managed-content.ts
     managed-content.mapper.ts
@@ -287,9 +279,9 @@ import repository internal secara acak atau circular dependency.
 Manage Content dikerjakan setelah Event dan Article selesai:
 
 - [x] 1. Finalisasi DTO gabungan Article dan Event.
-- [x] 2. Buat helper statistik hardcoded berdasarkan content type (Article: Comments; Event: Participants).
+- [x] 2. Petakan statistik database berdasarkan content type (Article: Comments; Event: Views dan Likes).
 - [x] 3. Implementasikan query search, sort, count, dan pagination server-side.
-- [x] 4. Ubah `/dashboard/content` menjadi route Server Component tipis.
+- [x] 4. Buat route Server Component terpisah untuk Article dan Event.
 - [x] 5. Implementasikan preview database untuk Article dan Event.
 - [x] 6. Implementasikan approve dan reject untuk Request (`PENDING_REVIEW`).
 - [x] 7. Implementasikan takedown dan restore (`PUBLISHED` <-> `TAKEN_DOWN`).
@@ -302,15 +294,20 @@ Manage Content dikerjakan setelah Event dan Article selesai:
 
 ### Status implementasi Manage Content
 
-- `/dashboard/content` membaca Article dan Event non-draft langsung dari database
-  PostgreSQL melalui DAL server-only `getManagedContent`.
-- Query mendukung pencarian case-insensitive berdasarkan judul konten, nama author/owner,
-  maupun filter eksplisit `article` / `event`.
-- Pagination berukuran 25 item per halaman dengan URL state synchronization (`page`, `q`).
-- Kolom Statistik menampilkan `MessageCircle` (Comments) khusus untuk Article dan `Users` (Participants) khusus untuk Event.
+- `/dashboard/content/article` membaca Article non-draft dan
+  `/dashboard/content/event` membaca Event non-draft langsung dari PostgreSQL
+  melalui DAL server-only `getManagedContent`.
+- Query mendukung pencarian case-insensitive berdasarkan judul, deskripsi, serta
+  nama author/owner pada tipe aktif.
+- Pagination berukuran 25 item per halaman dan independen untuk setiap tipe,
+  dengan URL state synchronization (`page`, `q`).
+- Sidebar menyediakan submenu Article dan Event; kolom Type di tabel dihapus.
+- Kolom Statistik menampilkan Views dan Likes untuk kedua tipe, serta
+  `MessageCircle` (Comments) khusus untuk Article.
 - Aksi moderasi (`Approve`, `Reject`, `Takedown`, `Restore`) ditangani oleh Server Actions
   terisolasi dengan validasi Zod dan revalidasi rute otomatis.
-- Tombol View membuka pratinjau canonical `/dashboard/create-article/preview/[id]` atau `/dashboard/create-event/preview/[id]`.
+- Tombol View membuka preview moderasi
+  `/dashboard/content/article/[id]` atau `/dashboard/content/event/[id]`.
 
 ## 12. Urutan implementasi lintas module
 
@@ -325,24 +322,25 @@ Urutan lengkap yang menjadi acuan project:
 6. Article seeding
 7. Article public pages dan landing integration
 8. Article owner dashboard
-9. Manage Content combined query
+9. Manage Content query per content type
 10. Manage Content moderation actions
 11. Permission integration pada tahap terpisah
 12. Interaction modules pada tahap terpisah
 ```
 
-Interaction modules setelah implementasi awal akan mengganti statistik
-hardcoded secara bertahap tanpa mengubah ownership dan status workflow.
+Statistik interaksi membaca model canonical tanpa mengubah ownership dan status
+workflow content.
 
 ## 13. Kriteria selesai
 
-- `/dashboard/content` membaca Article dan Event dari database.
+- `/dashboard/content/article` dan `/dashboard/content/event` membaca tipe
+  masing-masing dari database.
 - Tidak ada table atau seeder Manage Content.
-- Search dan pagination berjalan dengan pasangan identity `type + id`.
+- Search dan pagination berjalan independen pada tiap halaman.
 - Preview tidak memakai fallback mock.
 - Approve, reject, takedown, dan restore mengikuti status transition.
-- Article menampilkan views, likes, comments secara hardcoded.
-- Event menampilkan views, likes, participants secara hardcoded.
-- Article tidak mempunyai participants dan Event tidak mempunyai comments.
+- Article menampilkan views, likes, dan comments dari database.
+- Event menampilkan views dan likes dari database.
+- Event tidak mempunyai participants maupun comments.
 - Role-based permission belum diimplementasikan dan terdokumentasi sebagai scope
   module Permission.
