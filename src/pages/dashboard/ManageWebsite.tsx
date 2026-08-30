@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Save, Plus, Trash2, ChevronUp, ChevronDown, GripVertical, Users } from "lucide-react"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
+import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { toast } from "sonner"
 
@@ -73,7 +74,7 @@ export function ManageWebsite() {
             </div>
 
             <div className="relative border-b">
-                <div className="flex overflow-x-auto hide-scrollbar gap-6 pb-px">
+                <div className="flex overflow-x-auto no-scrollbar gap-6 pb-px">
                     {tabs.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`whitespace-nowrap pb-3 text-sm font-medium transition-colors border-b-2 ${activeTab === tab ? "border-palembang-red text-palembang-red" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}>
@@ -119,11 +120,6 @@ function HomeSettings() {
 
     const addCarousel = () => {
         setCarousels(prev => [...prev, { id: Date.now(), bg: "", judul: "", tagline: "", deskripsi: "", url: "" }])
-    }
-
-    const removeCarousel = (id: number) => {
-        if (carousels.length <= 1) { toast.error("Minimal harus ada 1 carousel!"); return }
-        setCarousels(prev => prev.filter(c => c.id !== id))
     }
 
     // Jelajahi
@@ -179,10 +175,6 @@ function HomeSettings() {
         setTeamMembers(prev => [...prev, { id: Date.now(), foto: "", nama: "", jabatan: "", deskripsi: "" }])
     }
 
-    const removeTeamMember = (id: number) => {
-        setTeamMembers(prev => prev.filter(m => m.id !== id))
-    }
-
     const updateTeamMember = (id: number, key: string, value: string) => {
         setTeamMembers(prev => prev.map(m => m.id === id ? { ...m, [key]: value } : m))
     }
@@ -192,6 +184,36 @@ function HomeSettings() {
     const [ctaJudul, setCtaJudul] = useState("Kota ini milik kita semua.")
     const [ctaDeskripsi, setCtaDeskripsi] = useState("Punya cerita, ide, atau ingin membuat sesuatu bersama? Kami ingin mendengarnya.")
     const [ctaUrl, setCtaUrl] = useState("/kolaborasi")
+
+    // Delete Confirm State
+    const [deleteConfirm, setDeleteConfirm] = useState<{
+        open: boolean
+        type: "carousel" | "jelajahi" | "team" | null
+        id?: number
+        index?: number
+        title?: string
+    }>({
+        open: false,
+        type: null
+    })
+
+    const handleConfirmDelete = () => {
+        if (deleteConfirm.type === "carousel" && deleteConfirm.id !== undefined) {
+            if (carousels.length <= 1) {
+                toast.error("Minimal harus ada 1 carousel!")
+            } else {
+                setCarousels(prev => prev.filter(c => c.id !== deleteConfirm.id))
+                toast.success("Slide carousel berhasil dihapus")
+            }
+        } else if (deleteConfirm.type === "jelajahi" && deleteConfirm.index !== undefined) {
+            setJelajahiCards(prev => prev.filter((_, i) => i !== deleteConfirm.index))
+            toast.success("Card jelajahi berhasil dihapus")
+        } else if (deleteConfirm.type === "team" && deleteConfirm.id !== undefined) {
+            setTeamMembers(prev => prev.filter(m => m.id !== deleteConfirm.id))
+            toast.success("Anggota tim berhasil dihapus")
+        }
+        setDeleteConfirm({ open: false, type: null })
+    }
 
     return (
         <div className="space-y-8">
@@ -208,7 +230,15 @@ function HomeSettings() {
                                 <div className="flex items-center gap-1">
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveItem(index, -1)} disabled={index === 0}><ChevronUp className="size-4" /></Button>
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveItem(index, 1)} disabled={index === carousels.length - 1}><ChevronDown className="size-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeCarousel(item.id)}><Trash2 className="size-4" /></Button>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" 
+                                        onClick={() => setDeleteConfirm({ open: true, type: "carousel", id: item.id, title: item.judul || `Slide ${index + 1}` })}
+                                        title="Hapus Slide"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
                                 </div>
                             </div>
                             <Field label="Background Carousel">
@@ -253,7 +283,15 @@ function HomeSettings() {
                             <Input className="flex-1" value={card.judul} onChange={e => setJelajahiCards(prev => prev.map((c, i) => i === index ? { ...c, judul: e.target.value } : c))} placeholder="Judul" />
                             <Input className="w-28" value={card.stories} onChange={e => setJelajahiCards(prev => prev.map((c, i) => i === index ? { ...c, stories: e.target.value } : c))} placeholder="CTA" />
                             <Input className="w-32" value={card.link} onChange={e => setJelajahiCards(prev => prev.map((c, i) => i === index ? { ...c, link: e.target.value } : c))} placeholder="Link URL" />
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setJelajahiCards(prev => prev.filter((_, i) => i !== index))}><Trash2 className="size-4" /></Button>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" 
+                                onClick={() => setDeleteConfirm({ open: true, type: "jelajahi", index, title: card.judul || `Card ${index + 1}` })}
+                                title="Hapus Card"
+                            >
+                                <Trash2 className="size-4" />
+                            </Button>
                         </div>
                     ))}
                     <Button variant="outline" className="w-full border-dashed" onClick={() => setJelajahiCards(prev => [...prev, { id: Date.now(), judul: "", stories: "", link: "" }])}><Plus className="size-4 mr-2" /> Tambah Card Jelajahi</Button>
@@ -279,7 +317,7 @@ function HomeSettings() {
                             {cat.pinArticles.filter(p => p).map((pin, pinIdx) => (
                                 <div key={pinIdx} className="flex justify-between items-center bg-muted/30 border rounded p-2 text-sm">
                                     <span>{pin}</span>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:bg-red-50" onClick={() => {
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40" onClick={() => {
                                         const newPins = [...cat.pinArticles]
                                         newPins[cat.pinArticles.indexOf(pin)] = ""
                                         setCatSections(prev => prev.map((c, i) => i === catIdx ? { ...c, pinArticles: newPins } : c))
@@ -336,7 +374,13 @@ function HomeSettings() {
                                 </div>
                                 <div className="flex-1 flex flex-col gap-3">
                                     <div className="flex justify-end">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 -mt-2 -mr-2" onClick={() => removeTeamMember(member.id)}>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 -mt-2 -mr-2" 
+                                            onClick={() => setDeleteConfirm({ open: true, type: "team", id: member.id, title: member.nama || 'Anggota Tim' })}
+                                            title="Hapus Anggota Tim"
+                                        >
                                             <Trash2 className="size-4" />
                                         </Button>
                                     </div>
@@ -358,6 +402,26 @@ function HomeSettings() {
                 <Field label="Deskripsi"><Textarea value={ctaDeskripsi} onChange={v => setCtaDeskripsi(v)} /></Field>
                 <Field label="URL Button CTA"><Input value={ctaUrl} onChange={e => setCtaUrl(e.target.value)} placeholder="/kolaborasi" /></Field>
             </SectionCard>
+
+            {/* Confirmation Modal */}
+            <ConfirmActionDialog
+                open={deleteConfirm.open}
+                onOpenChange={(open) => setDeleteConfirm(prev => ({ ...prev, open }))}
+                title={
+                    deleteConfirm.type === "carousel" ? "Hapus Slide Carousel?" :
+                    deleteConfirm.type === "jelajahi" ? "Hapus Card Jelajahi?" :
+                    "Hapus Anggota Tim?"
+                }
+                description={
+                    deleteConfirm.type === "carousel" ? `Apakah Anda yakin ingin menghapus "${deleteConfirm.title}"? Tindakan ini tidak dapat dibatalkan.` :
+                    deleteConfirm.type === "jelajahi" ? `Apakah Anda yakin ingin menghapus card "${deleteConfirm.title}"?` :
+                    `Apakah Anda yakin ingin menghapus "${deleteConfirm.title}" dari tim?`
+                }
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                variant="destructive"
+                onConfirm={handleConfirmDelete}
+            />
         </div>
     )
 }
@@ -423,6 +487,10 @@ function CollaborationSettings() {
         { id: 2, name: "Tokopedia", url: "https://images.tokopedia.net/img/toppicks/social-share-tokopedia.jpg" },
     ])
     const logoInputRef = useState<HTMLInputElement | null>(null)
+    const [deleteLogoDialog, setDeleteLogoDialog] = useState<{ open: boolean; logo: { id: number; name: string } | null }>({
+        open: false,
+        logo: null
+    })
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || [])
@@ -433,8 +501,12 @@ function CollaborationSettings() {
         e.target.value = ""
     }
 
-    const removePartnerLogo = (id: number) => {
-        setPartnerLogos(prev => prev.filter(l => l.id !== id))
+    const confirmDeleteLogo = () => {
+        if (deleteLogoDialog.logo) {
+            setPartnerLogos(prev => prev.filter(l => l.id !== deleteLogoDialog.logo!.id))
+            toast.success("Logo partner berhasil dihapus")
+        }
+        setDeleteLogoDialog({ open: false, logo: null })
     }
 
     // Partner Contents
@@ -444,15 +516,31 @@ function CollaborationSettings() {
     ])
     const [newContentPlatform, setNewContentPlatform] = useState("youtube")
     const [newContentLink, setNewContentLink] = useState("")
+    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: { id: number; platform: string; link: string } | null }>({
+        open: false,
+        item: null
+    })
 
     const addContent = () => {
-        if (!newContentLink.trim()) return
-        setPartnerContents(prev => [...prev, { id: Date.now(), platform: newContentPlatform, link: newContentLink }])
+        if (!newContentLink.trim()) {
+            toast.error("Link konten tidak boleh kosong")
+            return
+        }
+        setPartnerContents(prev => [...prev, { id: Date.now(), platform: newContentPlatform, link: newContentLink.trim() }])
         setNewContentLink("")
+        toast.success("Konten partner berhasil ditambahkan")
     }
 
-    const removeContent = (id: number) => {
-        setPartnerContents(prev => prev.filter(c => c.id !== id))
+    const handleDeleteClick = (content: { id: number; platform: string; link: string }) => {
+        setDeleteDialog({ open: true, item: content })
+    }
+
+    const confirmDelete = () => {
+        if (deleteDialog.item) {
+            setPartnerContents(prev => prev.filter(c => c.id !== deleteDialog.item!.id))
+            toast.success("Konten partner berhasil dihapus")
+        }
+        setDeleteDialog({ open: false, item: null })
     }
 
     return (
@@ -488,7 +576,13 @@ function CollaborationSettings() {
                         {partnerLogos.map(logo => (
                             <div key={logo.id} className="relative group border rounded-lg p-3 flex items-center justify-center bg-muted/20 h-20">
                                 <img src={logo.url} alt={logo.name} className="max-h-10 max-w-full object-contain" />
-                                <button onClick={() => removePartnerLogo(logo.id)} className="absolute -top-2 -right-2 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">×</button>
+                                <button 
+                                    onClick={() => setDeleteLogoDialog({ open: true, logo })} 
+                                    className="absolute -top-2 -right-2 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-xs"
+                                    title="Hapus Logo"
+                                >
+                                    ×
+                                </button>
                                 <span className="absolute bottom-1 left-1 right-1 text-[9px] text-center text-muted-foreground truncate">{logo.name}</span>
                             </div>
                         ))}
@@ -512,128 +606,376 @@ function CollaborationSettings() {
 
             {/* ── Partner Content ── */}
             <SectionCard title="Partner Content" desc="Kelola konten video kolaborasi dari berbagai platform (YouTube, Instagram, TikTok, dll).">
-                <div className="space-y-4">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Konten Saat Ini</p>
-                    {partnerContents.length === 0 && (
-                        <p className="text-sm text-muted-foreground italic">Belum ada konten. Tambahkan konten pertama di bawah.</p>
-                    )}
-                    {partnerContents.map(content => (
-                        <div key={content.id} className="flex items-center gap-3 rounded-lg border p-3 bg-muted/10">
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                                content.platform === "youtube" ? "bg-red-600 text-white" :
-                                content.platform === "instagram" ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white" :
-                                content.platform === "tiktok" ? "bg-black text-white border border-white/20" :
-                                content.platform === "facebook" ? "bg-blue-600 text-white" :
-                                "bg-neutral-800 text-white"
-                            }`}>{content.platform}</span>
-                            <span className="flex-1 text-sm truncate text-muted-foreground">{content.link}</span>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeContent(content.id)}>
-                                <Trash2 className="size-4" />
-                            </Button>
-                        </div>
-                    ))}
+                <div className="space-y-5">
+                    <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Konten Saat Ini</p>
+                        {partnerContents.length === 0 ? (
+                            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground italic">
+                                Belum ada konten kolaborasi. Silakan tambahkan melalui form di bawah.
+                            </div>
+                        ) : (
+                            <div className="grid sm:grid-cols-2 gap-3">
+                                {partnerContents.map(content => (
+                                    <div key={content.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 bg-muted/10 hover:bg-muted/25 transition-colors">
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shrink-0 ${
+                                                content.platform === "youtube" ? "bg-red-600 text-white" :
+                                                content.platform === "instagram" ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white" :
+                                                content.platform === "tiktok" ? "bg-black text-white border border-white/20" :
+                                                content.platform === "facebook" ? "bg-blue-600 text-white" :
+                                                "bg-neutral-800 text-white"
+                                            }`}>{content.platform}</span>
+                                            <span className="text-xs sm:text-sm truncate text-foreground font-medium" title={content.link}>
+                                                {content.link}
+                                            </span>
+                                        </div>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" 
+                                            onClick={() => handleDeleteClick(content)}
+                                            title="Hapus Konten"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-                    <div className="pt-2 border-t">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Tambah Konten Baru</p>
-                        <div className="flex items-center gap-3">
-                            <select
-                                value={newContentPlatform}
-                                onChange={e => setNewContentPlatform(e.target.value)}
-                                className="flex h-10 w-40 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-                            >
-                                <option value="youtube">YouTube</option>
-                                <option value="instagram">Instagram</option>
-                                <option value="tiktok">TikTok</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="x">X (Twitter)</option>
-                            </select>
-                            <Input
-                                value={newContentLink}
-                                onChange={e => setNewContentLink(e.target.value)}
-                                placeholder="Masukkan link video..."
-                                className="flex-1"
-                                onKeyDown={e => e.key === "Enter" && addContent()}
-                            />
-                            <Button onClick={addContent} className="bg-palembang-red text-white hover:bg-palembang-red/90">
-                                <Plus className="size-4 mr-2" /> Add
+                    {/* 2-Column Link Input Section */}
+                    <div className="pt-4 border-t space-y-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tambah Konten Baru</p>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Platform Media</label>
+                                <select
+                                    value={newContentPlatform}
+                                    onChange={e => setNewContentPlatform(e.target.value)}
+                                    className="flex h-10 w-full items-center rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
+                                >
+                                    <option value="youtube">YouTube</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="tiktok">TikTok</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="x">X (Twitter)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Link URL Konten</label>
+                                <Input
+                                    value={newContentLink}
+                                    onChange={e => setNewContentLink(e.target.value)}
+                                    placeholder="https://youtube.com/... atau https://instagram.com/..."
+                                    className="w-full"
+                                    onKeyDown={e => e.key === "Enter" && addContent()}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end pt-1">
+                            <Button onClick={addContent} className="bg-palembang-red text-white hover:bg-palembang-red/90 w-full sm:w-auto">
+                                <Plus className="size-4 mr-2" /> Tambah Konten
                             </Button>
                         </div>
                     </div>
                 </div>
             </SectionCard>
+
+            {/* Confirmation Modal for Partner Content Delete */}
+            <ConfirmActionDialog
+                open={deleteDialog.open}
+                onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+                title="Hapus Konten Partner?"
+                description={`Apakah Anda yakin ingin menghapus konten platform "${deleteDialog.item?.platform}" dengan link "${deleteDialog.item?.link}"? Tindakan ini tidak dapat dibatalkan.`}
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                variant="destructive"
+                onConfirm={confirmDelete}
+            />
+
+            {/* Confirmation Modal for Partner Logo Delete */}
+            <ConfirmActionDialog
+                open={deleteLogoDialog.open}
+                onOpenChange={(open) => setDeleteLogoDialog(prev => ({ ...prev, open }))}
+                title="Hapus Logo Partner?"
+                description={`Apakah Anda yakin ingin menghapus logo partner "${deleteLogoDialog.logo?.name || ''}"?`}
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                variant="destructive"
+                onConfirm={confirmDeleteLogo}
+            />
         </div>
     )
 }
+
+// Social platform SVG icons for Connect section
+function InstagramIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+        </svg>
+    )
+}
+
+function WhatsAppIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    )
+}
+
+function YouTubeIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+            <polygon points="10 15 15 12 10 9 10 15" fill="currentColor" />
+        </svg>
+    )
+}
+
+function TikTokIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-.04-4.52z" />
+        </svg>
+    )
+}
+
+function LinkedInIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+            <rect width="4" height="12" x="2" y="9" />
+            <circle cx="4" cy="4" r="2" />
+        </svg>
+    )
+}
+
+function XIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+    )
+}
+
+function FacebookIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+        </svg>
+    )
+}
+
+function MailIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
+    )
+}
+
+function GlobeIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+        </svg>
+    )
+}
+
+const SOCIAL_PLATFORMS = [
+    { value: "instagram", label: "Instagram", icon: InstagramIcon },
+    { value: "whatsapp", label: "WhatsApp", icon: WhatsAppIcon },
+    { value: "youtube", label: "YouTube", icon: YouTubeIcon },
+    { value: "tiktok", label: "TikTok", icon: TikTokIcon },
+    { value: "linkedin", label: "LinkedIn", icon: LinkedInIcon },
+    { value: "x", label: "X (Twitter)", icon: XIcon },
+    { value: "facebook", label: "Facebook", icon: FacebookIcon },
+    { value: "mail", label: "Email", icon: MailIcon },
+    { value: "website", label: "Website / Other", icon: GlobeIcon },
+]
 
 // ═══════════════════════════════════════════
 // TAB: HEADER & FOOTER
 // ═══════════════════════════════════════════
 function HeaderFooterSettings() {
     const [logoUrl, setLogoUrl] = useState("")
+    const [backgroundText, setBackgroundText] = useState("PALEMBANG")
+    const [siteDescription, setSiteDescription] = useState("Platform editorial yang merekam, merayakan, dan menggerakkan kota Palembang.")
 
     const [exploreLinks, setExploreLinks] = useState([
         { id: 1, nama: "Cerita Warga", url: "/cerita-warga" },
         { id: 2, nama: "Gaya Hidup", url: "/gaya-hidup" },
         { id: 3, nama: "Ruang Kota", url: "/ruang-kota" },
         { id: 4, nama: "Industri Kreatif", url: "/industri-kreatif" },
-        { id: 5, nama: "Agenda", url: "/agenda" },
+        { id: 5, nama: "Kebudayaan", url: "/kebudayaan" },
+        { id: 6, nama: "Agenda", url: "/agenda" },
+        { id: 7, nama: "Kolaborasi", url: "/kolaborasi" },
     ])
 
     const [connectLinks, setConnectLinks] = useState([
-        { id: 1, nama: "Instagram", url: "https://instagram.com/benahpalembang" },
-        { id: 2, nama: "TikTok", url: "#tiktok" },
-        { id: 3, nama: "YouTube", url: "https://youtube.com/@benahpalembang" },
-        { id: 4, nama: "LinkedIn", url: "#linkedin" },
+        { id: 1, platform: "instagram", url: "https://instagram.com/benahpalembang" },
+        { id: 2, platform: "whatsapp", url: "https://wa.me/628551241878" },
+        { id: 3, platform: "youtube", url: "https://youtube.com/@benahpalembang" },
+        { id: 4, platform: "mail", url: "mailto:halo@benahpalembang.id" },
     ])
+
+    const [deleteLinkDialog, setDeleteLinkDialog] = useState<{
+        open: boolean
+        type: "explore" | "connect" | null
+        index?: number
+        title?: string
+    }>({
+        open: false,
+        type: null
+    })
+
+    const confirmDeleteLink = () => {
+        if (deleteLinkDialog.type === "explore" && deleteLinkDialog.index !== undefined) {
+            setExploreLinks(prev => prev.filter((_, i) => i !== deleteLinkDialog.index))
+            toast.success("Link explore berhasil dihapus")
+        } else if (deleteLinkDialog.type === "connect" && deleteLinkDialog.index !== undefined) {
+            setConnectLinks(prev => prev.filter((_, i) => i !== deleteLinkDialog.index))
+            toast.success("Link sosial media berhasil dihapus")
+        }
+        setDeleteLinkDialog({ open: false, type: null })
+    }
 
     return (
         <div className="space-y-8">
-            <SectionCard title="Logo & Header" desc="Konfigurasi logo dan link utama header.">
+            <SectionCard title="Logo & Header" desc="Konfigurasi logo, redirect link header, background text footer, dan deskripsi website.">
                 <Field label="Logo Website (Upload)">
                     <ImageUpload value={logoUrl} onChange={setLogoUrl} placeholder="Pilih logo (PNG/SVG)..." />
                 </Field>
                 <Field label="URL Logo (Redirect Link)"><Input defaultValue="/" /></Field>
+                <Field label="Background Text (Footer)">
+                    <Input
+                        value={backgroundText}
+                        onChange={e => setBackgroundText(e.target.value)}
+                        placeholder="e.g. PALEMBANG"
+                    />
+                </Field>
+                <Field label="Deskripsi Website / Tagline Footer">
+                    <Textarea
+                        value={siteDescription}
+                        onChange={setSiteDescription}
+                        placeholder="Platform editorial yang merekam, merayakan, dan menggerakkan kota Palembang."
+                    />
+                </Field>
             </SectionCard>
 
             <SectionCard title="Footer — Explore" desc="Link navigasi pada kolom Explore footer.">
-                <div className="space-y-4">
-                    <Field label="Deskripsi Explore">
-                        <Input placeholder="Deskripsi singkat untuk kolom explore footer..." />
-                    </Field>
-                    <div className="space-y-3">
+                <div className="space-y-3">
                     {exploreLinks.map((link, index) => (
                         <div key={link.id} className="flex gap-2 items-center">
-                            <Input className="flex-1" value={link.nama} onChange={e => setExploreLinks(prev => prev.map((l, i) => i === index ? { ...l, nama: e.target.value } : l))} placeholder="Nama" />
-                            <Input className="flex-[2]" value={link.url} onChange={e => setExploreLinks(prev => prev.map((l, i) => i === index ? { ...l, url: e.target.value } : l))} placeholder="URL" />
-                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setExploreLinks(prev => prev.filter((_, i) => i !== index))}><Trash2 className="size-4" /></Button>
+                            <Input
+                                className="flex-1"
+                                value={link.nama}
+                                onChange={e => setExploreLinks(prev => prev.map((l, i) => i === index ? { ...l, nama: e.target.value } : l))}
+                                placeholder="Nama Halaman (e.g. Cerita Warga)"
+                            />
+                            <Input
+                                className="flex-[2]"
+                                value={link.url}
+                                onChange={e => setExploreLinks(prev => prev.map((l, i) => i === index ? { ...l, url: e.target.value } : l))}
+                                placeholder="URL (e.g. /cerita-warga)"
+                            />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
+                                onClick={() => setDeleteLinkDialog({ open: true, type: "explore", index, title: link.nama || `Link Explore ${index + 1}` })}
+                            >
+                                <Trash2 className="size-4" />
+                            </Button>
                         </div>
                     ))}
-                    <Button variant="outline" className="w-full border-dashed" onClick={() => setExploreLinks(prev => [...prev, { id: Date.now(), nama: "", url: "" }])}><Plus className="size-4 mr-2" /> Tambah Link Explore</Button>
-                    </div>
+                    <Button
+                        variant="outline"
+                        className="w-full border-dashed"
+                        onClick={() => setExploreLinks(prev => [...prev, { id: Date.now(), nama: "", url: "" }])}
+                    >
+                        <Plus className="size-4 mr-2" /> Tambah Link Explore
+                    </Button>
                 </div>
             </SectionCard>
 
-            <SectionCard title="Footer — Connect" desc="Link sosial media pada kolom Connect footer.">
+            <SectionCard title="Footer — Connect" desc="Link sosial media pada kolom Connect footer dengan pilihan icon platform.">
                 <div className="space-y-3">
-                    {connectLinks.map((link, index) => (
-                        <div key={link.id} className="flex gap-2 items-center">
-                            <Input className="flex-1" value={link.nama} onChange={e => setConnectLinks(prev => prev.map((l, i) => i === index ? { ...l, nama: e.target.value } : l))} placeholder="Platform" />
-                            <Input className="flex-[2]" value={link.url} onChange={e => setConnectLinks(prev => prev.map((l, i) => i === index ? { ...l, url: e.target.value } : l))} placeholder="URL" />
-                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setConnectLinks(prev => prev.filter((_, i) => i !== index))}><Trash2 className="size-4" /></Button>
-                        </div>
-                    ))}
-                    <Button variant="outline" className="w-full border-dashed" onClick={() => setConnectLinks(prev => [...prev, { id: Date.now(), nama: "", url: "" }])}><Plus className="size-4 mr-2" /> Tambah Link Connect</Button>
+                    {connectLinks.map((link, index) => {
+                        const platform = SOCIAL_PLATFORMS.find(p => p.value === link.platform) || SOCIAL_PLATFORMS[0]
+                        const IconComponent = platform.icon
+                        return (
+                            <div key={link.id} className="flex gap-2.5 items-center">
+                                <div className="relative w-44 sm:w-52 shrink-0 flex items-center">
+                                    <div className="absolute left-3 pointer-events-none text-muted-foreground flex items-center">
+                                        <IconComponent className="size-4" />
+                                    </div>
+                                    <select
+                                        value={link.platform}
+                                        onChange={e => setConnectLinks(prev => prev.map((l, i) => i === index ? { ...l, platform: e.target.value } : l))}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                                    >
+                                        {SOCIAL_PLATFORMS.map(p => (
+                                            <option key={p.value} value={p.value}>{p.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <Input
+                                    className="flex-1"
+                                    value={link.url}
+                                    onChange={e => setConnectLinks(prev => prev.map((l, i) => i === index ? { ...l, url: e.target.value } : l))}
+                                    placeholder={
+                                        link.platform === "whatsapp" ? "https://wa.me/62..." :
+                                        link.platform === "mail" ? "mailto:..." :
+                                        "https://..."
+                                    }
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
+                                    onClick={() => setDeleteLinkDialog({ open: true, type: "connect", index, title: `${platform.label} (${link.url || 'Link'})` })}
+                                >
+                                    <Trash2 className="size-4" />
+                                </Button>
+                            </div>
+                        )
+                    })}
+                    <Button
+                        variant="outline"
+                        className="w-full border-dashed"
+                        onClick={() => setConnectLinks(prev => [...prev, { id: Date.now(), platform: "instagram", url: "" }])}
+                    >
+                        <Plus className="size-4 mr-2" /> Tambah Link Sosial Media
+                    </Button>
                 </div>
             </SectionCard>
 
-            <SectionCard title="Footer — Contact & Copyright" desc="Informasi kontak dan hak cipta di bagian bawah footer.">
-                <div className="grid sm:grid-cols-2 gap-4">
-                    <Field label="Email Kontak"><Input defaultValue="halo@benahpalembang.id" /></Field>
-                    <Field label="Nomor HP / WhatsApp"><Input defaultValue="+62 711 123 456" /></Field>
-                </div>
-                <Field label="Alamat"><Input defaultValue="Palembang, Sumatera Selatan" /></Field>
-                <Field label="Copyright"><Input defaultValue="© 2025 Benah Palembang" /></Field>
+            <SectionCard title="Footer — Copyright" desc="Informasi hak cipta di bagian bawah footer.">
+                <Field label="Copyright Text">
+                    <Input defaultValue="© 2026 Benah Palembang. All rights reserved." />
+                </Field>
             </SectionCard>
+
+            {/* Confirmation Modal for Footer Links Delete */}
+            <ConfirmActionDialog
+                open={deleteLinkDialog.open}
+                onOpenChange={(open) => setDeleteLinkDialog(prev => ({ ...prev, open }))}
+                title={deleteLinkDialog.type === "explore" ? "Hapus Link Explore?" : "Hapus Link Sosial Media?"}
+                description={`Apakah Anda yakin ingin menghapus "${deleteLinkDialog.title || 'link ini'}"? Tindakan ini tidak dapat dibatalkan.`}
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                variant="destructive"
+                onConfirm={confirmDeleteLink}
+            />
         </div>
     )
 }

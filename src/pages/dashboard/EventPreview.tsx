@@ -3,8 +3,8 @@ import { useParams, useNavigate, useSearchParams, useLocation } from "react-rout
 import { agendaItems, type AgendaItem } from "@/data/mockData"
 import { Button } from "@/components/ui/button"
 import { 
-  ArrowLeft, Edit2, CalendarDays, Clock3, MapPin, 
-  Sparkles, Check, Share2, Ticket, Eye
+  ArrowLeft, CalendarDays, Clock3, MapPin, 
+  Sparkles, Share2, Ticket, Eye, Check, MessageCircle
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -95,44 +95,25 @@ export function EventPreview() {
     }
   }
 
-  const handleEdit = () => {
-    if (returnUrl) {
-      navigate(returnUrl)
-    } else if (eventId && eventId !== "new") {
-      navigate(`/dashboard/create-event/new?id=${eventId}&mode=edit`)
-    } else {
-      navigate('/dashboard/create-event/new')
-    }
-  }
-
   const waMessage = `Halo Panitia, saya ingin mendaftar untuk acara:\n*${item.title}*\nTanggal: ${item.date}\nLokasi: ${item.location}`
+  const waContactMessage = `Halo Panitia, saya ingin bertanya dan mendapatkan info lebih lanjut seputar acara:\n*${item.title}*\nTanggal: ${item.date}\nLokasi: ${item.location}`
 
   return (
     <div className="space-y-6 pb-16 animate-in fade-in duration-300">
       {/* ── Top Action & Control Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-20 py-3.5 px-4 -mx-4 md:-mx-8 border-b shadow-sm">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleBack} 
-            className="gap-2 font-medium"
-          >
-            <ArrowLeft className="size-4" /> Kembali
-          </Button>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            <Eye className="size-3.5" /> Pratinjau Event (Tampilan Publik)
-          </span>
-        </div>
+      <div className="flex flex-row items-center justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-20 py-3.5 px-4 -mx-4 md:-mx-8 border-b shadow-sm">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleBack} 
+          className="gap-2 font-medium"
+        >
+          <ArrowLeft className="size-4" /> Kembali
+        </Button>
 
-        <div className="flex items-center gap-2">
-          <Button 
-            onClick={handleEdit}
-            className="bg-palembang-red text-white hover:bg-palembang-red/90 gap-2 text-xs h-8"
-          >
-            <Edit2 className="size-3.5" /> Edit Event Ini
-          </Button>
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-xs">
+          <Eye className="size-3.5" /> Pratinjau Event (Tampilan Publik)
+        </span>
       </div>
 
       {/* ── Main Event Layout (Public Website Style) ── */}
@@ -151,7 +132,7 @@ export function EventPreview() {
 
           <div className="relative z-10 mx-auto max-w-[1240px]">
             <div className="mb-4">
-              <span className="inline-block rounded-full border border-palembang-gold/40 bg-palembang-gold/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-gold">
+              <span className="inline-block rounded-full border border-palembang-red/40 bg-palembang-red/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-red">
                 {item.category}
               </span>
             </div>
@@ -247,39 +228,50 @@ export function EventPreview() {
                       </div>
                     </div>
 
-                    <div className="mt-8 grid gap-3">
+                    <div className="mt-8 space-y-3">
                       <a 
                         href={`https://wa.me/628551241878?text=${encodeURIComponent(waMessage)}`} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white transition-colors hover:bg-palembang-red/90"
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white transition-colors hover:bg-palembang-red/90 shadow-sm"
                       >
                         <Ticket className="size-4" /> Daftar Sekarang
                       </a>
-                      
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={handleShare} 
-                        className="h-11 w-full font-semibold"
-                      >
-                        {copied ? (
-                          <>
-                            <Check className="size-4 text-emerald-600" />
-                            <span className="text-emerald-600">Tautan Disalin!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Share2 className="size-4" />
-                            <span>Bagikan Acara</span>
-                          </>
-                        )}
-                      </Button>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <a 
+                          href={`https://wa.me/628551241878?text=${encodeURIComponent(waContactMessage)}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-emerald-600/30 bg-emerald-600/10 text-xs sm:text-sm font-bold text-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white transition-all duration-200"
+                        >
+                          <MessageCircle className="size-4 shrink-0" /> Hubungi Kami
+                        </a>
+                        
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={handleShare} 
+                          className="h-11 w-full text-xs sm:text-sm font-semibold gap-2"
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="size-4 text-emerald-600 shrink-0" />
+                              <span className="text-emerald-600 truncate">Disalin!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Share2 className="size-4 shrink-0" />
+                              <span>Bagikan</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
                   <div className="rounded-[1.5rem] border border-border bg-muted/40 p-6">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-palembang-charcoal px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-palembang-gold">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-palembang-charcoal px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-palembang-red">
                       <Sparkles className="size-3" /> {item.category}
                     </div>
                     <h4 className="mt-3 font-display text-base font-bold text-foreground">

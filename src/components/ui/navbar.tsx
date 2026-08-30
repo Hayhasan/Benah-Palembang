@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Equal, X, ChevronDown, ArrowUpRight, LogOut, LayoutDashboard } from 'lucide-react'
+import { Equal, X, ChevronDown, LogOut, LayoutDashboard, Sun, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/liquid-glass-button'
 import React, { useState, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useTheme } from '@/context/ThemeContext'
 
 const categories = [
     { name: 'Cerita Warga', href: '/cerita-warga' },
@@ -15,12 +16,17 @@ const categories = [
 
 export const Header = () => {
     const { user, logout } = useAuth()
+    const { theme, toggleTheme } = useTheme()
     const [profileOpen, setProfileOpen] = useState(false)
     const [menuState, setMenuState] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     const [articleOpen, setArticleOpen] = useState(false)
     const location = useLocation()
     const isHome = location.pathname === "/"
+    const isHomeActive = location.pathname === "/"
+    const isArticleActive = categories.some(cat => location.pathname === cat.href) || location.pathname.startsWith("/article/")
+    const isAgendaActive = location.pathname.startsWith("/agenda")
+    const isCollabActive = location.pathname === "/kolaborasi"
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const handleDropdownEnter = useCallback(() => { 
@@ -48,40 +54,82 @@ export const Header = () => {
         setArticleOpen(false)
     }, [location.pathname])
 
+    const hasDarkHero = isHome || isArticleActive || isAgendaActive || isCollabActive || location.pathname.startsWith('/penulis/') || location.pathname.startsWith('/kategori/')
+    const isOverDarkHero = !isScrolled && hasDarkHero && !menuState
+    const isLogoWhite = theme === 'dark' || isOverDarkHero
+
     return (
         <header>
             <nav
                 data-state={menuState ? 'active' : 'inactive'}
                 className="fixed left-0 top-0 w-full z-50 px-2">
-                <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-background/80 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5 shadow-sm', !isScrolled && isHome && 'bg-transparent text-white', !isScrolled && !isHome && 'bg-transparent text-foreground')}>
+                <div className={cn(
+                    'mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', 
+                    isScrolled && 'bg-background/85 max-w-4xl rounded-2xl border border-border/80 backdrop-blur-xl lg:px-5 shadow-sm text-foreground', 
+                    !isScrolled && isOverDarkHero && 'bg-transparent text-white', 
+                    !isScrolled && !isOverDarkHero && 'bg-transparent text-foreground'
+                )}>
                     <div className="relative flex flex-wrap items-center justify-between gap-6 lg:gap-0 py-2">
-                        <div className="flex w-full justify-between lg:w-auto">
+                        <div className="flex w-full items-center justify-between lg:w-auto">
                             <Link
                                 to="/"
                                 aria-label="home"
                                 className="flex gap-2 items-center">
-                                <img src="/logo.png" alt="Benah Palembang" className={cn("transition-all duration-300", isScrolled ? "h-6" : "h-7", !isScrolled && isHome ? "brightness-0 invert" : "")} />
+                                <img src={isLogoWhite ? "/logo.png" : "/logohitam.png"} alt="Benah Palembang" className={cn("transition-all duration-300 object-contain", isScrolled ? "h-6" : "h-7")} />
                             </Link>
 
-                            <button
-                                onClick={() => setMenuState(!menuState)}
-                                aria-label={menuState ? 'Close Menu' : 'Open Menu'}
-                                className={cn("relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden", !isScrolled && isHome && !menuState ? "text-white" : "text-foreground")}>
-                                {menuState ? <X className="size-6" /> : <Equal className="size-6" />}
-                            </button>
+                            <div className="flex items-center gap-2 lg:hidden">
+                                <button
+                                    onClick={toggleTheme}
+                                    aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                                    title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+                                    className={cn(
+                                        "flex size-8 items-center justify-center rounded-full border transition-all duration-200",
+                                        isOverDarkHero
+                                            ? "border-white/20 bg-white/10 text-white"
+                                            : "border-border bg-background text-foreground"
+                                    )}
+                                >
+                                    {theme === 'dark' ? (
+                                        <Sun className="size-4 text-amber-400" />
+                                    ) : (
+                                        <Moon className="size-4 text-palembang-sage" />
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => setMenuState(!menuState)}
+                                    aria-label={menuState ? 'Close Menu' : 'Open Menu'}
+                                    className={cn("relative z-20 block cursor-pointer p-1.5", isOverDarkHero ? "text-white" : "text-foreground")}>
+                                    {menuState ? <X className="size-6" /> : <Equal className="size-6" />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="absolute inset-0 m-auto hidden size-fit lg:block">
                             <ul className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.16em]">
                                 <li>
-                                    <Link to="/" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link
+                                        to="/"
+                                        className={cn(
+                                            "duration-150 transition-colors py-1",
+                                            isHomeActive
+                                                ? "text-palembang-red font-bold"
+                                                : (isOverDarkHero ? "text-white/80 hover:text-palembang-red" : "text-muted-foreground hover:text-palembang-red")
+                                        )}
+                                    >
                                         Home
                                     </Link>
                                 </li>
                                 <li className="relative" onMouseEnter={handleDropdownEnter} onMouseLeave={handleDropdownLeave}>
                                     <button 
                                         onClick={() => setArticleOpen((value) => !value)} 
-                                        className={cn("flex items-center gap-1 duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}
+                                        className={cn(
+                                            "flex items-center gap-1 duration-150 transition-colors py-1",
+                                            isArticleActive
+                                                ? "text-palembang-red font-bold"
+                                                : (isOverDarkHero ? "text-white/80 hover:text-palembang-red" : "text-muted-foreground hover:text-palembang-red")
+                                        )}
                                     >
                                         Article <ChevronDown className={cn("size-3 transition-transform duration-300", articleOpen && "rotate-180")} />
                                     </button>
@@ -89,71 +137,116 @@ export const Header = () => {
                                     {/* Dropdown Menu */}
                                     <div className={cn("absolute left-1/2 top-full mt-4 w-56 -translate-x-1/2 rounded-2xl border border-border bg-background p-2 text-foreground shadow-xl transition-all duration-200", articleOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 translate-y-2 invisible")}>
                                         <div className="absolute inset-x-0 -top-4 h-4" /> {/* Invisible hover bridge */}
-                                        {categories.map((category, index) => (
-                                            <Link 
-                                                key={index} 
-                                                to={category.href} 
-                                                className="flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium normal-case tracking-normal transition-colors hover:bg-muted"
-                                            >
-                                                <span>{category.name}</span>
-                                                <ArrowUpRight className="size-3 text-palembang-red" />
-                                            </Link>
-                                        ))}
+                                        {categories.map((category, index) => {
+                                            const isCatActive = location.pathname === category.href
+                                            return (
+                                                <Link 
+                                                    key={index} 
+                                                    to={category.href} 
+                                                    className={cn(
+                                                        "flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium normal-case tracking-normal transition-colors",
+                                                        isCatActive ? "bg-palembang-red/10 text-palembang-red font-semibold" : "text-foreground hover:bg-muted"
+                                                    )}
+                                                    onClick={() => setArticleOpen(false)}
+                                                >
+                                                    <span>{category.name}</span>
+                                                    {isCatActive && <span className="size-1.5 rounded-full bg-palembang-red" />}
+                                                </Link>
+                                            )
+                                        })}
                                     </div>
                                 </li>
                                 <li>
-                                    <Link to="/agenda" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link
+                                        to="/agenda"
+                                        className={cn(
+                                            "duration-150 transition-colors py-1",
+                                            isAgendaActive
+                                                ? "text-palembang-red font-bold"
+                                                : (!isScrolled && isHome ? "text-white/80 hover:text-palembang-red" : "text-muted-foreground hover:text-palembang-red")
+                                        )}
+                                    >
                                         Agenda
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link to="/kolaborasi" className={cn("duration-150 transition-opacity hover:opacity-100", !isScrolled && isHome ? "text-white/80" : "text-muted-foreground")}>
+                                    <Link
+                                        to="/kolaborasi"
+                                        className={cn(
+                                            "duration-150 transition-colors py-1",
+                                            isCollabActive
+                                                ? "text-palembang-red font-bold"
+                                                : (!isScrolled && isHome ? "text-white/80 hover:text-palembang-red" : "text-muted-foreground hover:text-palembang-red")
+                                        )}
+                                    >
                                         Collaboration
                                     </Link>
                                 </li>
                             </ul>
                         </div>
 
-                        <div className={cn("bg-background lg:flex mb-6 w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent", menuState ? "block" : "hidden lg:flex")}>
-                            <div className="lg:hidden w-full overflow-y-auto max-h-[60vh] pr-2">
+                        <div className={cn("lg:flex mb-6 w-full flex-wrap items-center justify-end space-y-8 rounded-3xl p-6 md:flex-nowrap lg:m-0 lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:lg:bg-transparent", menuState ? "block bg-background/80 backdrop-blur-2xl border border-white/15 shadow-2xl" : "hidden lg:flex")}>
+                            <div className="lg:hidden w-full overflow-y-auto max-h-[60vh] pr-2 no-scrollbar">
                                 <ul className="space-y-4 text-base font-medium">
                                     <li>
-                                        <Link to="/" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b">
+                                        <Link to="/" className={cn("block duration-150 py-2 border-b border-border/40 transition-colors", isHomeActive ? "text-palembang-red font-bold" : "text-foreground hover:text-palembang-red")}>
                                             Home
                                         </Link>
                                     </li>
                                     <li>
-                                        <div className="text-foreground block py-2 font-bold uppercase tracking-wider text-[11px] text-muted-foreground mt-2">
+                                        <div className={cn("block py-2 font-bold uppercase tracking-wider text-[11px] mt-2", isArticleActive ? "text-palembang-red" : "text-muted-foreground")}>
                                             Article
                                         </div>
                                         <ul className="pl-4 space-y-3 mt-3">
-                                            {categories.map((category, index) => (
-                                                <li key={index}>
-                                                    <Link to={category.href} className="text-foreground hover:text-palembang-red block duration-150 text-sm">
-                                                        {category.name}
-                                                    </Link>
-                                                </li>
-                                            ))}
+                                            {categories.map((category, index) => {
+                                                const isCatActive = location.pathname === category.href
+                                                return (
+                                                    <li key={index}>
+                                                        <Link to={category.href} className={cn("block duration-150 text-sm transition-colors", isCatActive ? "text-palembang-red font-bold" : "text-foreground hover:text-palembang-red")}>
+                                                            {category.name}
+                                                        </Link>
+                                                    </li>
+                                                )
+                                            })}
                                         </ul>
                                     </li>
                                     <li>
-                                        <Link to="/agenda" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b mt-2">
+                                        <Link to="/agenda" className={cn("block duration-150 py-2 border-b border-border/40 mt-2 transition-colors", isAgendaActive ? "text-palembang-red font-bold" : "text-foreground hover:text-palembang-red")}>
                                             Agenda
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link to="/kolaborasi" className="text-foreground hover:text-palembang-red block duration-150 py-2 border-b">
+                                        <Link to="/kolaborasi" className={cn("block duration-150 py-2 border-b border-border/40 transition-colors", isCollabActive ? "text-palembang-red font-bold" : "text-foreground hover:text-palembang-red")}>
                                             Collaboration
                                         </Link>
                                     </li>
                                 </ul>
                             </div>
-                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit text-foreground mt-4 lg:mt-0">
+                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit text-foreground mt-4 lg:mt-0 items-center">
+                                {/* Desktop Theme Toggle Button */}
+                                <button
+                                    onClick={toggleTheme}
+                                    aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                                    title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+                                    className={cn(
+                                        "hidden lg:flex size-9 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95",
+                                        isOverDarkHero
+                                            ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                                            : "border-border bg-background text-foreground hover:bg-muted"
+                                    )}
+                                >
+                                    {theme === 'dark' ? (
+                                        <Sun className="size-4 text-amber-400 transition-transform duration-300 hover:rotate-45" />
+                                    ) : (
+                                        <Moon className="size-4 text-palembang-sage transition-transform duration-300 hover:-rotate-12" />
+                                    )}
+                                </button>
+
                                 {user ? (
                                     <div className="relative">
                                         <button 
                                             onClick={() => setProfileOpen(!profileOpen)}
-                                            className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", !isScrolled && isHome ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
+                                            className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", isOverDarkHero ? "border-white/20 text-white hover:bg-white/10" : "border-border text-foreground")}
                                         >
                                             <img src={user.avatar} alt={user.name} className="size-7 rounded-full object-cover" />
                                             <span className="text-sm font-semibold">{user.name}</span>
@@ -181,31 +274,50 @@ export const Header = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            size="sm"
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link to="/login">
-                                                <span>Login</span>
+                                        {/* Mobile view buttons: Login (Red) & Sign Up (Transparent), No Get Started */}
+                                        <div className="flex w-full flex-col gap-2.5 lg:hidden">
+                                            <Link
+                                                to="/login"
+                                                className="flex h-11 w-full items-center justify-center rounded-xl bg-palembang-red text-sm font-bold text-white shadow-md transition-colors hover:bg-palembang-red/90"
+                                            >
+                                                Login
                                             </Link>
-                                        </Button>
-                                        <Button
-                                            asChild
-                                            size="sm"
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link to="/register">
-                                                <span>Sign Up</span>
+                                            <Link
+                                                to="/register"
+                                                className="flex h-11 w-full items-center justify-center rounded-xl border border-border/70 bg-background/50 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                                            >
+                                                Sign Up
                                             </Link>
-                                        </Button>
-                                        <Button
-                                            asChild
-                                            size="sm"
-                                            className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                            <Link to="/login">
-                                                <span>Get Started</span>
-                                            </Link>
-                                        </Button>
+                                        </div>
+
+                                        {/* Desktop view buttons */}
+                                        <div className="hidden lg:flex items-center gap-2">
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                size="sm"
+                                                className={cn(isScrolled && 'lg:hidden')}>
+                                                <Link to="/login">
+                                                    <span>Login</span>
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                className={cn(isScrolled && 'lg:hidden')}>
+                                                <Link to="/register">
+                                                    <span>Sign Up</span>
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
+                                                <Link to="/login">
+                                                    <span>Get Started</span>
+                                                </Link>
+                                            </Button>
+                                        </div>
                                     </>
                                 )}
                             </div>

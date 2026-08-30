@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams, useLocation } from "react-rout
 import { articles, authors, type Article } from "@/data/mockData"
 import { Button } from "@/components/ui/button"
 import { 
-  ArrowLeft, Edit2, Heart, Share2, Copy, Check, 
+  ArrowLeft, Heart, Share2, Copy, Check, 
   Clock3, Eye
 } from "lucide-react"
 import { toast } from "sonner"
@@ -134,42 +134,22 @@ export function ArticlePreview() {
     }
   }
 
-  const handleEdit = () => {
-    if (returnUrl) {
-      navigate(returnUrl)
-    } else if (articleId && articleId !== "new") {
-      navigate(`/dashboard/create-article/new?id=${articleId}&mode=edit`)
-    } else {
-      navigate('/dashboard/create-article/new')
-    }
-  }
-
   return (
     <div className="space-y-6 pb-16 animate-in fade-in duration-300">
       {/* ── Top Action & Control Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-20 py-3.5 px-4 -mx-4 md:-mx-8 border-b shadow-sm">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleBack} 
-            className="gap-2 font-medium"
-          >
-            <ArrowLeft className="size-4" /> Kembali
-          </Button>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <Eye className="size-3.5" /> Pratinjau Tampilan Publik
-          </span>
-        </div>
+      <div className="flex flex-row items-center justify-between gap-4 sticky top-0 bg-background/90 backdrop-blur-md z-20 py-3.5 px-4 -mx-4 md:-mx-8 border-b shadow-sm">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleBack} 
+          className="gap-2 font-medium"
+        >
+          <ArrowLeft className="size-4" /> Kembali
+        </Button>
 
-        <div className="flex items-center gap-2">
-          <Button 
-            onClick={handleEdit}
-            className="bg-palembang-red text-white hover:bg-palembang-red/90 gap-2 text-xs h-8"
-          >
-            <Edit2 className="size-3.5" /> Edit Artikel Ini
-          </Button>
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+          <Eye className="size-3.5" /> Pratinjau Tampilan Publik
+        </span>
       </div>
 
       {/* ── Main Article Layout (Public Website Style) ── */}
@@ -187,7 +167,7 @@ export function ArticlePreview() {
           </div>
 
           <div className="relative z-10 mx-auto max-w-[1040px]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
+            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
               {article.category}
             </span>
             <h1 className="mt-4 max-w-4xl font-display text-3xl font-black leading-[1.05] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
@@ -212,7 +192,7 @@ export function ArticlePreview() {
 
               <div className="flex items-center gap-5 text-xs text-white/70">
                 <span className="flex items-center gap-1.5">
-                  <Clock3 className="size-4 text-palembang-gold" />
+                  <Clock3 className="size-4 text-palembang-red" />
                   {article.readingTime || 5} min read
                 </span>
                 <span className="flex items-center gap-1.5">

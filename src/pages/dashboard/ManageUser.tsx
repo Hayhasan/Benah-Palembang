@@ -209,7 +209,7 @@ export function ManageUser() {
                         />
                     </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                             <tr>

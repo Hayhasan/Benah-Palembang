@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { InternationalPhoneInput } from "@/components/dashboard/InternationalPhoneInput"
-import { Save, X, Mail, Camera, Edit2, Heart, Eye as EyeIcon, ArrowLeft, MessageCircle } from "lucide-react"
+import { Save, X, Mail, Camera, Edit2, Heart, Eye as EyeIcon, ArrowLeft, MessageCircle, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 
@@ -11,15 +11,29 @@ const DEFAULT_BANNER = "https://images.pexels.com/photos/1183992/pexels-photo-11
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=0"
 
 const dummyGallery = [
-    { id: 1, title: "Palembang di Balik Senja", image: "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop", views: 1204, likes: 340 },
-    { id: 2, title: "Lorong Basah dan Kulinernya", image: "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop", views: 3400, likes: 890 },
-    { id: 3, title: "Pusat Kebudayaan Sriwijaya", image: "https://images.pexels.com/photos/3321521/pexels-photo-3321521.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop", views: 980, likes: 210 },
+    { id: 1, title: "Palembang di Balik Senja: Catatan dari Tepian Sungai Musi", image: "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 1204, likes: 340, aspect: "aspect-[3/4]" },
+    { id: 2, title: "Lorong Basah dan Kulinernya: Cerita Dapur Tua Pasar 16 Ilir", image: "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 3400, likes: 890, aspect: "aspect-[4/5]" },
+    { id: 3, title: "Pusat Kebudayaan Sriwijaya: Menggali Artefak Kejayaan Maritim", image: "https://images.pexels.com/photos/3321521/pexels-photo-3321521.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 980, likes: 210, aspect: "aspect-[1/1]" },
+    { id: 4, title: "Songket Pusaka: Tenun Benang Emas Warisan Para Ratu", image: "https://images.pexels.com/photos/37628562/pexels-photo-37628562.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 2150, likes: 540, aspect: "aspect-[3/5]" },
+    { id: 5, title: "Kopi Semendo dan Aroma Pagi di Kedai Kuno", image: "https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 1890, likes: 430, aspect: "aspect-[4/3]" },
+    { id: 6, title: "Mural Lorong Seni: Menghidupkan Sudut Kota Palembang", image: "https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 2780, likes: 670, aspect: "aspect-[5/4]" },
+    { id: 7, title: "Revitalisasi Tepian Sekanak Lambidaro Jadi Ruang Temu", image: "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 2100, likes: 450, aspect: "aspect-[3/4]" },
+    { id: 8, title: "Misteri Terowongan Bawah Tanah Benteng Kuto Besak", image: "https://images.pexels.com/photos/2088210/pexels-photo-2088210.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 4800, likes: 1100, aspect: "aspect-[4/5]" },
+    { id: 9, title: "Eksistensi Pempek Kulit dan Rahasia Kuah Cuko Kental", image: "https://images.pexels.com/photos/2097090/pexels-photo-2097090.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 5100, likes: 1400, aspect: "aspect-[1/1]" },
+    { id: 10, title: "Arsitektur Rumah Limas: Filosofi Tingkat Kehidupan", image: "https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 1500, likes: 310, aspect: "aspect-[3/5]" },
+    { id: 11, title: "Menjaga Habitat Ikan Belida di Aliran Batanghari Sembilan", image: "https://images.pexels.com/photos/1684187/pexels-photo-1684187.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 1800, likes: 410, aspect: "aspect-[4/3]" },
+    { id: 12, title: "Kelezatan Manis Legit Kue Maksuba di Hari Raya", image: "https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 2300, likes: 520, aspect: "aspect-[5/4]" },
+    { id: 13, title: "Harmoni Tionghoa-Islam di Masjid Cheng Ho Jakabaring", image: "https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 3600, likes: 810, aspect: "aspect-[3/4]" },
+    { id: 14, title: "Meniti Kenangan di Gelagar Megah Jembatan Ampera", image: "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 6200, likes: 1800, aspect: "aspect-[4/5]" },
+    { id: 15, title: "Geliat Perahu Ketek Menembus Gelombang Senja Musi", image: "https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 4200, likes: 950, aspect: "aspect-[1/1]" },
+    { id: 16, title: "Aroma Khas Sambal Tempoyak Durian Dapur Tradisional", image: "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=600&fit=crop", views: 4000, likes: 920, aspect: "aspect-[3/5]" },
 ]
 
 export function UserProfile() {
     const { id } = useParams()
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
+    const [showAllGallery, setShowAllGallery] = useState(false)
     const { setIsDirty, registerSaveHandler, requestNavigation } = useUnsavedChanges()
 
     const isViewMode = searchParams.get("mode") === "view"
@@ -167,36 +181,49 @@ export function UserProfile() {
                     </div>
                 </div>
 
-                {/* Gallery Section */}
+                {/* Gallery Section — 2 Columns Pinterest Masonry */}
                 <div>
                     <div className="flex items-center justify-between border-b pb-2 mb-6">
-                        <h3 className="text-xl font-bold font-display">Galeri Artikel</h3>
+                        <h3 className="text-xl font-bold font-display">Galeri Publikasi</h3>
                         <span className="text-xs text-muted-foreground">Klik artikel untuk melihat pratinjau publik</span>
                     </div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {dummyGallery.map(article => (
-                            <div 
-                                key={article.id} 
-                                onClick={() => navigate(`/dashboard/article/preview/${article.id}`)}
-                                className="group rounded-xl border bg-background overflow-hidden shadow-sm hover:shadow-md hover:border-palembang-red/40 transition-all cursor-pointer"
-                            >
-                                <div className="aspect-[4/3] overflow-hidden relative">
-                                    <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <span className="bg-white/90 text-palembang-charcoal font-semibold text-xs px-3 py-1.5 rounded-full shadow-md">
-                                            Lihat Pratinjau
-                                        </span>
+                    <div className="relative">
+                        <div className="columns-2 lg:columns-4 gap-4 sm:gap-6">
+                            {(showAllGallery ? dummyGallery : dummyGallery.slice(0, 12)).map(article => (
+                                <div 
+                                    key={article.id} 
+                                    onClick={() => navigate(`/dashboard/article/preview/${article.id}`)}
+                                    className="break-inside-avoid mb-4 sm:mb-6 group rounded-2xl border bg-background overflow-hidden shadow-sm hover:shadow-md hover:border-palembang-red/40 transition-all cursor-pointer"
+                                >
+                                    <div className={`${article.aspect} overflow-hidden relative`}>
+                                        <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                            <span className="bg-white/95 text-palembang-charcoal font-bold text-xs px-3.5 py-1.5 rounded-full shadow-lg">
+                                                Lihat Pratinjau
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="p-3.5 sm:p-4">
+                                        <h4 className="font-bold font-display text-sm sm:text-base leading-snug mb-2 sm:mb-3 group-hover:text-palembang-red transition-colors line-clamp-2">{article.title}</h4>
+                                        <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
+                                            <span className="flex items-center gap-1.5"><EyeIcon className="size-3.5" /> {article.views.toLocaleString()}</span>
+                                            <span className="flex items-center gap-1.5"><Heart className="size-3.5 text-palembang-red" /> {article.likes.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-4">
-                                    <h4 className="font-bold font-display text-lg leading-tight mb-3 group-hover:text-palembang-red transition-colors">{article.title}</h4>
-                                    <div className="flex items-center gap-4 text-xs text-muted-foreground font-medium">
-                                        <span className="flex items-center gap-1.5"><EyeIcon className="size-3.5" /> {article.views.toLocaleString()}</span>
-                                        <span className="flex items-center gap-1.5"><Heart className="size-3.5 text-palembang-red" /> {article.likes.toLocaleString()}</span>
-                                    </div>
-                                </div>
+                            ))}
+                        </div>
+                        
+                        {dummyGallery.length > 12 && !showAllGallery && (
+                            <div className="absolute inset-x-0 -bottom-4 flex h-48 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
+                                <button
+                                    onClick={() => setShowAllGallery(true)}
+                                    className="group flex items-center gap-2 rounded-full border border-border bg-background px-7 py-3 text-xs font-bold uppercase tracking-[0.14em] text-foreground shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-palembang-red hover:text-palembang-red"
+                                >
+                                    See More <ChevronDown className="size-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+                                </button>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>

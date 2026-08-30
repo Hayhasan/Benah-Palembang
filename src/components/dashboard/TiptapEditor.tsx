@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,11 @@ import {
 } from "@/components/ui/dialog"
 import { ResizableMedia, Indent } from './TiptapExtensions'
 
-const MenuBar = ({ editor }: { editor: any }) => {
+interface ToolbarProps {
+  editor: any
+}
+
+const MenuBar = ({ editor }: ToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [linkModalOpen, setLinkModalOpen] = useState(false)
@@ -35,22 +40,30 @@ const MenuBar = ({ editor }: { editor: any }) => {
 
   if (!editor) return null
 
-  const addImage = () => fileInputRef.current?.click()
+  const addImage = () => {
+    fileInputRef.current?.click()
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const url = URL.createObjectURL(file)
       editor.chain().focus().insertContent({ type: 'resizableMedia', attrs: { src: url, mediaType: 'image' } }).run()
+      toast.success("Gambar berhasil disisipkan!")
     }
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-  const addVideo = () => videoInputRef.current?.click()
+  const addVideo = () => {
+    videoInputRef.current?.click()
+  }
+
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const url = URL.createObjectURL(file)
       editor.chain().focus().insertContent({ type: 'resizableMedia', attrs: { src: url, mediaType: 'video' } }).run()
+      toast.success("Video berhasil disisipkan!")
     }
     if (videoInputRef.current) videoInputRef.current.value = ""
   }
@@ -64,8 +77,10 @@ const MenuBar = ({ editor }: { editor: any }) => {
   const saveLink = () => {
     if (linkUrl === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      toast.success("Tautan berhasil dihapus!")
     } else {
       editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run()
+      toast.success("Tautan berhasil disimpan!")
     }
     setLinkModalOpen(false)
   }

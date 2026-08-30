@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, FileText, CalendarPlus, Activity, Eye, MousePointerClick, TrendingUp } from "lucide-react"
+import { Users, FileText, CalendarPlus, Eye, TrendingUp, BookOpen, Inbox } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import { useAuth } from "@/context/AuthContext"
 
 const monthsList = [
     "Januari 2026",
@@ -25,128 +25,132 @@ interface PeriodData {
     articles: { total: string; growth: string }
     events: { total: string; growth: string }
     views: { total: string; growth: string }
-    clicks: { total: string; growth: string }
-    logs: { total: string; growth: string }
+    requests: { total: string; growth: string }
+    userPubs?: { total: string; growth: string }
+    userViews?: { total: string; growth: string }
     chartData: { name: string; views: number; interactions: number }[]
+}
+
+const defaultMonthlyData: PeriodData = {
+    periodLabel: "Bulan Ini",
+    users: { total: "128", growth: "+12% dari bulan lalu" },
+    articles: { total: "45", growth: "+8 artikel baru" },
+    events: { total: "12", growth: "+3 agenda baru" },
+    views: { total: "24.5K", growth: "+18.2% pembaca" },
+    requests: { total: "8", growth: "3 menunggu review" },
+    userPubs: { total: "14", growth: "+2 publikasi baru" },
+    userViews: { total: "8.9K", growth: "+15.4% pembaca" },
+    chartData: [
+        { name: "Mgg 1", views: 4200, interactions: 520 },
+        { name: "Mgg 2", views: 5800, interactions: 780 },
+        { name: "Mgg 3", views: 6400, interactions: 890 },
+        { name: "Mgg 4", views: 8100, interactions: 1010 },
+    ]
 }
 
 const mockOverviewData: Record<string, PeriodData> = {
     daily: {
-        periodLabel: "Harian (24 Jam Terakhir)",
-        users: { total: "148", growth: "+14 hari ini" },
-        articles: { total: "3", growth: "+3 artikel hari ini" },
-        events: { total: "1", growth: "+1 event hari ini" },
-        views: { total: "2.8K", growth: "+8.5% dibanding kemarin" },
-        clicks: { total: "142", growth: "Hari ini" },
-        logs: { total: "12", growth: "Log tercatat hari ini" },
+        periodLabel: "Hari Ini (28 Agt 2026)",
+        users: { total: "14", growth: "+3 user baru" },
+        articles: { total: "2", growth: "2 draft diposting" },
+        events: { total: "1", growth: "1 agenda terverifikasi" },
+        views: { total: "1,420", growth: "+12.4% vs kemarin" },
+        requests: { total: "2", growth: "1 menunggu review" },
+        userPubs: { total: "14", growth: "Aktif berkarya" },
+        userViews: { total: "450", growth: "+8.5% hari ini" },
         chartData: [
-            { name: "00:00", views: 120, interactions: 15 },
-            { name: "04:00", views: 80, interactions: 8 },
-            { name: "08:00", views: 450, interactions: 42 },
-            { name: "12:00", views: 820, interactions: 85 },
-            { name: "16:00", views: 710, interactions: 64 },
-            { name: "20:00", views: 620, interactions: 52 },
-        ],
+            { name: "06:00", views: 120, interactions: 15 },
+            { name: "09:00", views: 340, interactions: 45 },
+            { name: "12:00", views: 510, interactions: 68 },
+            { name: "15:00", views: 620, interactions: 82 },
+            { name: "18:00", views: 780, interactions: 95 },
+            { name: "21:00", views: 430, interactions: 55 },
+        ]
     },
     weekly: {
-        periodLabel: "Mingguan (7 Hari Terakhir)",
-        users: { total: "492", growth: "+38 minggu ini" },
-        articles: { total: "18", growth: "+14 artikel minggu ini" },
-        events: { total: "6", growth: "+4 event minggu ini" },
-        views: { total: "18.5K", growth: "+15.2% dibanding pekan lalu" },
-        clicks: { total: "980", growth: "Pekan ini" },
-        logs: { total: "64", growth: "Log tercatat pekan ini" },
+        periodLabel: "7 Hari Terakhir",
+        users: { total: "42", growth: "+18% vs minggu lalu" },
+        articles: { total: "11", growth: "+4 artikel baru" },
+        events: { total: "4", growth: "+2 agenda baru" },
+        views: { total: "7,850", growth: "+14.8% vs minggu lalu" },
+        requests: { total: "5", growth: "2 menunggu review" },
+        userPubs: { total: "14", growth: "+1 minggu ini" },
+        userViews: { total: "2.8K", growth: "+12% minggu ini" },
         chartData: [
-            { name: "Senin", views: 2100, interactions: 190 },
-            { name: "Selasa", views: 2400, interactions: 210 },
-            { name: "Rabu", views: 2800, interactions: 260 },
-            { name: "Kamis", views: 2600, interactions: 230 },
-            { name: "Jumat", views: 3100, interactions: 290 },
-            { name: "Sabtu", views: 3500, interactions: 340 },
-            { name: "Minggu", views: 2000, interactions: 180 },
-        ],
+            { name: "Sen", views: 890, interactions: 110 },
+            { name: "Sel", views: 1050, interactions: 135 },
+            { name: "Rab", views: 1200, interactions: 155 },
+            { name: "Kam", views: 980, interactions: 120 },
+            { name: "Jum", views: 1450, interactions: 190 },
+            { name: "Sab", views: 1780, interactions: 230 },
+            { name: "Min", views: 1500, interactions: 195 },
+        ]
     },
     "Juni 2026": {
-        periodLabel: "Bulan Juni 2026",
-        users: { total: "1,120", growth: "+10% pada Juni 2026" },
-        articles: { total: "42", growth: "+8 artikel baru" },
-        events: { total: "12", growth: "+3 event baru" },
-        views: { total: "39.4K", growth: "+11% pada Juni 2026" },
-        clicks: { total: "1.8K", growth: "Total Juni 2026" },
-        logs: { total: "210", growth: "Log tercatat" },
+        periodLabel: "Juni 2026",
+        users: { total: "128", growth: "+12% dari Mei 2026" },
+        articles: { total: "45", growth: "+8 artikel baru" },
+        events: { total: "12", growth: "+3 agenda baru" },
+        views: { total: "24.5K", growth: "+18.2% dari Mei 2026" },
+        requests: { total: "8", growth: "3 menunggu review" },
+        userPubs: { total: "14", growth: "+2 bulan ini" },
+        userViews: { total: "8.9K", growth: "+15.4% bulan ini" },
         chartData: [
-            { name: "Minggu 1", views: 8900, interactions: 410 },
-            { name: "Minggu 2", views: 9800, interactions: 460 },
-            { name: "Minggu 3", views: 10400, interactions: 490 },
-            { name: "Minggu 4", views: 10300, interactions: 440 },
-        ],
+            { name: "Mgg 1", views: 4800, interactions: 580 },
+            { name: "Mgg 2", views: 5600, interactions: 710 },
+            { name: "Mgg 3", views: 6700, interactions: 890 },
+            { name: "Mgg 4", views: 7400, interactions: 1020 },
+        ]
     },
     "Juli 2026": {
-        periodLabel: "Bulan Juli 2026",
-        users: { total: "1,180", growth: "+11.5% pada Juli 2026" },
-        articles: { total: "49", growth: "+10 artikel baru" },
-        events: { total: "14", growth: "+4 event baru" },
-        views: { total: "42.8K", growth: "+14% pada Juli 2026" },
-        clicks: { total: "1.9K", growth: "Total Juli 2026" },
-        logs: { total: "245", growth: "Log tercatat" },
+        periodLabel: "Juli 2026",
+        users: { total: "145", growth: "+13.2% dari Juni 2026" },
+        articles: { total: "52", growth: "+7 artikel baru" },
+        events: { total: "15", growth: "+3 agenda baru" },
+        views: { total: "28.1K", growth: "+14.7% dari Juni 2026" },
+        requests: { total: "12", growth: "4 menunggu review" },
+        userPubs: { total: "16", growth: "+2 bulan ini" },
+        userViews: { total: "10.2K", growth: "+14.6% bulan ini" },
         chartData: [
-            { name: "Minggu 1", views: 9400, interactions: 430 },
-            { name: "Minggu 2", views: 10600, interactions: 480 },
-            { name: "Minggu 3", views: 11200, interactions: 520 },
-            { name: "Minggu 4", views: 11600, interactions: 530 },
-        ],
+            { name: "Mgg 1", views: 5900, interactions: 720 },
+            { name: "Mgg 2", views: 6800, interactions: 890 },
+            { name: "Mgg 3", views: 7400, interactions: 980 },
+            { name: "Mgg 4", views: 8000, interactions: 1210 },
+        ]
     },
     "Agustus 2026": {
-        periodLabel: "Bulan Agustus 2026",
-        users: { total: "1,234", growth: "+12.4% pada Agustus 2026" },
-        articles: { total: "56", growth: "+12 artikel baru" },
-        events: { total: "15", growth: "+5 event baru" },
-        views: { total: "45.2K", growth: "+18.2% pada Agustus 2026" },
-        clicks: { total: "2.1K", growth: "Total Agustus 2026" },
-        logs: { total: "320", growth: "Log tercatat" },
+        periodLabel: "Agustus 2026",
+        users: { total: "168", growth: "+15.8% dari Juli 2026" },
+        articles: { total: "60", growth: "+8 artikel baru" },
+        events: { total: "18", growth: "+3 agenda baru" },
+        views: { total: "34.2K", growth: "+21.7% dari Juli 2026" },
+        requests: { total: "15", growth: "5 menunggu review" },
+        userPubs: { total: "18", growth: "+2 bulan ini" },
+        userViews: { total: "12.5K", growth: "+22.5% bulan ini" },
         chartData: [
-            { name: "Minggu 1", views: 10200, interactions: 480 },
-            { name: "Minggu 2", views: 11400, interactions: 530 },
-            { name: "Minggu 3", views: 11800, interactions: 560 },
-            { name: "Minggu 4", views: 11800, interactions: 550 },
-        ],
-    },
-}
-
-const defaultMonthlyData: PeriodData = {
-    periodLabel: "Bulanan",
-    users: { total: "1,150", growth: "+9% bulan ini" },
-    articles: { total: "45", growth: "+8 artikel baru" },
-    events: { total: "13", growth: "+3 event baru" },
-    views: { total: "41.0K", growth: "+12% bulan ini" },
-    clicks: { total: "1.9K", growth: "Bulan ini" },
-    logs: { total: "230", growth: "Log tercatat" },
-    chartData: [
-        { name: "Minggu 1", views: 9500, interactions: 430 },
-        { name: "Minggu 2", views: 10200, interactions: 470 },
-        { name: "Minggu 3", views: 10800, interactions: 500 },
-        { name: "Minggu 4", views: 10500, interactions: 480 },
-    ],
+            { name: "Mgg 1", views: 7200, interactions: 910 },
+            { name: "Mgg 2", views: 8400, interactions: 1120 },
+            { name: "Mgg 3", views: 9100, interactions: 1240 },
+            { name: "Mgg 4", views: 9500, interactions: 1230 },
+        ]
+    }
 }
 
 const recentContents = [
-    { id: 1, title: "Jejak Sejarah Kesultanan Palembang", type: "Article", status: "Request" },
-    { id: 2, title: "Festival Kuliner Malam Ampera", type: "Event", status: "Posted" },
-    { id: 3, title: "Opini: Ruang Terbuka Hijau", type: "Article", status: "Takedown" },
-]
-
-const recentLogs = [
-    { id: 1, user: "Budi Hartono", action: "Create", module: "Article", time: "14:00" },
-    { id: 2, user: "Siti Aminah", action: "Edit", module: "Profile", time: "10:15" },
-    { id: 3, user: "Agus Supriyadi", action: "Takedown", module: "Content", time: "Kemarin" },
-    { id: 4, user: "Dina Kirana", action: "Login", module: "Auth", time: "Kemarin" },
+    { id: 1, type: "Article", title: "Menyusuri Jejak Trem di Palembang", author: "Budi Hartono", status: "Posted" },
+    { id: 2, type: "Article", title: "Resep Pindang Patin Warisan Karuhun", author: "Siti Aminah", status: "Posted" },
+    { id: 3, type: "Event", title: "Pameran Fotografi: Warna Palembang", author: "Agus Supriyadi", status: "Request" },
+    { id: 4, type: "Article", title: "Pusat Kebudayaan Sriwijaya: Menjaga Nafas Warisan Luhur", author: "Dina Kirana", status: "Posted" },
+    { id: 5, type: "Event", title: "Festival Kuliner Malam Ampera", author: "Rian Pratama", status: "Takedown" },
 ]
 
 export function Overview() {
+    const { user } = useAuth()
+    const isUserRole = user?.role === "user"
+
     const [filterType, setFilterType] = useState<"daily" | "weekly" | "monthly">("monthly")
     const [selectedMonth, setSelectedMonth] = useState<string>("Juni 2026")
 
-    // Determine current active data
     const activeData: PeriodData = 
         filterType === "daily"
             ? mockOverviewData.daily
@@ -156,18 +160,18 @@ export function Overview() {
 
     return (
         <div className="space-y-8 pb-10">
-            {/* Header + Filter Controls */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight font-display">Overview</h2>
                     <p className="text-muted-foreground text-sm mt-0.5">
-                        Ringkasan aktivitas dan performa website • <span className="font-semibold text-foreground">{activeData.periodLabel}</span>
+                        {isUserRole 
+                            ? `Ringkasan performa publikasi Anda • ${activeData.periodLabel}`
+                            : `Ringkasan performa & konten website • ${activeData.periodLabel}`
+                        }
                     </p>
                 </div>
 
-                {/* Filter Area: Tab Bar (Harian / Mingguan) + Dropdown (Bulanan) */}
                 <div className="flex flex-wrap items-center gap-2.5">
-                    {/* Tab Bar for Harian & Mingguan */}
                     <div className="inline-flex items-center bg-muted/60 p-1 rounded-xl border border-border shadow-xs">
                         <button
                             type="button"
@@ -193,7 +197,6 @@ export function Overview() {
                         </button>
                     </div>
 
-                    {/* Dropdown for Bulanan */}
                     <div className="w-[180px]">
                         <Select
                             value={filterType === "monthly" ? selectedMonth : ""}
@@ -223,76 +226,87 @@ export function Overview() {
                 </div>
             </div>
 
-            {/* 6 Metric Overview Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                <Card className="bg-palembang-charcoal text-white border-none shadow-md transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
-                        <Users className="size-4 opacity-70" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl sm:text-2xl font-bold font-display">{activeData.users.total}</div>
-                        <p className="text-xs opacity-70 mt-1">{activeData.users.growth}</p>
-                    </CardContent>
-                </Card>
+            {isUserRole ? (
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <Card className="shadow-sm border-border bg-card">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Publikasi</CardTitle>
+                            <BookOpen className="size-4 text-palembang-red" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-xl sm:text-3xl font-bold font-display text-foreground">
+                                {activeData.userPubs?.total || "14"}
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                                {activeData.userPubs?.growth || "+2 publikasi baru"}
+                            </p>
+                        </CardContent>
+                    </Card>
 
-                <Card className="shadow-sm border-border">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Total Artikel</CardTitle>
-                        <FileText className="size-4 text-palembang-red" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl sm:text-2xl font-bold font-display text-foreground">{activeData.articles.total}</div>
-                        <p className="text-xs text-muted-foreground mt-1">{activeData.articles.growth}</p>
-                    </CardContent>
-                </Card>
+                    <Card className="bg-palembang-red text-white border-none shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Views</CardTitle>
+                            <Eye className="size-4 opacity-80" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-xl sm:text-3xl font-bold font-display">
+                                {activeData.userViews?.total || "8.9K"}
+                            </div>
+                            <p className="text-[10px] sm:text-xs opacity-80 mt-1">
+                                {activeData.userViews?.growth || "+15.4% pembaca"}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            ) : (
+                /* Admin & Superadmin: 4 Score Cards (2 columns on mobile, 4 on desktop) */
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <Card className="bg-palembang-charcoal text-white border-none shadow-md transition-all">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
+                            <Users className="size-4 opacity-70" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-lg sm:text-2xl font-bold font-display">{activeData.users.total}</div>
+                            <p className="text-[10px] sm:text-xs opacity-70 mt-1">{activeData.users.growth}</p>
+                        </CardContent>
+                    </Card>
 
-                <Card className="shadow-sm border-border">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Total Event</CardTitle>
-                        <CalendarPlus className="size-4 text-palembang-red" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl sm:text-2xl font-bold font-display text-foreground">{activeData.events.total}</div>
-                        <p className="text-xs text-muted-foreground mt-1">{activeData.events.growth}</p>
-                    </CardContent>
-                </Card>
+                    <Card className="shadow-sm border-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Artikel</CardTitle>
+                            <FileText className="size-4 text-palembang-red" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-lg sm:text-2xl font-bold font-display text-foreground">{activeData.articles.total}</div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{activeData.articles.growth}</p>
+                        </CardContent>
+                    </Card>
 
-                <Card className="bg-palembang-red text-white border-none shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Page Views</CardTitle>
-                        <Eye className="size-4 opacity-70" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl sm:text-2xl font-bold font-display">{activeData.views.total}</div>
-                        <p className="text-xs opacity-70 mt-1">{activeData.views.growth}</p>
-                    </CardContent>
-                </Card>
+                    <Card className="shadow-sm border-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Event</CardTitle>
+                            <CalendarPlus className="size-4 text-palembang-red" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-lg sm:text-2xl font-bold font-display text-foreground">{activeData.events.total}</div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{activeData.events.growth}</p>
+                        </CardContent>
+                    </Card>
 
-                <Card className="shadow-sm border-border">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Klik CTA</CardTitle>
-                        <MousePointerClick className="size-4 text-palembang-red" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl sm:text-2xl font-bold font-display text-foreground">{activeData.clicks.total}</div>
-                        <p className="text-xs text-muted-foreground mt-1">{activeData.clicks.growth}</p>
-                    </CardContent>
-                </Card>
+                    <Card className="bg-palembang-red text-white border-none shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Request</CardTitle>
+                            <Inbox className="size-4 opacity-80" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-lg sm:text-2xl font-bold font-display">{activeData.requests.total}</div>
+                            <p className="text-[10px] sm:text-xs opacity-80 mt-1">{activeData.requests.growth}</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
-                <Card className="shadow-sm border-border">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Aktivitas</CardTitle>
-                        <Activity className="size-4 text-palembang-red" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl sm:text-2xl font-bold font-display text-foreground">{activeData.logs.total}</div>
-                        <p className="text-xs text-muted-foreground mt-1">{activeData.logs.growth}</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Interactive Analytics Graph */}
             <Card className="shadow-sm border-border overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b pb-3">
                     <div>
@@ -315,7 +329,6 @@ export function Overview() {
                 </CardHeader>
                 <CardContent className="pt-6 pb-4 px-4 sm:px-6">
                     <div className="space-y-4">
-                        {/* Interactive Bar & Curve Analytics Visualizer */}
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 gap-2 sm:gap-4 items-end h-[190px] pt-6 pb-2 border-b border-border/60">
                             {activeData.chartData.map((item, idx) => {
                                 const maxVal = Math.max(...activeData.chartData.map(d => d.views), 100)
@@ -324,28 +337,23 @@ export function Overview() {
                                 
                                 return (
                                     <div key={idx} className="group relative flex flex-col items-center h-full justify-end">
-                                        {/* Hover Tooltip */}
                                         <div className="absolute -top-12 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-palembang-charcoal text-white text-[11px] py-1.5 px-2.5 rounded-lg shadow-lg pointer-events-none whitespace-nowrap border border-white/10">
                                             <p className="font-bold text-palembang-gold">{item.name}</p>
                                             <p className="text-white/90 font-medium">{item.views.toLocaleString()} Views</p>
                                             <p className="text-white/60 text-[10px]">{item.interactions.toLocaleString()} Interaksi</p>
                                         </div>
 
-                                        {/* Dual Metric Bars */}
                                         <div className="w-full max-w-[32px] flex items-end justify-center gap-1 h-full pb-1">
-                                            {/* Views Bar */}
                                             <div 
                                                 style={{ height: `${heightPercent}%` }}
                                                 className="w-1/2 bg-gradient-to-t from-palembang-red/80 to-palembang-red rounded-t-md group-hover:brightness-110 transition-all duration-500 shadow-xs"
                                             />
-                                            {/* Interactions Bar */}
                                             <div 
                                                 style={{ height: `${interPercent}%` }}
                                                 className="w-1/3 bg-gradient-to-t from-zinc-700 to-zinc-500 dark:from-palembang-gold/60 dark:to-palembang-gold rounded-t-sm group-hover:brightness-125 transition-all duration-500"
                                             />
                                         </div>
 
-                                        {/* Label */}
                                         <span className="text-[11px] font-medium text-muted-foreground mt-2 truncate w-full text-center group-hover:text-foreground group-hover:font-bold transition-colors">
                                             {item.name}
                                         </span>
@@ -355,76 +363,51 @@ export function Overview() {
                         </div>
                     </div>
                 </CardContent>
-
             </Card>
 
-            {/* Bottom Section: Content Approval & Logs */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-1 md:col-span-1 lg:col-span-4 shadow-sm border-border overflow-hidden flex flex-col">
-                    <CardHeader className="bg-muted/30 border-b">
-                        <CardTitle className="text-lg">Manage Content (Menunggu Persetujuan)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 flex-1 overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-muted-foreground uppercase bg-muted/20 border-b">
-                                <tr>
-                                    <th className="px-6 py-3 font-semibold">Tipe</th>
-                                    <th className="px-6 py-3 font-semibold">Judul Konten</th>
-                                    <th className="px-6 py-3 font-semibold text-right">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {recentContents.map((c) => (
-                                    <tr key={c.id} className="hover:bg-muted/30">
-                                        <td className="px-6 py-3 whitespace-nowrap">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-semibold ${c.type === 'Article' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
-                                                {c.type}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-3 font-medium min-w-[200px]">{c.title}</td>
-                                        <td className="px-6 py-3 text-right whitespace-nowrap">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-semibold ${
-                                                c.status === 'Posted' ? 'bg-emerald-50 text-emerald-600' : 
-                                                c.status === 'Request' ? 'bg-amber-50 text-amber-600' : 
-                                                'bg-red-50 text-red-600'
-                                            }`}>
-                                                {c.status}
-                                            </span>
-                                        </td>
+            {!isUserRole && (
+                <div className="w-full">
+                    <Card className="shadow-sm border-border overflow-hidden flex flex-col">
+                        <CardHeader className="bg-muted/30 border-b">
+                            <CardTitle className="text-lg">Manage Content (Menunggu Persetujuan)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0 flex-1 overflow-x-auto no-scrollbar">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-muted-foreground uppercase bg-muted/20 border-b">
+                                    <tr>
+                                        <th className="px-6 py-3 font-semibold">Tipe</th>
+                                        <th className="px-6 py-3 font-semibold">Judul Konten</th>
+                                        <th className="px-6 py-3 font-semibold">Penulis</th>
+                                        <th className="px-6 py-3 font-semibold text-right">Status</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </CardContent>
-                </Card>
-
-                {/* Log Aktivitas Terbaru - Flex Layout */}
-                <Card className="col-span-1 md:col-span-1 lg:col-span-3 shadow-sm border-border overflow-hidden flex flex-col">
-                    <CardHeader className="bg-muted/30 border-b">
-                        <CardTitle className="text-lg">Log Aktivitas Terbaru</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 flex-1">
-                        <div className="flex flex-col gap-4">
-                            {recentLogs.map((log) => (
-                                <div key={log.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-foreground truncate">{log.user}</p>
-                                            <p className="text-xs text-muted-foreground mt-0.5">{log.time}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex-shrink-0">
-                                        <span className="text-[10px] sm:text-xs px-2.5 py-1 bg-secondary text-secondary-foreground rounded-full font-medium inline-block">
-                                            {log.module} - {log.action}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {recentContents.map((c) => (
+                                        <tr key={c.id} className="hover:bg-muted/30">
+                                            <td className="px-6 py-3 whitespace-nowrap">
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-semibold ${c.type === 'Article' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                                                    {c.type}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-3 font-medium min-w-[200px]">{c.title}</td>
+                                            <td className="px-6 py-3 text-muted-foreground text-xs">{c.author}</td>
+                                            <td className="px-6 py-3 text-right whitespace-nowrap">
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-semibold ${
+                                                    c.status === 'Posted' ? 'bg-emerald-50 text-emerald-600' : 
+                                                    c.status === 'Request' ? 'bg-amber-50 text-amber-600' : 
+                                                    'bg-red-50 text-red-600'
+                                                }`}>
+                                                    {c.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     )
 }
-

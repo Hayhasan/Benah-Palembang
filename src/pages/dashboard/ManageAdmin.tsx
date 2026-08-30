@@ -171,7 +171,7 @@ export function ManageAdmin() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Role</label>
-                                    <select required className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-palembang-charcoal text-white px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                                    <select required className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                                         <option value="admin">Admin</option>
                                         <option value="superadmin">SuperAdmin</option>
                                     </select>
@@ -216,7 +216,7 @@ export function ManageAdmin() {
                         />
                     </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                             <tr>

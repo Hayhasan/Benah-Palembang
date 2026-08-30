@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /register
+Disallow: /lupa-password
+
+Sitemap: https://benahpalembang.id/sitemap.xml

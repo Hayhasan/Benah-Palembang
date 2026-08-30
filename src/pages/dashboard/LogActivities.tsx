@@ -121,7 +121,7 @@ export function LogActivities() {
                         />
                     </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                             <tr>
@@ -169,7 +169,7 @@ export function LogActivities() {
                                                     <Eye className="size-3.5" /> Detail
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="sm:max-w-[500px]">
+                                            <DialogContent className="sm:max-w-[540px] overflow-x-hidden no-scrollbar">
                                                 <DialogHeader>
                                                     <DialogTitle>Detail Log Aktivitas #{selectedLog?.id}</DialogTitle>
                                                     <DialogDescription>
@@ -177,23 +177,23 @@ export function LogActivities() {
                                                     </DialogDescription>
                                                 </DialogHeader>
                                                 {selectedLog && (
-                                                    <div className="space-y-4 py-4">
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div className="space-y-2">
+                                                    <div className="space-y-4 py-4 overflow-x-hidden">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div className="space-y-2 overflow-x-hidden">
                                                                 <h4 className="text-sm font-semibold text-red-600 flex items-center gap-1.5">
                                                                     <div className="w-2 h-2 rounded-full bg-red-600" /> Sebelum (Before)
                                                                 </h4>
-                                                                <pre className="bg-muted/50 p-4 rounded-md text-xs overflow-auto border font-mono">
+                                                                <pre className="bg-muted/50 p-3.5 rounded-md text-xs border font-mono whitespace-pre-wrap break-all overflow-x-hidden overflow-y-auto max-h-60 no-scrollbar">
                                                                     {selectedLog.details.before 
                                                                         ? JSON.stringify(selectedLog.details.before, null, 2) 
                                                                         : <span className="text-muted-foreground italic">Null / Tidak ada data sebelumnya</span>}
                                                                 </pre>
                                                             </div>
-                                                            <div className="space-y-2">
+                                                            <div className="space-y-2 overflow-x-hidden">
                                                                 <h4 className="text-sm font-semibold text-emerald-600 flex items-center gap-1.5">
                                                                     <div className="w-2 h-2 rounded-full bg-emerald-600" /> Sesudah (After)
                                                                 </h4>
-                                                                <pre className="bg-muted/50 p-4 rounded-md text-xs overflow-auto border font-mono">
+                                                                <pre className="bg-muted/50 p-3.5 rounded-md text-xs border font-mono whitespace-pre-wrap break-all overflow-x-hidden overflow-y-auto max-h-60 no-scrollbar">
                                                                     {selectedLog.details.after 
                                                                         ? JSON.stringify(selectedLog.details.after, null, 2) 
                                                                         : <span className="text-muted-foreground italic">Null / Dihapus</span>}

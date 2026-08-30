@@ -1,14 +1,84 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Benah Palembang Editorial Platform</title>
-    <meta property="og:image" content="https://bolt.new/static/og_default.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
-</head>
+    
+    <!-- Primary Favicon -->
+    <link rel="icon" type="image/jpeg" href="/logocircle.jpeg" />
+    <link rel="apple-touch-icon" href="/logocircle.jpeg" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Benah Palembang - Ruang Cerita & Budaya Kota Palembang</title>
+    <meta name="title" content="Benah Palembang - Ruang Cerita & Budaya Kota Palembang" />
+    <meta name="description" content="Benah Palembang adalah platform editorial independen dan ruang kolaborasi yang mengangkat cerita warga, gaya hidup, ruang kota, industri kreatif, kebudayaan, serta agenda terkini di Kota Palembang." />
+    <meta name="keywords" content="Benah Palembang, Benah, Palembang, Kota Palembang, Pempek, Berita Palembang, Cerita Warga Palembang, Kuliner Palembang, Wisata Palembang, Budaya Palembang, Jembatan Ampera, Sungai Musi, Event Palembang, Agenda Palembang, Industri Kreatif Palembang, Gaya Hidup Palembang, Media Palembang" />
+    <meta name="author" content="Benah Palembang Editorial Team" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="theme-color" content="#161616" />
+    <link rel="canonical" href="https://benahpalembang.id/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://benahpalembang.id/" />
+    <meta property="og:title" content="Benah Palembang - Ruang Cerita & Budaya Kota Palembang" />
+    <meta property="og:description" content="Platform editorial independen yang merawat cerita, geliat budaya, dan energi kreatif Kota Palembang." />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:site_name" content="Benah Palembang" />
+    <meta property="og:locale" content="id_ID" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://benahpalembang.id/" />
+    <meta name="twitter:title" content="Benah Palembang - Ruang Cerita & Budaya Kota Palembang" />
+    <meta name="twitter:description" content="Platform editorial independen yang merawat cerita, geliat budaya, dan energi kreatif Kota Palembang." />
+    <meta name="twitter:image" content="/logo.png" />
+
+    <!-- JSON-LD Structured Data: Organization & WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://benahpalembang.id/#organization",
+          "name": "Benah Palembang",
+          "url": "https://benahpalembang.id/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://benahpalembang.id/logo.png"
+          },
+          "description": "Platform editorial independen yang merawat cerita, geliat budaya, dan energi kreatif Kota Palembang.",
+          "email": "kolaborasi@benahpalembang.id",
+          "telephone": "+628551241878",
+          "sameAs": [
+            "https://instagram.com/benahpalembang",
+            "https://tiktok.com/@benahpalembang",
+            "https://youtube.com/@benahpalembang"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://benahpalembang.id/#website",
+          "url": "https://benahpalembang.id/",
+          "name": "Benah Palembang",
+          "publisher": {
+            "@id": "https://benahpalembang.id/#organization"
+          },
+          "inLanguage": "id-ID",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://benahpalembang.id/cerita-warga?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

@@ -3,9 +3,9 @@ import { Input } from "@/components/ui/input"
 import { Search, Eye, CheckCircle, RotateCcw, XCircle, Trash2, Heart, MessageCircle } from "lucide-react"
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { toast } from "sonner"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 
 const initialContent = [
     { id: 1, type: "Article", title: "Jejak Sejarah Kesultanan Palembang", author: "Budi Hartono", date: "24 Aug 2026, 14:30", views: "1.2K", likes: 340, comments: 28, status: "Request", banner: "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop" },
@@ -60,12 +60,26 @@ const initialContent = [
     { id: 50, type: "Article", title: "Membangun Ruang Publik Ramah Anak di Palembang", author: "Sari Wulandari", date: "06 Jul 2026, 09:15", views: "2.7K", likes: 610, comments: 46, status: "Posted", banner: "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop" },
 ]
 
-export function ManageContent() {
+interface ManageContentProps {
+    type?: "Article" | "Event"
+}
+
+export function ManageContent({ type }: ManageContentProps = {}) {
     const navigate = useNavigate()
+    const location = useLocation()
+    const contentType: "Article" | "Event" = type || (location.pathname.includes("/event") ? "Event" : "Article")
+    const isEvent = contentType === "Event"
+
     const [contents, setContents] = useState(initialContent)
     const [searchTerm, setSearchTerm] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 25
+
+    // Reset pagination and search when switching sub-menus
+    useEffect(() => {
+        setSearchTerm("")
+        setCurrentPage(1)
+    }, [contentType])
 
     const [confirmModal, setConfirmModal] = useState<{
         open: boolean
@@ -107,12 +121,13 @@ export function ManageContent() {
     }
 
     const filteredContents = useMemo(() => {
-        return contents.filter(c => 
-            c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            c.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.type.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    }, [contents, searchTerm])
+        return contents
+            .filter(c => c.type === contentType)
+            .filter(c => 
+                c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                c.author.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+    }, [contents, contentType, searchTerm])
 
     const totalPages = Math.ceil(filteredContents.length / itemsPerPage)
     const paginatedContents = useMemo(() => {
@@ -129,8 +144,15 @@ export function ManageContent() {
         <div className="space-y-8 pb-10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Manage Content</h2>
-                    <p className="text-muted-foreground">Moderasi artikel dan event yang diajukan oleh pengguna.</p>
+                    <h2 className="text-3xl font-bold tracking-tight">
+                        Manage Content: {isEvent ? "Event" : "Article"}
+                    </h2>
+                    <p className="text-muted-foreground">
+                        {isEvent 
+                            ? "Moderasi event dan agenda kegiatan yang diajukan oleh pengguna."
+                            : "Moderasi artikel dan cerita yang diajukan oleh pengguna."
+                        }
+                    </p>
                 </div>
             </div>
 
@@ -139,20 +161,19 @@ export function ManageContent() {
                     <div className="relative w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Cari konten..." 
+                            placeholder={isEvent ? "Cari event atau organizer..." : "Cari artikel atau penulis..."} 
                             className="pl-9" 
                             value={searchTerm}
                             onChange={e => handleSearchChange(e.target.value)}
                         />
                     </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
                             <tr>
-                                <th className="px-6 py-4 font-semibold">Tipe</th>
-                                <th className="px-6 py-4 font-semibold">Banner & Judul</th>
-                                <th className="px-6 py-4 font-semibold">Author</th>
+                                <th className="px-6 py-4 font-semibold">{isEvent ? "Banner & Judul Event" : "Banner & Judul Artikel"}</th>
+                                <th className="px-6 py-4 font-semibold">{isEvent ? "Organizer" : "Author"}</th>
                                 <th className="px-6 py-4 font-semibold">Date & Time</th>
                                 <th className="px-6 py-4 font-semibold">Statistik</th>
                                 <th className="px-6 py-4 font-semibold">Status</th>
@@ -162,13 +183,6 @@ export function ManageContent() {
                         <tbody className="divide-y">
                             {paginatedContents.length > 0 ? paginatedContents.map((content) => (
                                 <tr key={content.id} className="hover:bg-muted/30 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                            content.type === 'Article' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
-                                        }`}>
-                                            {content.type}
-                                        </span>
-                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <img src={content.banner || "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop"} alt="Banner" className="w-16 h-12 rounded-md object-cover border" />
@@ -207,9 +221,13 @@ export function ManageContent() {
                                                 size="sm" 
                                                 onClick={() => {
                                                     if (content.type === "Article") {
-                                                        navigate(`/dashboard/article/preview/${content.id}`)
+                                                        navigate(`/dashboard/article/preview/${content.id}`, {
+                                                            state: { returnUrl: `/dashboard/content/article` }
+                                                        })
                                                     } else {
-                                                        navigate(`/dashboard/event/preview/${content.id}`)
+                                                        navigate(`/dashboard/event/preview/${content.id}`, {
+                                                            state: { returnUrl: `/dashboard/content/event` }
+                                                        })
                                                     }
                                                 }}
                                                 className="gap-1.5 text-xs text-foreground hover:bg-muted"
@@ -262,8 +280,8 @@ export function ManageContent() {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                                        Tidak ada konten ditemukan.
+                                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                                        Tidak ada konten {isEvent ? "event" : "artikel"} ditemukan.
                                     </td>
                                 </tr>
                             )}
@@ -284,16 +302,16 @@ export function ManageContent() {
                 open={confirmModal.open}
                 onOpenChange={(open) => setConfirmModal(prev => ({ ...prev, open }))}
                 title={
-                    confirmModal.action === "accept" ? "Konfirmasi Persetujuan Konten" :
-                    confirmModal.action === "reject" ? "Konfirmasi Penolakan Konten" :
-                    confirmModal.action === "takedown" ? "Konfirmasi Takedown Konten" :
-                    "Konfirmasi Pemulihan Konten"
+                    confirmModal.action === "accept" ? `Konfirmasi Persetujuan ${isEvent ? 'Event' : 'Artikel'}` :
+                    confirmModal.action === "reject" ? `Konfirmasi Penolakan ${isEvent ? 'Event' : 'Artikel'}` :
+                    confirmModal.action === "takedown" ? `Konfirmasi Takedown ${isEvent ? 'Event' : 'Artikel'}` :
+                    `Konfirmasi Pemulihan ${isEvent ? 'Event' : 'Artikel'}`
                 }
                 description={
-                    confirmModal.action === "accept" ? `Apakah Anda yakin ingin menyetujui dan mempublikasikan konten "${confirmModal.contentTitle}"?` :
-                    confirmModal.action === "reject" ? `Apakah Anda yakin ingin menolak pengajuan konten "${confirmModal.contentTitle}"?` :
-                    confirmModal.action === "takedown" ? `Apakah Anda yakin ingin men-takedown konten "${confirmModal.contentTitle}" dari penayangan publik?` :
-                    `Apakah Anda yakin ingin memulihkan konten "${confirmModal.contentTitle}" ke status Posted?`
+                    confirmModal.action === "accept" ? `Apakah Anda yakin ingin menyetujui dan mempublikasikan ${isEvent ? 'event' : 'artikel'} "${confirmModal.contentTitle}"?` :
+                    confirmModal.action === "reject" ? `Apakah Anda yakin ingin menolak pengajuan ${isEvent ? 'event' : 'artikel'} "${confirmModal.contentTitle}"?` :
+                    confirmModal.action === "takedown" ? `Apakah Anda yakin ingin men-takedown ${isEvent ? 'event' : 'artikel'} "${confirmModal.contentTitle}" dari penayangan publik?` :
+                    `Apakah Anda yakin ingin memulihkan ${isEvent ? 'event' : 'artikel'} "${confirmModal.contentTitle}" ke status Posted?`
                 }
                 confirmText={
                     confirmModal.action === "accept" ? "Ya, Setujui" :
