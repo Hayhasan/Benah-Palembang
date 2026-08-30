@@ -105,9 +105,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua cerita",
-      theme: "OFF_WHITE",
-      layout: "FEATURED_FIRST",
-      maxItems: 3,
       position: 1,
       isVisible: true,
     },
@@ -120,9 +117,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/37234075/pexels-photo-37234075.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      theme: "DEFAULT",
-      layout: "STANDARD",
-      maxItems: 4,
       position: 2,
       isVisible: true,
     },
@@ -136,9 +130,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/38956265/pexels-photo-38956265.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      theme: "RED",
-      layout: "FEATURED_FIRST",
-      maxItems: 3,
       position: 3,
       isVisible: true,
     },
@@ -152,9 +143,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/36748274/pexels-photo-36748274.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      theme: "OFF_WHITE",
-      layout: "STANDARD",
-      maxItems: 4,
       position: 4,
       isVisible: true,
     },
@@ -168,9 +156,6 @@ export const DEFAULT_LANDING_PAGE = {
       backgroundImageUrl:
         "https://images.pexels.com/photos/37628562/pexels-photo-37628562.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
       linkLabel: "Lihat semua",
-      theme: "DEFAULT",
-      layout: "FEATURED_FIRST",
-      maxItems: 3,
       position: 5,
       isVisible: true,
     },
@@ -226,5 +211,9 @@ export const DEFAULT_LANDING_PAGE = {
       "Punya cerita, ide, atau ingin membuat sesuatu bersama? Kami ingin mendengarnya.",
     buttonLabel: "Let's collaborate",
     buttonUrl: "/kolaborasi",
+    backgroundImageUrl:
+      "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    contactLabel: "Hubungi Kami",
+    contactEmail: "kolaborasi@benahpalembang.id",
   },
 } satisfies LandingPageData

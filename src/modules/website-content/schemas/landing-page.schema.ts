@@ -34,6 +34,13 @@ const imageUrlSchema = z
     "Gambar harus menggunakan URL HTTP(S), bukan file atau blob lokal.",
   )
 
+const emailSchema = z
+  .string()
+  .trim()
+  .min(1, "Email kontak CTA wajib diisi.")
+  .max(320, "Email kontak CTA maksimal 320 karakter.")
+  .email("Email kontak CTA tidak valid.")
+
 const articleCategorySlugSchema = z
   .string()
   .trim()
@@ -93,9 +100,13 @@ const articleSectionSchema = z.object({
   description: requiredText("Deskripsi section", 5000),
   backgroundImageUrl: imageUrlSchema,
   linkLabel: requiredText("Label link section", 100),
-  theme: z.enum(["DEFAULT", "RED", "OFF_WHITE", "DARK"]),
-  layout: z.enum(["STANDARD", "FEATURED_FIRST"]),
-  maxItems: z.number().int().min(1).max(12),
+  pinnedArticleIds: z
+    .array(z.number().int().positive())
+    .max(3, "Artikel yang dipin maksimal 3 per section.")
+    .refine(
+      (articleIds) => new Set(articleIds).size === articleIds.length,
+      "Artikel yang sama tidak dapat dipin dua kali dalam satu section.",
+    ),
   position: z.number().int().positive(),
   isVisible: z.boolean(),
 })
@@ -141,6 +152,9 @@ export const landingPageEditorSchema = z
       description: requiredText("Deskripsi CTA", 5000),
       buttonLabel: requiredText("Label tombol CTA", 100),
       buttonUrl: linkUrlSchema,
+      backgroundImageUrl: imageUrlSchema,
+      contactLabel: requiredText("Label kontak CTA", 100),
+      contactEmail: emailSchema,
     }),
   })
   .superRefine((data, context) => {

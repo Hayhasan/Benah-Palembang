@@ -1,11 +1,3 @@
-export type WebsiteArticleSectionTheme =
-  | "DEFAULT"
-  | "RED"
-  | "OFF_WHITE"
-  | "DARK"
-
-export type WebsiteArticleSectionLayout = "STANDARD" | "FEATURED_FIRST"
-
 export interface LandingHeroSlideData {
   imageUrl: string
   imageAlt: string
@@ -34,9 +26,6 @@ export interface LandingArticleSectionData {
   description: string
   backgroundImageUrl: string
   linkLabel: string
-  theme: WebsiteArticleSectionTheme
-  layout: WebsiteArticleSectionLayout
-  maxItems: number
   position: number
   isVisible: boolean
 }
@@ -78,5 +67,8 @@ export interface LandingPageData {
     description: string
     buttonLabel: string
     buttonUrl: string
+    backgroundImageUrl: string
+    contactLabel: string
+    contactEmail: string
   }
 }

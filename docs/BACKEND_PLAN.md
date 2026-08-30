@@ -67,7 +67,7 @@ src/
     ├── auth/                          # Autentikasi, Redis Session, Activity, & Password Reset
     ├── event/                         # Domain Agenda/Acara (Publik & Owner Dashboard)
     ├── manage-content/                # Moderasi Terpadu Artikel & Event (Admin & SuperAdmin)
-    ├── overview/                      # Ringkasan Eksekutif & Metrik Platform (Admin & SuperAdmin)
+    ├── overview/                      # Overview role-aware untuk seluruh role
     ├── profile/                       # Profil Pengguna Aktif & Signed Uploads
     └── website-content/               # CMS Konfigurasi Landing Page, Hero, & Header/Footer
 ```
@@ -76,9 +76,10 @@ src/
 
 | Modul Domain | Route Canonical | `SUPERADMIN` | `ADMIN` | `USER` | Guard Canonical |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Overview** | `/dashboard` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **Overview** | `/dashboard` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
 | **Manage Website** | `/dashboard/website` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
-| **Manage Content** | `/dashboard/content` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **Manage Content — Article** | `/dashboard/content/article` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **Manage Content — Event** | `/dashboard/content/event` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
 | **Manage Account** | `/dashboard/account/[role]` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
 | **Log Activities** | `/dashboard/logs` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
 | **Create Article** | `/dashboard/create-article` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
@@ -89,7 +90,7 @@ src/
 
 ## 4. Skema Database PostgreSQL (Prisma Models)
 
-Database terdiri dari 22 model dan 7 enum yang saling terintegrasi:
+Database terdiri dari 21 model dan 7 enum yang saling terintegrasi:
 
 ```mermaid
 erDiagram
@@ -98,7 +99,6 @@ erDiagram
     User ||--o{ ArticleComment : "articleComments"
     User ||--o{ ArticleLike : "articleLikes"
     User ||--o{ EventLike : "eventLikes"
-    User ||--o{ EventParticipant : "eventParticipants"
     User ||--o{ ActivityLog : "activityLogs"
 
     WebsiteContent ||--o{ WebsiteHeroSlide : "heroSlides"
@@ -107,13 +107,14 @@ erDiagram
     WebsiteContent ||--o{ WebsiteTeamMember : "teamMembers"
 
     WebsiteArticleSection ||--o{ Article : "articles"
+    WebsiteArticleSection ||--o{ WebsiteArticleSectionPin : "pins"
+    Article ||--o| WebsiteArticleSectionPin : "landingPin"
     Article ||--o{ ArticleTag : "tags"
     Article ||--o{ ArticleComment : "comments"
     Article ||--o{ ArticleLike : "likes"
 
     Event ||--o{ EventTag : "tags"
     Event ||--o{ EventLike : "likes"
-    Event ||--o{ EventParticipant : "participants"
 
     WebsiteCollaborationContent ||--o{ WebsiteCollaborationPartnerLogo : "partnerLogos"
     WebsiteCollaborationContent ||--o{ WebsiteCollaborationPartnerContent : "partnerContents"
@@ -123,11 +124,11 @@ erDiagram
 ```
 
 ### 4.1. Entitas Inti Platform:
-1. **`User` (Tabel `users`):** Model identitas canonical untuk seluruh peran (`USER`, `ADMIN`, `SUPERADMIN`), data profil, kontak WhatsApp terpisah, URL sosial media, dan flag proteksi status ban/soft-delete.
+1. **`User` (Tabel `users`):** Model identitas canonical untuk seluruh peran (`USER`, `ADMIN`, `SUPERADMIN`), username public unique, data profil, kontak WhatsApp terpisah, URL sosial media, dan flag proteksi status ban/soft-delete.
 2. **`Article` (Tabel `articles`):** Artikel publikasi yang terikat ke `User` (author) dan `WebsiteArticleSection` (kategori), menyimpan slug unik, reading time, status moderasi, dan views counter.
-3. **`Event` (Tabel `events`):** Agenda acara yang terikat ke `User` (owner), menyimpan tanggal pelaksanaan, lokasi, URL pendaftaran, kategori, status moderasi, dan views counter.
+3. **`Event` (Tabel `events`):** Agenda acara yang terikat ke `User` (owner), menyimpan tanggal pelaksanaan, lokasi, URL pendaftaran optional, URL WhatsApp CTA Tanya wajib, kategori, status moderasi, dan views counter.
 4. **`ActivityLog` (Tabel `activity_logs`):** Audit trail sentral yang mencatat peristiwa mutasi data, snapshot `beforeState` dan `afterState` JSONB, IP address, serta user agent.
-5. **`WebsiteContent` dkk:** Entitas CMS singleton (`home`, `agenda`, `collaboration`, `header-footer`) yang mengatur elemen dinamis situs publik.
+5. **`WebsiteContent` dkk:** Entitas CMS singleton (`home`, `agenda`, `collaboration`, `header-footer`) yang mengatur elemen dinamis situs publik, termasuk ordered pin maksimal tiga Article per section homepage.
 
 ---
 

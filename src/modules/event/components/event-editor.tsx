@@ -8,6 +8,7 @@ import {
   Eye,
   Link2,
   MapPin,
+  MessageCircle,
   Save,
   Send,
 } from "lucide-react"
@@ -72,6 +73,9 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
   const [registrationUrl, setRegistrationUrl] = useState(
     initialEvent?.registrationUrl ?? "",
   )
+  const [whatsappUrl, setWhatsappUrl] = useState(
+    initialEvent?.whatsappUrl ?? "",
+  )
   const [tags, setTags] = useState(initialEvent?.tags ?? ["Palembang", "Event"])
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
@@ -93,6 +97,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
       location,
       organizer,
       registrationUrl,
+      whatsappUrl,
       tags,
     }),
     [
@@ -108,6 +113,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
       startsTime,
       tags,
       title,
+      whatsappUrl,
     ],
   )
 
@@ -336,22 +342,22 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
                 placeholder="Misal: Plaza Benteng Kuto Besak, Palembang"
               />
             </Field>
+            <Field
+              label="Penyelenggara / Organizer"
+              icon={<Building className="size-4 text-muted-foreground" />}
+            >
+              <Input
+                value={organizer}
+                onChange={(event) => {
+                  setOrganizer(event.target.value)
+                  markDirty()
+                }}
+                placeholder="Misal: Komunitas Seni Wong Kito"
+              />
+            </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
-                label="Penyelenggara / Organizer"
-                icon={<Building className="size-4 text-muted-foreground" />}
-              >
-                <Input
-                  value={organizer}
-                  onChange={(event) => {
-                    setOrganizer(event.target.value)
-                    markDirty()
-                  }}
-                  placeholder="Misal: Komunitas Seni Wong Kito"
-                />
-              </Field>
-              <Field
-                label="Tautan Pendaftaran / Tiket"
+                label="Tautan Pendaftaran / Tiket (Opsional)"
                 icon={<Link2 className="size-4 text-muted-foreground" />}
               >
                 <Input
@@ -363,6 +369,27 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
                   }}
                   placeholder="https://..."
                 />
+              </Field>
+              <Field
+                label="Tautan WhatsApp Tombol Tanya"
+                icon={
+                  <MessageCircle className="size-4 text-muted-foreground" />
+                }
+              >
+                <Input
+                  type="url"
+                  required
+                  value={whatsappUrl}
+                  onChange={(event) => {
+                    setWhatsappUrl(event.target.value)
+                    markDirty()
+                  }}
+                  placeholder="https://wa.me/628xxxxxxxxxx"
+                />
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Wajib memakai kode negara 62 tanpa tanda plus, spasi, atau
+                  tanda hubung.
+                </p>
               </Field>
             </div>
           </div>

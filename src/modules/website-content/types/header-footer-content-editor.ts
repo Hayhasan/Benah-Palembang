@@ -1,4 +1,5 @@
 import type {
+  WebsiteFooterConnectLinkData,
   HeaderFooterContentData,
   WebsiteFooterLinkData,
 } from "./header-footer-content"
@@ -11,6 +12,9 @@ interface HeaderFooterEditorRecord {
 export type WebsiteFooterLinkEditorData = WebsiteFooterLinkData &
   HeaderFooterEditorRecord
 
+export type WebsiteFooterConnectLinkEditorData =
+  WebsiteFooterConnectLinkData & HeaderFooterEditorRecord
+
 export interface HeaderFooterContentEditorData
   extends Omit<HeaderFooterContentData, "footer"> {
   footer: Omit<
@@ -18,7 +22,7 @@ export interface HeaderFooterContentEditorData
     "exploreLinks" | "connectLinks"
   > & {
     exploreLinks: WebsiteFooterLinkEditorData[]
-    connectLinks: WebsiteFooterLinkEditorData[]
+    connectLinks: WebsiteFooterConnectLinkEditorData[]
   }
 }
 

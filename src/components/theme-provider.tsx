@@ -15,6 +15,7 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme
   setTheme: (theme: Theme) => void
+  toggleTheme: () => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
@@ -80,22 +81,23 @@ function isEditableTarget(target: EventTarget | null) {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
   storageKey = "theme",
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
-  // Dirender juga di server saat prerender, jadi localStorage harus dijaga.
-  // Nilai tersimpan dibaca ulang di effect di bawah supaya tidak terjadi
-  // hydration mismatch.
-  const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
+  const [theme, setThemeState] = React.useState<Theme>(() => {
+    if (typeof window === "undefined") {
+      return defaultTheme
+    }
 
-  React.useEffect(() => {
     const storedTheme = window.localStorage.getItem(storageKey)
     if (isTheme(storedTheme)) {
-      setThemeState(storedTheme)
+      return storedTheme
     }
-  }, [storageKey])
+
+    return defaultTheme
+  })
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
@@ -104,6 +106,17 @@ export function ThemeProvider({
     },
     [storageKey]
   )
+
+  const toggleTheme = React.useCallback(() => {
+    setThemeState((currentTheme) => {
+      const resolvedTheme =
+        currentTheme === "system" ? getSystemTheme() : currentTheme
+      const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
+
+      window.localStorage.setItem(storageKey, nextTheme)
+      return nextTheme
+    })
+  }, [storageKey])
 
   const applyTheme = React.useCallback(
     (nextTheme: Theme) => {
@@ -116,6 +129,7 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark")
       root.classList.add(resolvedTheme)
+      root.style.colorScheme = resolvedTheme
 
       if (restoreTransitions) {
         restoreTransitions()
@@ -212,8 +226,9 @@ export function ThemeProvider({
     () => ({
       theme,
       setTheme,
+      toggleTheme,
     }),
-    [theme, setTheme]
+    [theme, setTheme, toggleTheme]
   )
 
   return (

@@ -8,5 +8,5 @@ import { ThemeProvider } from "@/components/theme-provider"
  * `BrowserRouter` tidak diperlukan lagi — routing kini berbasis file.
  */
 export function Providers({ children }: { children: ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>
+  return <ThemeProvider defaultTheme="dark">{children}</ThemeProvider>
 }

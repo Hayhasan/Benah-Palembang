@@ -31,7 +31,7 @@ Platform terbagi menjadi dua ranah utama:
   5. Kebudayaan (`/kebudayaan`)
 - **Detail Artikel (`/artikel/[slug]`):** Halaman baca artikel lengkap dengan views counter 24 jam, interaksi like, dan kolom komentar real-time.
 - **Agenda Komunitas (`/agenda` & `/agenda/[id]`):** Kalender kegiatan dan detail acara dengan pendaftaran CTA eksternal serta pelacakan partisipan.
-- **Kolaborasi (`/kolaborasi`):** Informasi kemitraan media, partner logos, dan featured partner contents.
+- **Kolaborasi (`/kolaborasi`):** Informasi kemitraan, partner logos, dan masonry partner content dengan preview thumbnail/rasio yang diturunkan otomatis dari URL sosial media.
 
 ### 2.2. Autentikasi & Inisialisasi (`src/app/(auth)`)
 - **Login (`/login`):** Pintu masuk akun terdaftar.
@@ -40,14 +40,18 @@ Platform terbagi menjadi dua ranah utama:
 - **First Time Setup (`/first-time-setup`):** Inisialisasi akun SuperAdmin pertama saat database masih kosong.
 
 ### 2.3. Dashboard Terkelola (`src/app/dashboard`)
-- **Overview (`/dashboard`):** Ringkasan metrik eksekutif, grafik performa kunjungan & interaksi, serta pratinjau permohonan moderasi dan log audit (`ADMIN` & `SUPERADMIN`).
-- **Manage Website (`/dashboard/website`):** CMS pengelola konfigurasi landing page, hero kategori, agenda, kolaborasi, dan global header/footer (`ADMIN` & `SUPERADMIN`).
-- **Manage Content (`/dashboard/content`):** Pusat moderasi artikel dan acara (Approve, Reject, Takedown, Restore) (`ADMIN` & `SUPERADMIN`).
+- **Overview (`/dashboard`):** Landing dashboard seluruh role. `USER` melihat
+  performa publikasi miliknya, sedangkan `ADMIN` dan `SUPERADMIN` melihat metrik
+  platform, grafik performa, serta pratinjau permohonan moderasi.
+- **Manage Website (`/dashboard/website`):** CMS pengelola konfigurasi landing page, pin maksimal tiga Article per section homepage, hero kategori, agenda, kolaborasi, dan global header/footer (`ADMIN` & `SUPERADMIN`).
+- **Manage Content (`/dashboard/content/article`, `/dashboard/content/event`):** Pusat moderasi artikel dan acara yang dipisahkan per tipe (Approve, Reject, Takedown, Restore) (`ADMIN` & `SUPERADMIN`).
 - **Manage Account (`/dashboard/account/[role]`):** Manajemen akun pengguna dan administrator, perubahan peran, ban/unban, dan soft-delete (`SUPERADMIN`).
 - **Log Activities (`/dashboard/logs`):** Audit trail sentral yang mencatat rekaman jejak mutasi data dan aktivitas sistem (`SUPERADMIN`).
 - **Create Article (`/dashboard/create-article`):** Editor TipTap kaya fitur untuk membuat, mengedit, dan mengajukan artikel (`USER`, `ADMIN`, `SUPERADMIN`).
 - **Create Event (`/dashboard/create-event`):** Formulir pembuatan dan pengajuan agenda acara (`USER`, `ADMIN`, `SUPERADMIN`).
 - **Profile (`/dashboard/profile`):** Pengelolaan profil personal, avatar/banner Cloudinary, kontak WhatsApp, dan tautan sosial media (`USER`, `ADMIN`, `SUPERADMIN`).
+- **Profil Penulis (`/penulis/[username]`):** Profil publik berbasis username
+  unique beserta statistik, galeri Article published, dan Event published.
 
 ---
 

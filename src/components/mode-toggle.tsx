@@ -2,38 +2,36 @@
 
 import { Moon, Sun } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/components/theme-provider"
+import { cn } from "@/lib/utils"
 
-export function ModeToggle() {
-  const { setTheme } = useTheme()
+type ModeToggleProps = {
+  className?: string
+  showLabel?: boolean
+}
+
+export function ModeToggle({ className, showLabel = false }: ModeToggleProps) {
+  const { toggleTheme } = useTheme()
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label="Ganti mode warna"
+      title="Ganti mode warna"
+      className={cn(
+        "inline-flex items-center justify-center gap-3 rounded-full border border-border bg-background text-foreground transition-all duration-200 hover:bg-muted active:scale-95",
+        className
+      )}
+    >
+      <Moon className="size-4 shrink-0 text-palembang-sage dark:hidden" />
+      <Sun className="hidden size-4 shrink-0 text-amber-400 dark:block" />
+      {showLabel && (
+        <span className="text-xs font-semibold">
+          <span className="dark:hidden">Mode Gelap</span>
+          <span className="hidden dark:inline">Mode Terang</span>
+        </span>
+      )}
+    </button>
   )
 }

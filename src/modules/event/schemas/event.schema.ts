@@ -24,6 +24,15 @@ const optionalHttpsUrl = (label: string) =>
     z.union([z.null(), httpsUrl(label)]),
   )
 
+const whatsappUrl = z
+  .string()
+  .trim()
+  .max(40, "Tautan WhatsApp maksimal 40 karakter.")
+  .regex(/^https:\/\/wa\.me\/628\d{7,12}$/, {
+    message:
+      "Tautan WhatsApp wajib memakai format https://wa.me/628xxxxxxxxxx.",
+  })
+
 export const eventListQuerySchema = z.object({
   q: z.string().trim().max(255).catch(""),
   page: z.coerce.number().int().positive().catch(1),
@@ -50,6 +59,7 @@ export const eventEditorSchema = z.object({
   location: requiredText("Lokasi", 255),
   organizer: requiredText("Penyelenggara", 255),
   registrationUrl: optionalHttpsUrl("Tautan pendaftaran"),
+  whatsappUrl,
   tags: z
     .array(requiredText("Tag", 80))
     .max(12, "Tag maksimal 12 item.")

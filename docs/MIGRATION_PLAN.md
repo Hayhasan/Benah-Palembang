@@ -70,7 +70,8 @@
 | `/dashboard/account/user/:id` | `app/dashboard/account/user/[id]/page.tsx` | `UserProfile` |
 | `/dashboard/account/admin` | `app/dashboard/account/admin/page.tsx` | `ManageAdmin` |
 | `/dashboard/account/admin/:id` | `app/dashboard/account/admin/[id]/page.tsx` | `UserProfile` |
-| `/dashboard/content` | `app/dashboard/content/page.tsx` | `ManageContent` |
+| `/dashboard/content/article` | `app/dashboard/content/article/page.tsx` | `ManageContentList` |
+| `/dashboard/content/event` | `app/dashboard/content/event/page.tsx` | `ManageContentList` |
 | `/dashboard/create-article` | `app/dashboard/create-article/page.tsx` | `CreateArticle` |
 | `/dashboard/create-article/new` | `app/dashboard/create-article/new/page.tsx` | `CreateArticleEditor` |
 | `/dashboard/create-article/edit` † | `app/dashboard/create-article/edit/page.tsx` | `CreateArticleEditor` |

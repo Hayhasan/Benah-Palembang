@@ -1,51 +1,111 @@
 "use client"
 
-import { Mail, MessageCircle } from "lucide-react"
-import { useState, type ReactNode } from "react"
+import { Mail, MessageCircle, Play, Search, X } from "lucide-react"
+import { useState } from "react"
 
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
 
+import { getCollaborationContentFallbackPreview } from "../data/collaboration-content-preview"
 import type {
+  CollaborationContentAspectRatio,
   CollaborationPageData,
+  CollaborationPartnerContentData,
   CollaborationPlatform,
 } from "../types/collaboration-page"
 
-const aspectRatioClasses = {
-  "9:16": "aspect-[9/16]",
-  "4:5": "aspect-[4/5]",
-  "16:9": "aspect-[16/9]",
-  "1:1": "aspect-[1/1]",
-} as const
+const platformLabels: Record<CollaborationPlatform, string> = {
+  youtube: "YouTube",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  facebook: "Facebook",
+  x: "X",
+}
 
-function PlatformIcon({ platform }: { platform: CollaborationPlatform }) {
-  if (platform === "youtube") {
-    return (
-      <span className="rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
-        YT
-      </span>
-    )
-  }
-
+function platformBadgeClass(platform: CollaborationPlatform) {
+  if (platform === "youtube") return "bg-red-600 text-white"
   if (platform === "instagram") {
-    return (
-      <span className="rounded bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
-        IG
-      </span>
-    )
+    return "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white"
   }
-
   if (platform === "tiktok") {
-    return (
-      <span className="rounded border border-white/20 bg-black px-1.5 py-0.5 text-[9px] font-bold text-white">
-        TK
-      </span>
-    )
+    return "border border-white/20 bg-black text-white"
   }
+  if (platform === "facebook") return "bg-blue-600 text-white"
+  return "bg-foreground text-background"
+}
+
+function aspectRatioClass(aspectRatio: CollaborationContentAspectRatio) {
+  if (aspectRatio === "PORTRAIT") return "aspect-[9/16]"
+  if (aspectRatio === "SQUARE") return "aspect-square"
+  return "aspect-video"
+}
+
+function fallbackBackgroundClass(platform: CollaborationPlatform) {
+  if (platform === "youtube") return "from-red-950 via-red-700 to-black"
+  if (platform === "instagram") {
+    return "from-amber-400 via-fuchsia-600 to-indigo-950"
+  }
+  if (platform === "tiktok") return "from-cyan-400 via-black to-pink-500"
+  if (platform === "facebook") return "from-blue-800 via-blue-600 to-sky-400"
+  return "from-zinc-700 via-black to-zinc-950"
+}
+
+function CollaborationContentCard({
+  item,
+}: {
+  item: CollaborationPartnerContentData
+}) {
+  const [thumbnailFailed, setThumbnailFailed] = useState(false)
+  const preview =
+    item.preview ?? getCollaborationContentFallbackPreview(item)
+  const showThumbnail = preview.thumbnailUrl && !thumbnailFailed
 
   return (
-    <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
-      {platform === "x" ? "X" : "FB"}
-    </span>
+    <a
+      href={item.contentUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block break-inside-avoid"
+      title={`Buka konten: ${preview.title}`}
+    >
+      <div
+        className={`relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br ${fallbackBackgroundClass(item.platform)} ${aspectRatioClass(preview.aspectRatio)}`}
+      >
+        {showThumbnail ? (
+          // Provider thumbnails are derived at render time and are not stored.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={preview.thumbnailUrl ?? ""}
+            alt={preview.title}
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={() => setThumbnailFailed(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.3),transparent_40%)]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-70 transition-opacity group-hover:opacity-90" />
+        <div className="absolute left-3 top-3">
+          <span
+            className={`rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider shadow-sm ${platformBadgeClass(item.platform)}`}
+          >
+            {platformLabels[item.platform]}
+          </span>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <h3 className="line-clamp-3 text-sm font-bold leading-tight text-white">
+            {preview.title}
+          </h3>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">
+            {platformLabels[item.platform]}
+          </p>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/20 text-white shadow-xl backdrop-blur-md">
+            <Play className="size-5 fill-current" />
+          </span>
+        </div>
+      </div>
+    </a>
   )
 }
 
@@ -81,197 +141,177 @@ function HeroTitle({ title }: { title: string }) {
   )
 }
 
-function OptionalContentLink({
-  href,
-  children,
-}: {
-  href: string
-  children: ReactNode
-}) {
-  if (!href) return <div className="break-inside-avoid">{children}</div>
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block break-inside-avoid"
-    >
-      {children}
-    </a>
-  )
-}
-
 export function CollaborationPage({ data }: { data: CollaborationPageData }) {
+  const [query, setQuery] = useState("")
   const [showAllContent, setShowAllContent] = useState(false)
   const doubledLogos = [...data.partnerLogos, ...data.partnerLogos]
-  const hasMoreContent = data.partnerContents.length > 6
-  const visibleContents = showAllContent
-    ? data.partnerContents
-    : data.partnerContents.slice(0, 6)
+  const normalizedQuery = query.trim().toLowerCase()
+  const filteredContents = data.partnerContents.filter((item) => {
+    if (!normalizedQuery) return true
+
+    const preview =
+      item.preview ?? getCollaborationContentFallbackPreview(item)
+    return `${preview.title} ${platformLabels[item.platform]} ${item.contentUrl}`
+      .toLowerCase()
+      .includes(normalizedQuery)
+  })
+  const initialCount = 12
+  const visibleContents =
+    showAllContent || normalizedQuery
+      ? filteredContents
+      : filteredContents.slice(0, initialCount)
+  const hasMoreContent =
+    !showAllContent && !normalizedQuery && filteredContents.length > initialCount
 
   return (
     <>
-      <div className="relative bg-palembang-charcoal">
-        <div className="absolute inset-x-0 top-0 h-[600px] overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={data.hero.imageUrl}
-            alt={data.hero.imageAlt}
-            className="size-full object-cover opacity-40"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/30 via-palembang-charcoal/80 to-palembang-charcoal" />
-        </div>
-        <main className="relative z-10 px-6 pb-24 pt-40 text-white sm:px-10 lg:px-16 lg:pb-36">
-          <div className="mx-auto max-w-[1240px]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
-              {data.hero.eyebrow}
-            </p>
-            <h1 className="mt-6 max-w-5xl font-display text-6xl font-black leading-[0.88] tracking-[-0.065em] sm:text-8xl lg:text-9xl">
+      <main>
+        <section className="relative overflow-hidden bg-palembang-charcoal px-6 pb-12 pt-32 text-white sm:px-10 sm:pb-14 sm:pt-36 lg:px-16">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-40">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={data.hero.imageUrl}
+              alt={data.hero.imageAlt}
+              className="size-full object-cover object-right"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-palembang-charcoal via-palembang-charcoal/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-[1240px]">
+            <h1 className="reveal-on-scroll max-w-4xl font-display text-5xl font-black leading-[0.9] tracking-[-0.065em] sm:text-7xl lg:text-8xl">
               <HeroTitle title={data.hero.title} />
             </h1>
-            <div className="mt-16">
-              <div>
-                <p className="max-w-lg text-lg leading-8 text-white/65">
-                  {data.hero.description}
-                </p>
-                <div className="mt-10 flex flex-col gap-4">
-                  <div className="flex items-center gap-3 text-palembang-gold">
-                    <Mail className="size-5" />
-                    <a
-                      href={data.contact.emailUrl}
-                      className="text-sm text-white underline underline-offset-4 transition-colors hover:text-palembang-gold"
-                    >
-                      {data.contact.email}
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-3 text-palembang-gold">
-                    <MessageCircle className="size-5" />
-                    <a
-                      href={data.contact.whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-white underline underline-offset-4 transition-colors hover:text-palembang-gold"
-                    >
-                      {data.contact.phone}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      <section className="overflow-hidden bg-palembang-off-white py-16 sm:py-20">
-        <div className="mx-auto mb-10 max-w-[1240px] px-6 sm:px-10 lg:px-16">
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
-            Trusted By
-          </p>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] text-palembang-charcoal sm:text-4xl">
-            Our Partners
-          </h2>
-          <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
-            Brand, komunitas, dan organisasi yang telah berkolaborasi bersama
-            Benah Palembang.
-          </p>
-        </div>
-        <div className="relative">
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-palembang-off-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-palembang-off-white to-transparent" />
-          <div className="flex animate-marquee items-center gap-12">
-            {doubledLogos.map((logo, index) => (
-              <div
-                key={`${logo.name}-${logo.position}-${index}`}
-                className="group flex-shrink-0 cursor-pointer px-4"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={logo.imageUrl}
-                  alt={logo.name}
-                  className="h-12 w-auto object-contain opacity-50 grayscale transition-all duration-500 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-palembang-charcoal px-6 py-16 sm:px-10 sm:py-24 lg:px-16">
-        <div className="mx-auto max-w-[1240px]">
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
-            Partner Content
-          </p>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] text-white sm:text-4xl">
-            Konten Kolaborasi
-          </h2>
-          <p className="mt-3 max-w-lg text-sm leading-6 text-white/60">
-            Konten promosi dan cerita dari partner-partner kami di berbagai
-            platform.
-          </p>
-
-          <div className="relative mt-12">
-            <div className="columns-2 gap-4 space-y-4 sm:columns-3 lg:columns-4">
-              {visibleContents.map((item) => (
-                <OptionalContentLink
-                  key={`${item.title}-${item.position}`}
-                  href={item.contentUrl}
+            <p className="reveal-on-scroll reveal-delay-150 mt-4 max-w-lg text-sm leading-6 text-white/80 sm:text-base">
+              {data.hero.description}
+            </p>
+            <div className="reveal-on-scroll reveal-delay-200 mt-8 flex flex-col gap-3.5">
+              <div className="flex items-center gap-3 text-palembang-red">
+                <Mail className="size-4.5" />
+                <a
+                  href={data.contact.emailUrl}
+                  className="text-sm text-white underline underline-offset-4 transition-colors hover:text-palembang-red"
                 >
-                  <div className="group cursor-pointer">
-                    <div
-                      className={`relative overflow-hidden rounded-2xl ${aspectRatioClasses[item.aspectRatio]}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.thumbnailUrl}
-                        alt={item.title}
-                        className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
-                      <div className="absolute left-3 top-3">
-                        <PlatformIcon platform={item.platform} />
-                      </div>
-                      <div className="absolute inset-x-0 bottom-0 p-4">
-                        <h3 className="text-sm font-bold leading-tight text-white">
-                          {item.title}
-                        </h3>
-                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">
-                          {item.platform}
-                        </p>
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                        <div className="flex size-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="white"
-                          >
-                            <polygon points="5 3 19 12 5 21 5 3" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
+                  {data.contact.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-3 text-palembang-red">
+                <MessageCircle className="size-4.5" />
+                <a
+                  href={data.contact.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-white underline underline-offset-4 transition-colors hover:text-palembang-red"
+                >
+                  {data.contact.phone}
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {doubledLogos.length > 0 ? (
+          <section className="reveal-on-scroll overflow-hidden bg-background py-16 text-foreground sm:py-20">
+            <div className="reveal-on-scroll mx-auto mb-12 max-w-[1240px] px-6 text-center sm:px-10 lg:px-16">
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
+                Trusted By
+              </p>
+              <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+                Our Partners
+              </h2>
+              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+                Brand, komunitas, dan organisasi yang telah berkolaborasi
+                bersama Benah Palembang.
+              </p>
+            </div>
+            <div className="relative w-full overflow-hidden py-2">
+              <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-background via-background/80 to-transparent backdrop-blur-[2px] sm:w-24 lg:w-32" />
+              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-background via-background/80 to-transparent backdrop-blur-[2px] sm:w-24 lg:w-32" />
+              <div className="flex w-max animate-marquee items-center gap-12 sm:gap-16">
+                {doubledLogos.map((logo, index) => (
+                  <div
+                    key={`${logo.name}-${logo.position}-${index}`}
+                    className="group flex-shrink-0 px-4"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={logo.imageUrl}
+                      alt={logo.name}
+                      className="h-10 w-auto object-contain opacity-50 grayscale transition-all duration-500 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0 dark:brightness-0 dark:invert dark:group-hover:brightness-100 dark:group-hover:invert-0 sm:h-12"
+                    />
                   </div>
-                </OptionalContentLink>
-              ))}
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="reveal-on-scroll bg-background px-6 py-16 text-foreground sm:px-10 sm:py-24 lg:px-16">
+          <div className="mx-auto max-w-[1240px]">
+            <div className="reveal-on-scroll flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
+                  Partner Content
+                </p>
+                <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+                  Konten Kolaborasi
+                </h2>
+                <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+                  Temukan konten dan cerita kolaborasi kami di berbagai
+                  platform.
+                </p>
+              </div>
+              <div className="flex w-full max-w-md items-center gap-3 border-b border-border pb-3">
+                <Search className="size-4 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Cari platform atau URL..."
+                  aria-label="Cari konten kolaborasi"
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
+                {query ? (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="Hapus pencarian"
+                  >
+                    <X className="size-4" />
+                  </button>
+                ) : null}
+              </div>
             </div>
 
-            {hasMoreContent && !showAllContent ? (
-              <div className="absolute inset-x-0 bottom-0 flex h-64 items-end justify-center bg-gradient-to-t from-palembang-charcoal via-palembang-charcoal/90 to-transparent">
+            {visibleContents.length > 0 ? (
+              <div className="reveal-stagger mt-12 columns-2 gap-4 space-y-4 sm:columns-3 lg:columns-4">
+                {visibleContents.map((item) => (
+                  <CollaborationContentCard
+                    key={`${item.position}-${item.contentUrl}`}
+                    item={item}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="reveal-on-scroll mt-12 rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+                Tidak ada konten kolaborasi yang cocok.
+              </div>
+            )}
+
+            {hasMoreContent ? (
+              <div className="reveal-on-scroll mt-10 flex justify-center">
                 <button
                   type="button"
                   onClick={() => setShowAllContent(true)}
-                  className="mb-8 rounded-full border border-white/20 bg-white/10 px-8 py-3 text-sm font-semibold text-white backdrop-blur-md transition-all hover:scale-105 hover:border-white/40 hover:bg-white/20"
+                  className="rounded-full border border-border bg-card px-8 py-3 text-sm font-semibold transition-all hover:scale-105 hover:border-palembang-red hover:text-palembang-red"
                 >
                   Tampilkan Semua Konten
                 </button>
               </div>
             ) : null}
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </>

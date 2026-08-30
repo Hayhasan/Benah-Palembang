@@ -7,12 +7,14 @@ import {
   Loader2,
   Plus,
   Save,
+  Search,
   Trash2,
   Users,
 } from "lucide-react"
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -23,13 +25,6 @@ import { toast } from "sonner"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
 import { updateAgendaPageAction } from "../actions/update-agenda-page"
@@ -42,6 +37,7 @@ import type { ArticleCategoryPagesEditorData } from "../types/article-category-p
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
 import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
 import type {
+  LandingArticlePinOption,
   LandingArticleSectionEditorData,
   LandingExploreItemEditorData,
   LandingHeroSlideEditorData,
@@ -166,12 +162,14 @@ export function ManageLandingPageForm({
   initialAgendaData,
   initialCollaborationData,
   initialHeaderFooterData,
+  articlePinOptions,
 }: {
   initialData: LandingPageEditorData
   initialArticleCategoryData: ArticleCategoryPagesEditorData
   initialAgendaData: AgendaPageEditorData
   initialCollaborationData: CollaborationPageEditorData
   initialHeaderFooterData: HeaderFooterContentEditorData
+  articlePinOptions: LandingArticlePinOption[]
 }) {
   const [activeTab, setActiveTab] = useState(tabs[0])
   const [data, setData] = useState(initialData)
@@ -185,6 +183,9 @@ export function ManageLandingPageForm({
   const [headerFooterData, setHeaderFooterData] = useState(
     initialHeaderFooterData,
   )
+  const [articlePinSearches, setArticlePinSearches] = useState<
+    Record<string, string>
+  >({})
   const [isPending, startTransition] = useTransition()
   const dataRef = useRef(data)
   const articleCategoryDataRef = useRef(articleCategoryData)
@@ -453,6 +454,39 @@ export function ManageLandingPageForm({
           : section,
       ),
     }))
+  }
+
+  const articlePinOptionsById = useMemo(
+    () => new Map(articlePinOptions.map((article) => [article.id, article])),
+    [articlePinOptions],
+  )
+
+  const addArticlePin = (sectionClientKey: string, articleId: number) => {
+    changeData((current) => ({
+      ...current,
+      articleSections: current.articleSections.map((section) =>
+        section.clientKey === sectionClientKey &&
+        section.pinnedArticleIds.length < 3 &&
+        !section.pinnedArticleIds.includes(articleId)
+          ? {
+              ...section,
+              pinnedArticleIds: [...section.pinnedArticleIds, articleId],
+            }
+          : section,
+      ),
+    }))
+    setArticlePinSearches((current) => ({
+      ...current,
+      [sectionClientKey]: "",
+    }))
+  }
+
+  const removeArticlePin = (sectionClientKey: string, articleId: number) => {
+    updateArticleSection(sectionClientKey, {
+      pinnedArticleIds: dataRef.current.articleSections
+        .find((section) => section.clientKey === sectionClientKey)
+        ?.pinnedArticleIds.filter((id) => id !== articleId) ?? [],
+    })
   }
 
   const updateTeamMember = (
@@ -1034,60 +1068,130 @@ export function ManageLandingPageForm({
                       />
                     </Field>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <Field label="Tema">
-                      <Select
-                        value={section.theme}
-                        onValueChange={(
-                          theme: LandingArticleSectionEditorData["theme"],
-                        ) =>
-                          updateArticleSection(section.clientKey, { theme })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="DEFAULT">Default</SelectItem>
-                          <SelectItem value="RED">Merah</SelectItem>
-                          <SelectItem value="OFF_WHITE">Off White</SelectItem>
-                          <SelectItem value="DARK">Gelap</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    <Field label="Layout">
-                      <Select
-                        value={section.layout}
-                        onValueChange={(
-                          layout: LandingArticleSectionEditorData["layout"],
-                        ) =>
-                          updateArticleSection(section.clientKey, { layout })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="STANDARD">Standard</SelectItem>
-                          <SelectItem value="FEATURED_FIRST">
-                            Featured First
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    <Field label="Maks. Artikel">
-                      <Input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={section.maxItems}
-                        onChange={(event) =>
-                          updateArticleSection(section.clientKey, {
-                            maxItems: Number(event.target.value),
-                          })
-                        }
-                      />
-                    </Field>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Pin Postingan Artikel (Maks. 3)
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {section.pinnedArticleIds.length}/3
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {section.pinnedArticleIds.length === 0 ? (
+                        <div className="rounded-lg border border-dashed px-4 py-5 text-center text-sm text-muted-foreground">
+                          Belum ada artikel yang dipin pada section ini.
+                        </div>
+                      ) : null}
+                      {section.pinnedArticleIds.map((articleId, index) => {
+                        const article = articlePinOptionsById.get(articleId)
+                        return (
+                          <div
+                            key={articleId}
+                            className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
+                          >
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-palembang-red text-xs font-bold text-white">
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">
+                                {article?.title ?? `Artikel #${articleId}`}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {article
+                                  ? `${article.publishedAtLabel} · /artikel/${article.slug}`
+                                  : "Data artikel tidak lagi tersedia"}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                              onClick={() =>
+                                removeArticlePin(section.clientKey, articleId)
+                              }
+                              aria-label={`Hapus pin ${article?.title ?? articleId}`}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {section.pinnedArticleIds.length < 3 ? (
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
+                        <Input
+                          value={articlePinSearches[section.clientKey] ?? ""}
+                          onChange={(event) =>
+                            setArticlePinSearches((current) => ({
+                              ...current,
+                              [section.clientKey]: event.target.value,
+                            }))
+                          }
+                          className="pl-9"
+                          placeholder="Cari artikel untuk dipin..."
+                        />
+                        {(articlePinSearches[section.clientKey] ?? "").trim() ? (
+                          <div className="absolute left-0 top-full z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-background p-1 shadow-xl">
+                            {articlePinOptions
+                              .filter(
+                                (article) =>
+                                  article.isAvailable &&
+                                  article.sectionKey === section.sectionKey &&
+                                  !section.pinnedArticleIds.includes(article.id) &&
+                                  `${article.title} ${article.slug}`
+                                    .toLowerCase()
+                                    .includes(
+                                      articlePinSearches[section.clientKey]
+                                        .trim()
+                                        .toLowerCase(),
+                                    ),
+                              )
+                              .slice(0, 8)
+                              .map((article) => (
+                                <button
+                                  key={article.id}
+                                  type="button"
+                                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
+                                  onClick={() =>
+                                    addArticlePin(section.clientKey, article.id)
+                                  }
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium">
+                                      {article.title}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {article.publishedAtLabel}
+                                    </p>
+                                  </div>
+                                  <Plus className="size-4 shrink-0 text-palembang-red" />
+                                </button>
+                              ))}
+                            {articlePinOptions.filter(
+                              (article) =>
+                                article.sectionKey === section.sectionKey &&
+                                !section.pinnedArticleIds.includes(article.id) &&
+                                `${article.title} ${article.slug}`
+                                  .toLowerCase()
+                                  .includes(
+                                    articlePinSearches[section.clientKey]
+                                      .trim()
+                                      .toLowerCase(),
+                                  ),
+                            ).length === 0 ? (
+                              <p className="px-3 py-4 text-center text-sm text-muted-foreground">
+                                Artikel published tidak ditemukan.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </SectionCard>
               )
@@ -1245,8 +1349,23 @@ export function ManageLandingPageForm({
 
             <SectionCard
               title="Section CTA"
-              desc="Konfigurasi call-to-action di bagian bawah homepage."
+              desc="Konfigurasi call-to-action dan kontak email di bagian bawah homepage."
             >
+              <Field label="Background CTA">
+                <div className="max-w-xl">
+                  <ImageUpload
+                    value={data.cta.backgroundImageUrl}
+                    onChange={(backgroundImageUrl) =>
+                      changeData((current) => ({
+                        ...current,
+                        cta: { ...current.cta, backgroundImageUrl },
+                      }))
+                    }
+                    placeholder="Background CTA"
+                    aspect={16 / 9}
+                  />
+                </div>
+              </Field>
               <Field label="Tagline">
                 <Input
                   value={data.cta.eyebrow}
@@ -1258,15 +1377,16 @@ export function ManageLandingPageForm({
                   }
                 />
               </Field>
-              <Field label="Judul">
-                <Input
+              <Field label="Judul (baris pertama putih, baris berikutnya merah)">
+                <Textarea
                   value={data.cta.title}
-                  onChange={(event) =>
+                  onChange={(title) =>
                     changeData((current) => ({
                       ...current,
-                      cta: { ...current.cta, title: event.target.value },
+                      cta: { ...current.cta, title },
                     }))
                   }
+                  placeholder={"Kota ini milik\nkita semua."}
                 />
               </Field>
               <Field label="Deskripsi">
@@ -1306,6 +1426,39 @@ export function ManageLandingPageForm({
                   placeholder="/kolaborasi"
                 />
               </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Label Kontak">
+                  <Input
+                    value={data.cta.contactLabel}
+                    onChange={(event) =>
+                      changeData((current) => ({
+                        ...current,
+                        cta: {
+                          ...current.cta,
+                          contactLabel: event.target.value,
+                        },
+                      }))
+                    }
+                    placeholder="Hubungi Kami"
+                  />
+                </Field>
+                <Field label="Email Kontak">
+                  <Input
+                    type="email"
+                    value={data.cta.contactEmail}
+                    onChange={(event) =>
+                      changeData((current) => ({
+                        ...current,
+                        cta: {
+                          ...current.cta,
+                          contactEmail: event.target.value,
+                        },
+                      }))
+                    }
+                    placeholder="kolaborasi@benahpalembang.id"
+                  />
+                </Field>
+              </div>
             </SectionCard>
           </div>
         ) : null}

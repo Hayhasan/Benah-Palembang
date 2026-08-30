@@ -5,7 +5,16 @@ export type CollaborationPlatform =
   | "facebook"
   | "x"
 
-export type CollaborationAspectRatio = "9:16" | "4:5" | "16:9" | "1:1"
+export type CollaborationContentAspectRatio =
+  | "LANDSCAPE"
+  | "PORTRAIT"
+  | "SQUARE"
+
+export interface CollaborationContentPreviewData {
+  title: string
+  thumbnailUrl: string | null
+  aspectRatio: CollaborationContentAspectRatio
+}
 
 export interface CollaborationPartnerLogoData {
   name: string
@@ -16,10 +25,8 @@ export interface CollaborationPartnerLogoData {
 
 export interface CollaborationPartnerContentData {
   platform: CollaborationPlatform
-  title: string
-  thumbnailUrl: string
   contentUrl: string
-  aspectRatio: CollaborationAspectRatio
+  preview?: CollaborationContentPreviewData
   position: number
   isVisible: boolean
 }
@@ -29,7 +36,6 @@ export interface CollaborationPageData {
   hero: {
     imageUrl: string
     imageAlt: string
-    eyebrow: string
     title: string
     description: string
   }
@@ -38,10 +44,6 @@ export interface CollaborationPageData {
     phone: string
     emailUrl: string
     whatsappUrl: string
-  }
-  form: {
-    title: string
-    description: string
   }
   partnerLogos: CollaborationPartnerLogoData[]
   partnerContents: CollaborationPartnerContentData[]

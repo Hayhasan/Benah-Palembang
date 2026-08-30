@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight, Sparkles } from "lucide-react"
+import { ArrowRight, ArrowUpRight, Mail, Sparkles } from "lucide-react"
 
 import { PublicFooter } from "@/features/public/components/PublicFooter"
 import { SectionHeading } from "@/features/public/components/SectionHeading"
@@ -10,66 +10,22 @@ import type { LandingArticlesBySection } from "@/modules/article/types/public-ar
 import type {
   LandingArticleSectionData,
   LandingPageData,
-  WebsiteArticleSectionTheme,
 } from "../types/landing-page"
 import { LandingHero } from "./landing-hero"
 
 interface LandingPageProps {
   data: LandingPageData
   articlesBySection: LandingArticlesBySection
+  agendaCount: number
 }
 
-interface ThemeStyle {
-  background: string
-  gradientHorizontal: string
-  gradientVertical: string
-  link: string
-  buttonBorder: string
-  darkHeading: boolean
-}
-
-const themeStyles: Record<WebsiteArticleSectionTheme, ThemeStyle> = {
-  DEFAULT: {
-    background: "bg-background text-foreground",
-    gradientHorizontal: "from-background via-background/60",
-    gradientVertical: "from-background/40 via-transparent to-background",
-    link: "text-palembang-charcoal",
-    buttonBorder:
-      "border-palembang-charcoal group-hover:bg-palembang-charcoal group-hover:text-white",
-    darkHeading: false,
-  },
-  RED: {
-    background: "bg-palembang-red text-white",
-    gradientHorizontal: "from-palembang-red via-palembang-red/60",
-    gradientVertical:
-      "from-palembang-red/40 via-transparent to-palembang-red",
-    link: "text-white",
-    buttonBorder:
-      "border-white group-hover:bg-white group-hover:text-palembang-red",
-    darkHeading: true,
-  },
-  OFF_WHITE: {
-    background: "bg-palembang-off-white text-palembang-charcoal",
-    gradientHorizontal:
-      "from-palembang-off-white via-palembang-off-white/60",
-    gradientVertical:
-      "from-palembang-off-white/40 via-transparent to-palembang-off-white",
-    link: "text-palembang-charcoal",
-    buttonBorder:
-      "border-palembang-charcoal group-hover:bg-palembang-charcoal group-hover:text-white",
-    darkHeading: false,
-  },
-  DARK: {
-    background: "bg-palembang-charcoal text-white",
-    gradientHorizontal:
-      "from-palembang-charcoal via-palembang-charcoal/60",
-    gradientVertical:
-      "from-palembang-charcoal/40 via-transparent to-palembang-charcoal",
-    link: "text-palembang-gold",
-    buttonBorder:
-      "border-palembang-gold group-hover:bg-palembang-gold group-hover:text-palembang-charcoal",
-    darkHeading: true,
-  },
+const articleSectionStyle = {
+  background: "bg-background text-foreground",
+  gradientHorizontal: "from-background via-background/70",
+  gradientVertical: "from-background/40 via-transparent to-background",
+  link: "text-palembang-red",
+  buttonBorder:
+    "border-palembang-red text-palembang-red group-hover:bg-palembang-red group-hover:text-white",
 }
 
 function HighlightedTitle({ title }: { title: string }) {
@@ -96,19 +52,16 @@ function FeaturedArticleSection({
   section: LandingArticleSectionData
   articlesBySection: LandingArticlesBySection
 }) {
-  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(
-    0,
-    section.maxItems,
-  )
-  const style = themeStyles[section.theme]
+  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(0, 3)
+  const style = articleSectionStyle
 
   if (sectionArticles.length === 0) return null
 
   return (
     <section
-      className={`relative overflow-hidden px-6 py-24 sm:px-10 lg:px-16 lg:py-32 ${style.background}`}
+      className={`reveal-on-scroll relative overflow-hidden px-6 py-24 sm:px-10 lg:px-16 lg:py-32 ${style.background}`}
     >
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-15 sm:w-2/3 lg:w-1/2 lg:opacity-25">
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-10 sm:w-2/3 lg:w-1/2 lg:opacity-20 dark:opacity-20 dark:lg:opacity-30">
         <Image
           fill
           src={section.backgroundImageUrl}
@@ -128,20 +81,17 @@ function FeaturedArticleSection({
           eyebrow={section.eyebrow}
           title={section.title}
           description={section.description}
-          dark={style.darkHeading}
         />
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
+        <div className="reveal-stagger mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
           {sectionArticles.map((article, index) => (
             <PublicArticleCard
               key={article.id}
               article={article}
-              featured={
-                section.layout === "FEATURED_FIRST" && index === 0
-              }
+              featured={index === 0}
             />
           ))}
         </div>
-        <div className="mt-12 flex justify-end">
+        <div className="reveal-on-scroll mt-12 flex justify-end">
           <Link
             href={`/${section.articleCategorySlug}`}
             className={`group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] ${style.link}`}
@@ -166,19 +116,16 @@ function CategoryArticleSection({
   section: LandingArticleSectionData
   articlesBySection: LandingArticlesBySection
 }) {
-  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(
-    0,
-    section.maxItems,
-  )
-  const style = themeStyles[section.theme]
+  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(0, 3)
+  const style = articleSectionStyle
 
   if (sectionArticles.length === 0) return null
 
   return (
     <section
-      className={`relative overflow-hidden px-6 py-24 sm:px-10 lg:px-16 lg:py-32 ${style.background}`}
+      className={`reveal-on-scroll relative overflow-hidden px-6 py-24 sm:px-10 lg:px-16 lg:py-32 ${style.background}`}
     >
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-25 sm:w-2/3 lg:w-1/2 lg:opacity-35">
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-10 sm:w-2/3 lg:w-1/2 lg:opacity-20 dark:opacity-20 dark:lg:opacity-30">
         <Image
           fill
           src={section.backgroundImageUrl}
@@ -199,7 +146,6 @@ function CategoryArticleSection({
             eyebrow={section.eyebrow}
             title={section.title}
             description={section.description}
-            dark={style.darkHeading}
           />
           <Link
             href={`/${section.articleCategorySlug}`}
@@ -213,18 +159,16 @@ function CategoryArticleSection({
             </span>
           </Link>
         </div>
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
+        <div className="reveal-stagger mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
           {sectionArticles.map((article, index) => (
             <PublicArticleCard
               key={article.id}
               article={article}
-              featured={
-                section.layout === "FEATURED_FIRST" && index === 0
-              }
+              featured={index === 0}
             />
           ))}
         </div>
-        <div className="mt-12 flex justify-end md:hidden">
+        <div className="reveal-on-scroll mt-12 flex justify-end md:hidden">
           <Link
             href={`/${section.articleCategorySlug}`}
             className={`group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] ${style.link}`}
@@ -267,34 +211,90 @@ function LandingArticleSection({
 }
 
 function LandingCta({ data }: { data: LandingPageData["cta"] }) {
+  const titleLines = data.title
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+
   return (
-    <section className="bg-palembang-red px-6 py-24 text-white sm:px-10 lg:px-16 lg:py-32">
-      <div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-12 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
-            {data.eyebrow}
-          </p>
-          <h2 className="mt-5 max-w-3xl whitespace-pre-line font-display text-5xl font-black leading-[0.92] tracking-[-0.06em] sm:text-7xl">
-            {data.title}
-          </h2>
-        </div>
-        <div className="max-w-sm">
-          <p className="text-sm leading-7 text-white/75">{data.description}</p>
-          <Link
-            href={data.buttonUrl}
-            className="mt-7 flex w-fit items-center gap-3 rounded-full bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-palembang-charcoal transition-transform hover:-translate-y-1"
-          >
-            {data.buttonLabel} <ArrowRight className="size-4" />
-          </Link>
+    <section className="reveal-on-scroll relative overflow-hidden bg-background px-6 py-20 text-foreground sm:px-10 lg:px-16 lg:py-28">
+      <div className="mx-auto max-w-[1240px]">
+        <div className="reveal-scale relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-zinc-900 via-black/85 to-zinc-950 p-8 text-white shadow-2xl sm:p-14 lg:p-16">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-25 sm:w-2/3 lg:w-1/2 lg:opacity-35">
+            <Image
+              fill
+              src={data.backgroundImageUrl}
+              alt=""
+              sizes="(max-width: 640px) 100vw, 50vw"
+              className="size-full object-cover object-right"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-transparent to-zinc-950" />
+          </div>
+          <div className="relative z-10 flex flex-col justify-between gap-10 lg:flex-row lg:items-end">
+            <div>
+              <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
+                <span className="size-2 rounded-full bg-palembang-red" />
+                {data.eyebrow}
+              </div>
+              <h2 className="mt-4 max-w-2xl font-display text-4xl font-black leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+                {titleLines.map((line, index) => (
+                  <span
+                    key={`${index}-${line}`}
+                    className={`block ${index === 0 ? "text-white" : "text-palembang-red"}`}
+                  >
+                    {line}
+                  </span>
+                ))}
+              </h2>
+            </div>
+            <div className="max-w-md">
+              <p className="text-sm leading-relaxed text-white/75 sm:text-base">
+                {data.description}
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Link
+                  href={data.buttonUrl}
+                  className="flex items-center gap-3 rounded-full bg-palembang-red px-7 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-palembang-charcoal"
+                >
+                  {data.buttonLabel} <ArrowRight className="size-4" />
+                </Link>
+                <a
+                  href={`mailto:${data.contactEmail}`}
+                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3.5 text-xs font-semibold text-white/80 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white"
+                >
+                  <Mail className="size-4 text-palembang-red" />
+                  {data.contactLabel}
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-export function LandingPage({ data, articlesBySection }: LandingPageProps) {
+export function LandingPage({
+  data,
+  articlesBySection,
+  agendaCount,
+}: LandingPageProps) {
   const heroSlides = data.heroSlides.filter((slide) => slide.isVisible)
   const exploreItems = data.explore.items.filter((item) => item.isVisible)
+  const categoryShortcuts = exploreItems
+    .filter((item) => item.linkUrl !== "/agenda")
+    .slice(0, 5)
+  const agendaShortcut = {
+    ...(exploreItems.find((item) => item.linkUrl === "/agenda") ?? {
+      label: "Agenda Kota",
+      linkUrl: "/agenda",
+      position: categoryShortcuts.length + 1,
+      isVisible: true,
+    }),
+    storyCount: agendaCount,
+  }
+  const perspectives = [...categoryShortcuts, agendaShortcut]
   const articleSections = data.articleSections.filter(
     (section) => section.isVisible,
   )
@@ -303,10 +303,10 @@ export function LandingPage({ data, articlesBySection }: LandingPageProps) {
   return (
     <>
       <LandingHero slides={heroSlides} />
-      <main>
-        <section className="px-6 py-24 sm:px-10 lg:px-16 lg:py-36">
+      <main className="bg-background text-foreground">
+        <section className="reveal-on-scroll bg-background px-6 py-24 text-foreground sm:px-10 lg:px-16 lg:py-36">
           <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[0.75fr_1.7fr]">
-            <div>
+            <div className="reveal-slide-left">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-palembang-red">
                 {data.about.eyebrow}
               </p>
@@ -315,7 +315,7 @@ export function LandingPage({ data, articlesBySection }: LandingPageProps) {
                 {data.about.establishedText}
               </p>
             </div>
-            <div>
+            <div className="reveal-on-scroll reveal-delay-150">
               <h2 className="max-w-4xl font-display text-4xl font-bold leading-[1.05] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
                 <HighlightedTitle title={data.about.title} />
               </h2>
@@ -332,33 +332,35 @@ export function LandingPage({ data, articlesBySection }: LandingPageProps) {
           </div>
         </section>
 
-        {exploreItems.length > 0 ? (
-          <section className="px-6 py-24 sm:px-10 lg:px-16 lg:py-32">
+        {perspectives.length > 0 ? (
+          <section className="reveal-on-scroll bg-background px-6 py-24 text-foreground sm:px-10 lg:px-16 lg:py-32">
             <div className="mx-auto max-w-[1240px]">
               <SectionHeading
                 eyebrow={data.explore.eyebrow}
                 title={data.explore.title}
               />
-              <div className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-[1.5rem] bg-border sm:grid-cols-2 lg:grid-cols-5">
-                {exploreItems.map((item, index) => (
+              <div className="reveal-stagger mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-[1.5rem] border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
+                {perspectives.map((item, index) => (
                   <Link
                     key={`${item.position}-${item.linkUrl}`}
                     href={item.linkUrl}
-                    className="group relative min-h-48 overflow-hidden bg-background p-4 transition-colors hover:bg-palembang-charcoal hover:text-white sm:min-h-64 sm:p-6"
+                    className="group relative min-h-48 overflow-hidden bg-card p-4 text-foreground transition-colors hover:bg-muted sm:min-h-64 sm:p-6"
                   >
                     <div className="flex h-full flex-col justify-between">
                       <div>
                         <span className="font-display text-3xl text-palembang-red sm:text-5xl">
                           {String(index + 1).padStart(2, "0")}
                         </span>
-                        <h3 className="mt-3 font-display text-lg font-bold leading-tight sm:mt-5 sm:text-2xl">
+                        <h3 className="mt-3 font-display text-lg font-bold leading-tight transition-colors group-hover:text-palembang-red sm:mt-5 sm:text-2xl">
                           {item.label}
                         </h3>
                       </div>
-                      <span className="mt-4 flex flex-col justify-between text-[10px] uppercase tracking-[0.13em] text-muted-foreground group-hover:text-white/70 sm:mt-0 sm:flex-row sm:items-center sm:text-xs">
+                      <span className="mt-4 flex flex-col justify-between text-[10px] uppercase tracking-[0.13em] text-muted-foreground group-hover:text-foreground sm:mt-0 sm:flex-row sm:items-center sm:text-xs">
                         <span>
-                          {item.storyCount === null
-                            ? "Stories"
+                          {item.linkUrl === "/agenda"
+                            ? `${item.storyCount ?? 0} Agenda`
+                            : item.storyCount === null
+                              ? "Stories"
                             : `${item.storyCount} stories`}
                         </span>
                         <ArrowUpRight className="mt-1 size-4 text-palembang-red transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 sm:mt-0 sm:size-5" />
@@ -371,39 +373,30 @@ export function LandingPage({ data, articlesBySection }: LandingPageProps) {
           </section>
         ) : null}
 
-        {articleSections.map((section, index) => (
-          <div
+        {articleSections.map((section) => (
+          <LandingArticleSection
             key={section.sectionKey}
-            className="sticky top-0"
-            style={{ zIndex: index === 0 ? 10 : 19 + index }}
-          >
-            <LandingArticleSection
-              section={section}
-              articlesBySection={articlesBySection}
-            />
-          </div>
+            section={section}
+            articlesBySection={articlesBySection}
+          />
         ))}
 
-        <div
-          className="relative"
-          style={{ zIndex: 19 + articleSections.length }}
-        >
+        <div>
           {teamMembers.length > 0 ? (
-            <section className="bg-palembang-charcoal px-6 py-24 text-white sm:px-10 lg:px-16 lg:py-32">
+            <section className="reveal-on-scroll bg-background px-6 py-24 text-foreground sm:px-10 lg:px-16 lg:py-32">
               <div className="mx-auto max-w-[1240px]">
                 <SectionHeading
-                  dark
                   eyebrow={data.team.eyebrow}
                   title={data.team.title}
                   description={data.team.description}
                 />
-                <div className="mt-10 grid grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+                <div className="reveal-stagger mt-10 grid grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
                   {teamMembers.map((member) => (
                     <div
                       key={`${member.position}-${member.name}`}
-                      className="group"
+                      className="group rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-md"
                     >
-                      <div className="img-zoom relative aspect-[4/5] overflow-hidden rounded-xl bg-white/10 sm:rounded-[1.25rem]">
+                      <div className="img-zoom relative aspect-[4/5] overflow-hidden rounded-xl border border-border/50 bg-muted">
                         <Image
                           fill
                           src={member.imageUrl}
@@ -415,10 +408,10 @@ export function LandingPage({ data, articlesBySection }: LandingPageProps) {
                       <p className="mt-3 font-display text-lg font-bold sm:mt-5 sm:text-2xl">
                         {member.name}
                       </p>
-                      <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.16em] text-palembang-gold sm:text-[10px]">
+                      <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.16em] text-palembang-red sm:text-[10px]">
                         {member.role}
                       </p>
-                      <p className="mt-2 line-clamp-3 text-xs leading-5 text-white/55 sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">
+                      <p className="mt-2 line-clamp-3 text-xs leading-5 text-muted-foreground sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">
                         {member.bio}
                       </p>
                     </div>

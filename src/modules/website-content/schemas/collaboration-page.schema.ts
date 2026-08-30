@@ -52,10 +52,10 @@ const partnerLogoSchema = z.object({
 const partnerContentSchema = z.object({
   ...editorRecordSchema,
   platform: z.enum(["youtube", "instagram", "tiktok", "facebook", "x"]),
-  title: requiredText("Judul konten", 255),
-  thumbnailUrl: imageUrlSchema,
-  contentUrl: optionalContentUrlSchema,
-  aspectRatio: z.enum(["9:16", "4:5", "16:9", "1:1"]),
+  contentUrl: optionalContentUrlSchema.refine(
+    (value) => value.length > 0,
+    "URL konten wajib diisi.",
+  ),
   position: z.number().int().positive(),
   isVisible: z.boolean(),
 })
@@ -66,7 +66,6 @@ export const collaborationPageEditorSchema = z
     hero: z.object({
       imageUrl: imageUrlSchema,
       imageAlt: requiredText("Alt gambar hero", 255),
-      eyebrow: requiredText("Tagline hero", 160),
       title: requiredText("Judul hero", 255),
       description: requiredText("Deskripsi hero", 5000),
     }),
@@ -79,10 +78,6 @@ export const collaborationPageEditorSchema = z
       phone: requiredText("Nomor WhatsApp", 50),
       emailUrl: actionUrlSchema,
       whatsappUrl: actionUrlSchema,
-    }),
-    form: z.object({
-      title: requiredText("Judul form", 255),
-      description: requiredText("Deskripsi form", 5000),
     }),
     partnerLogos: z.array(partnerLogoSchema).max(50),
     partnerContents: z.array(partnerContentSchema).max(100),

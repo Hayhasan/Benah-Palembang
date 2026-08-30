@@ -50,12 +50,15 @@ Peran pengelola operasional konten dan tampilan situs:
 
 ### 2.3. `USER` (Kreator Konten & Komunitas)
 Peran pengguna reguler / kreator komunitas:
+- Mengakses **Overview** yang dibatasi pada total publikasi, views, dan
+  interaksi dari Article/Event published miliknya sendiri.
 - Membuat, mengedit, melihat pratinjau, dan mengajukan artikel miliknya sendiri (*Create Article*).
 - Membuat, mengedit, melihat pratinjau, dan mengajukan agenda acara miliknya sendiri (*Create Event*).
 - Mengelola profil personal, foto avatar, banner sampul, dan informasi kontak miliknya sendiri (*Profile*).
 - Menggunakan fitur interaksi publik yang memerlukan login (memberikan Like pada artikel/event dan mengirim/menghapus komentar pada artikel).
-- **Dilarang Mengakses:** **Overview**, **Manage Website**, **Manage Account**, **Manage Content**, dan **Log Activities**.
-- **Default Landing Page:** Ketika login atau membuka URL root dashboard (`/dashboard`), pengguna dengan peran `USER` secara otomatis dialihkan ke **`/dashboard/create-article`**.
+- **Dilarang Mengakses:** **Manage Website**, **Manage Account**, **Manage Content**, dan **Log Activities**.
+- **Default Landing Page:** Seluruh role, termasuk `USER`, diarahkan ke
+  **`/dashboard`** setelah login.
 
 ---
 
@@ -65,24 +68,25 @@ Peran pengguna reguler / kreator komunitas:
 
 | No | Modul / Halaman | Path Route Canonical | `SUPERADMIN` | `ADMIN` | `USER` | Guard Server Component |
 | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **1** | **Dashboard Root / Overview** | `/dashboard` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **1** | **Dashboard Root / Overview** | `/dashboard` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
 | **2** | **Manage Website** | `/dashboard/website` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
 | **3** | **Manage Account (User)** | `/dashboard/account/user` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
 | **4** | **Manage Account (Admin)** | `/dashboard/account/admin` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
 | **5** | **Account Detail** | `/dashboard/account/[role]/[id]` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
-| **6** | **Manage Content** | `/dashboard/content` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
-| **7** | **Moderation Article Preview** | `/dashboard/content/[id]/article` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
-| **8** | **Moderation Event Preview** | `/dashboard/content/[id]/event` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
-| **9** | **Create Article (List)** | `/dashboard/create-article` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
-| **10** | **Create Article (New Form)** | `/dashboard/create-article/new` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
-| **11** | **Create Article (Edit Form)** | `/dashboard/create-article/edit?id=...` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
-| **12** | **Create Article (Author Preview)** | `/dashboard/create-article/preview/[id]` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
-| **13** | **Create Event (List)** | `/dashboard/create-event` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
-| **14** | **Create Event (New Form)** | `/dashboard/create-event/new` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
-| **15** | **Create Event (Edit Form)** | `/dashboard/create-event/edit?id=...` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
-| **16** | **Create Event (Author Preview)** | `/dashboard/create-event/preview/[id]` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
-| **17** | **Log Activities** | `/dashboard/logs` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
-| **18** | **Profile** | `/dashboard/profile` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
+| **6** | **Manage Content Article** | `/dashboard/content/article` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **7** | **Manage Content Event** | `/dashboard/content/event` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **8** | **Moderation Article Preview** | `/dashboard/content/article/[id]` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **9** | **Moderation Event Preview** | `/dashboard/content/event/[id]` | ✅ Ya | ✅ Ya | ❌ *Redirect* | `requireRole(["ADMIN", "SUPERADMIN"])` |
+| **10** | **Create Article (List)** | `/dashboard/create-article` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
+| **11** | **Create Article (New Form)** | `/dashboard/create-article/new` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
+| **12** | **Create Article (Edit Form)** | `/dashboard/create-article/edit?id=...` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
+| **13** | **Create Article (Author Preview)** | `/dashboard/create-article/preview/[id]` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
+| **14** | **Create Event (List)** | `/dashboard/create-event` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
+| **15** | **Create Event (New Form)** | `/dashboard/create-event/new` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
+| **16** | **Create Event (Edit Form)** | `/dashboard/create-event/edit?id=...` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
+| **17** | **Create Event (Author Preview)** | `/dashboard/create-event/preview/[id]` | ✅ Ya* | ✅ Ya* | ✅ Ya* | `requireCurrentUser()` + *Owner check* |
+| **18** | **Log Activities** | `/dashboard/logs` | ✅ Ya | ❌ *Redirect* | ❌ *Redirect* | `requireRole(["SUPERADMIN"])` |
+| **19** | **Profile** | `/dashboard/profile` | ✅ Ya | ✅ Ya | ✅ Ya | `requireCurrentUser()` |
 
 *\*Catatan Akses Bertanda Bintang (\*): Akses diberikan kepada seluruh peran yang login, namun dibatasi secara ketat hanya untuk konten yang dimiliki oleh pengguna tersebut (`authorId === actor.id` atau `ownerId === actor.id`). Percobaan mengakses ID milik pengguna lain akan menghasilkan `notFound()`.*
 
@@ -94,6 +98,7 @@ Fungsi query server-only yang bertugas mengambil data dari database PostgreSQL w
 
 | Modul Domain | Fungsi DAL Server-Only | Guard Otorisasi | Keterangan Scoping & Keamanan |
 | :--- | :--- | :--- | :--- |
+| **Overview** | `getOverviewData()` | `requireCurrentUser()` | `USER` menerima agregat Article/Event published miliknya; `ADMIN` dan `SUPERADMIN` menerima agregat platform serta antrean moderasi. |
 | **Website Content** | `getLandingPageEditor()` | `requireRole(["ADMIN", "SUPERADMIN"])` | Membaca draft dan konfigurasi editor Landing Page. |
 | | `getArticleCategoryPageEditor()` | `requireRole(["ADMIN", "SUPERADMIN"])` | Membaca konfigurasi hero kategori artikel. |
 | | `getAgendaPageEditor()` | `requireRole(["ADMIN", "SUPERADMIN"])` | Membaca konfigurasi hero halaman agenda. |
@@ -101,7 +106,7 @@ Fungsi query server-only yang bertugas mengambil data dari database PostgreSQL w
 | | `getHeaderFooterContentEditor()` | `requireRole(["ADMIN", "SUPERADMIN"])` | Membaca konfigurasi global header & footer. |
 | **Account Manage** | `getManagedAccounts()` | `requireRole(["SUPERADMIN"])` | Mengambil daftar akun dengan pagination & filter role. |
 | | `getManagedAccount()` | `requireRole(["SUPERADMIN"])` | Mengambil detail akun lengkap berdasarkan UUID. |
-| **Manage Content** | `getManagedContent()` | `requireRole(["ADMIN", "SUPERADMIN"])` | Mengambil artikel & event berstatus non-draft untuk moderasi. |
+| **Manage Content** | `getManagedContent(type)` | `requireRole(["ADMIN", "SUPERADMIN"])` | Mengambil Article atau Event non-draft sesuai route moderasi aktif. |
 | | `getManagedArticle(id)` | `requireRole(["ADMIN", "SUPERADMIN"])` | Mengambil detail artikel untuk pratinjau moderator. |
 | | `getManagedEvent(id)` | `requireRole(["ADMIN", "SUPERADMIN"])` | Mengambil detail event untuk pratinjau moderator. |
 | **Article (Owner)** | `getOwnedArticles()` | `requireCurrentUser()` | Query difilter ketat `where: { authorId: actor.id, deletedAt: null }`. |
@@ -166,17 +171,11 @@ Ketika pengguna mencoba mengakses halaman yang tidak sesuai dengan hak aksesnya,
             │ ?reason=session-required      │    TIDAK        YA
             └───────────────────────────────┘     /            \
                                                  /          Render Halaman
-                 ┌──────────────────────────────┴──────────────────────────────┐
-                 │                                                             │
-           Role = USER?                                                  Role = ADMIN?
-           (Mencoba akses Overview, Website,                             (Mencoba akses Account,
-            Account, Content, Logs)                                       Logs)
-                 │                                                             │
-                 ▼                                                             ▼
-  ┌───────────────────────────────┐                             ┌───────────────────────────────┐
-  │ Redirect:                     │                             │ Redirect:                     │
-  │ /dashboard/create-article     │                             │ /dashboard                    │
-  └───────────────────────────────┘                             └───────────────────────────────┘
+                                                 │
+                                                 ▼
+                                  ┌───────────────────────────────┐
+                                  │ Redirect: /dashboard          │
+                                  └───────────────────────────────┘
 ```
 
 ### 4.1. Implementasi Helper Guard Canonical
@@ -187,10 +186,7 @@ export async function requireRole(roles: AuthRole[]) {
   const user = await getCurrentUser()
   if (!user) redirect("/login?reason=session-invalid")
   
-  if (!roles.includes(user.role)) {
-    // Pengalihan cerdas sesuai peran pengguna
-    redirect(user.role === "USER" ? "/dashboard/create-article" : "/dashboard")
-  }
+  if (!roles.includes(user.role)) redirect("/dashboard")
 
   await scheduleActivityTouch(user.id)
   return user
@@ -222,7 +218,7 @@ stateDiagram-v2
 
 ### Aturan Alur Konten:
 1. **Kreasi Mandiri:** Ketika `ADMIN` atau `SUPERADMIN` membuat artikel/event dari menu *Create Article* / *Create Event*, konten berstatus awal `DRAFT` dan diajukan menjadi `PENDING_REVIEW`.
-2. **Pemisahan Peran Kreator vs Moderator:** Persetujuan penayangan publik dilakukan secara objektif melalui modul **Manage Content** (`/dashboard/content`).
+2. **Pemisahan Peran Kreator vs Moderator:** Persetujuan penayangan publik dilakukan secara objektif melalui modul **Manage Content** (`/dashboard/content/article` dan `/dashboard/content/event`).
 3. **Audit Trail Moderasi:** Setiap perubahan status moderasi dicatat bersama identitas actor peninjau ke central activity log.
 
 ---
@@ -255,7 +251,7 @@ Komponen navigasi [`Sidebar.tsx`](file:///Users/lanstheprodigy/Data/project/bena
 
 ```ts
 const menuItems = [
-  { title: "Overview", icon: LayoutDashboard, path: "/dashboard", roles: ["SUPERADMIN", "ADMIN"] },
+  { title: "Overview", icon: LayoutDashboard, path: "/dashboard", roles: ["SUPERADMIN", "ADMIN", "USER"] },
   { title: "Manage Website", icon: Monitor, path: "/dashboard/website", roles: ["SUPERADMIN", "ADMIN"] },
   { 
     title: "Manage Account", icon: Users, path: "/dashboard/account", roles: ["SUPERADMIN"],
@@ -264,7 +260,16 @@ const menuItems = [
       { title: "Admin", path: "/dashboard/account/admin" }
     ]
   },
-  { title: "Manage Content", icon: FileText, path: "/dashboard/content", roles: ["SUPERADMIN", "ADMIN"] },
+  {
+    title: "Manage Content",
+    icon: FileText,
+    path: "/dashboard/content",
+    roles: ["SUPERADMIN", "ADMIN"],
+    subItems: [
+      { title: "Article", path: "/dashboard/content/article" },
+      { title: "Event", path: "/dashboard/content/event" },
+    ],
+  },
   { title: "Create Article", icon: PenTool, path: "/dashboard/create-article", roles: ["SUPERADMIN", "ADMIN", "USER"] },
   { title: "Create Event", icon: CalendarPlus, path: "/dashboard/create-event", roles: ["SUPERADMIN", "ADMIN", "USER"] },
   { title: "Log Activities", icon: Activity, path: "/dashboard/logs", roles: ["SUPERADMIN"] },
@@ -281,13 +286,14 @@ const filteredMenu = menuItems.filter(item => item.roles.includes(user.role))
 Sebelum fitur otorisasi dianggap selesai, lakukan verifikasi skenario berikut:
 
 ### Skenario Pengujian `USER`:
-- [ ] Login sebagai `USER` (`user@example.com`), diarahkan langsung ke `/dashboard/create-article`.
-- [ ] Sidebar hanya menampilkan: **Create Article**, **Create Event**, dan **Profile**.
-- [ ] Mencoba membuka `/dashboard` (Overview) $\rightarrow$ dialihkan (*redirect*) ke `/dashboard/create-article`.
-- [ ] Mencoba membuka `/dashboard/website` $\rightarrow$ dialihkan ke `/dashboard/create-article`.
-- [ ] Mencoba membuka `/dashboard/content` $\rightarrow$ dialihkan ke `/dashboard/create-article`.
-- [ ] Mencoba membuka `/dashboard/account/user` $\rightarrow$ dialihkan ke `/dashboard/create-article`.
-- [ ] Mencoba membuka `/dashboard/logs` $\rightarrow$ dialihkan ke `/dashboard/create-article`.
+- [ ] Login sebagai `USER` (`user@example.com`), diarahkan langsung ke `/dashboard`.
+- [ ] Sidebar menampilkan: **Overview**, **Create Article**, **Create Event**, dan **Profile**.
+- [ ] Overview hanya menampilkan total publikasi, views, dan interaksi dari konten published milik user tersebut.
+- [ ] Mencoba membuka `/dashboard/website` $\rightarrow$ dialihkan ke `/dashboard`.
+- [ ] Mencoba membuka `/dashboard/content/article` atau
+  `/dashboard/content/event` $\rightarrow$ dialihkan ke `/dashboard`.
+- [ ] Mencoba membuka `/dashboard/account/user` $\rightarrow$ dialihkan ke `/dashboard`.
+- [ ] Mencoba membuka `/dashboard/logs` $\rightarrow$ dialihkan ke `/dashboard`.
 - [ ] Mencoba membuka artikel milik user lain di `/dashboard/create-article/edit?id=...` $\rightarrow$ menghasilkan `notFound()`.
 - [ ] Membuka `/dashboard/create-article` dan `/dashboard/create-event` untuk mengelola konten milik sendiri $\rightarrow$ berhasil.
 
@@ -297,7 +303,10 @@ Sebelum fitur otorisasi dianggap selesai, lakukan verifikasi skenario berikut:
 - [ ] Sidebar **tidak** menampilkan: **Manage Account** dan **Log Activities**.
 - [ ] Mencoba membuka `/dashboard/account/user` atau `/dashboard/account/admin` $\rightarrow$ dialihkan ke `/dashboard`.
 - [ ] Mencoba membuka `/dashboard/logs` $\rightarrow$ dialihkan ke `/dashboard`.
-- [ ] Mengakses `/dashboard/content` dan membuka `/dashboard/content/[id]/article` atau `/dashboard/content/[id]/event` $\rightarrow$ tombol moderasi (*Approve*, *Reject*, *Takedown*, *Restore*) berfungsi sempurna.
+- [ ] Mengakses `/dashboard/content/article` atau `/dashboard/content/event` dan
+  membuka preview `/dashboard/content/article/[id]` atau
+  `/dashboard/content/event/[id]` $\rightarrow$ tombol moderasi (*Approve*,
+  *Reject*, *Takedown*, *Restore*) berfungsi sempurna.
 - [ ] Mengakses `/dashboard/website` dan menyimpan perubahan konten situs $\rightarrow$ berhasil.
 
 ### Skenario Pengujian `SUPERADMIN`:

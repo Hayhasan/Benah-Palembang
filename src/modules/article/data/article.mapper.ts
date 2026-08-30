@@ -43,6 +43,7 @@ export const publicArticleDetailSelect = {
   author: {
     select: {
       name: true,
+      username: true,
       avatarUrl: true,
       bio: true,
     },
@@ -155,6 +156,7 @@ export function mapPublicArticleDetail(
     tags: article.tags.map((tag) => tag.label),
     author: {
       name: article.author.name,
+      username: article.author.username,
       avatarUrl: article.author.avatarUrl || DEFAULT_AUTHOR_AVATAR,
       bio:
         article.author.bio ||

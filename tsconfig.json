@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     "benah-palembang-legacy-vite",
-    "benah-palembang-original-project"
+    "benah-palembang-original-project",
+    "benah-palembang-revision-project"
   ]
 }

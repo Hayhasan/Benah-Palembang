@@ -7,10 +7,17 @@ import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
+import type { FooterConnectPlatform } from "../types/header-footer-content"
 import type {
   HeaderFooterContentEditorData,
+  WebsiteFooterConnectLinkEditorData,
   WebsiteFooterLinkEditorData,
 } from "../types/header-footer-content-editor"
+import {
+  FOOTER_CONNECT_PLATFORMS,
+  FooterConnectIcon,
+  footerConnectPlaceholder,
+} from "./footer-connect-icon"
 
 function SectionCard({
   title,
@@ -68,7 +75,7 @@ function clientKey(prefix: string) {
   return `${prefix}-${crypto.randomUUID()}`
 }
 
-function normalizePositions(items: WebsiteFooterLinkEditorData[]) {
+function normalizePositions<T extends { position: number }>(items: T[]) {
   return items.map((item, index) => ({ ...item, position: index + 1 }))
 }
 
@@ -100,7 +107,7 @@ export function ManageHeaderFooterSettings({
 
   const updateConnectLink = (
     clientKeyValue: string,
-    values: Partial<WebsiteFooterLinkEditorData>,
+    values: Partial<WebsiteFooterConnectLinkEditorData>,
   ) => {
     onChange((current) => ({
       ...current,
@@ -117,7 +124,7 @@ export function ManageHeaderFooterSettings({
     <div className="space-y-8">
       <SectionCard
         title="Logo & Header"
-        desc="Konfigurasi logo dan link utama header."
+        desc="Konfigurasi logo, redirect header, background text footer, dan deskripsi website."
       >
         <Field label="Logo Website (Upload)">
           <ImageUpload
@@ -156,7 +163,22 @@ export function ManageHeaderFooterSettings({
             />
           </Field>
         </div>
-        <Field label="Deskripsi Footer">
+        <Field label="Background Text (Footer)">
+          <Input
+            value={data.footer.backgroundText}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                footer: {
+                  ...current.footer,
+                  backgroundText: event.target.value,
+                },
+              }))
+            }
+            placeholder="PALEMBANG"
+          />
+        </Field>
+        <Field label="Deskripsi Website / Tagline Footer">
           <Input
             value={data.footer.description}
             onChange={(event) =>
@@ -176,23 +198,7 @@ export function ManageHeaderFooterSettings({
         title="Footer — Explore"
         desc="Link navigasi pada kolom Explore footer."
       >
-        <div className="space-y-4">
-          <Field label="Deskripsi Explore">
-            <Input
-              value={data.footer.exploreDescription}
-              onChange={(event) =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    exploreDescription: event.target.value,
-                  },
-                }))
-              }
-              placeholder="Deskripsi singkat untuk kolom explore footer..."
-            />
-          </Field>
-          <div className="space-y-3">
+        <div className="space-y-3">
             {data.footer.exploreLinks.map((link) => (
               <div key={link.clientKey} className="flex items-center gap-2">
                 <Input
@@ -264,36 +270,52 @@ export function ManageHeaderFooterSettings({
             >
               <Plus className="mr-2 size-4" /> Tambah Link Explore
             </Button>
-          </div>
         </div>
       </SectionCard>
 
       <SectionCard
         title="Footer — Connect"
-        desc="Link sosial media pada kolom Connect footer."
+        desc="Link sosial media pada footer dengan pilihan ikon platform."
       >
         <div className="space-y-3">
           {data.footer.connectLinks.map((link) => (
-            <div key={link.clientKey} className="flex items-center gap-2">
+            <div
+              key={link.clientKey}
+              className="flex items-center gap-2.5"
+            >
+              <div className="relative flex w-44 shrink-0 items-center sm:w-52">
+                <div className="pointer-events-none absolute left-3 flex items-center text-muted-foreground">
+                  <FooterConnectIcon
+                    platform={link.platform}
+                    className="size-4"
+                  />
+                </div>
+                <select
+                  value={link.platform}
+                  onChange={(event) =>
+                    updateConnectLink(link.clientKey, {
+                      platform: event.target.value as FooterConnectPlatform,
+                    })
+                  }
+                  className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  aria-label="Platform Connect"
+                >
+                  {FOOTER_CONNECT_PLATFORMS.map((platform) => (
+                    <option key={platform.value} value={platform.value}>
+                      {platform.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Input
                 className="flex-1"
-                value={link.label}
-                onChange={(event) =>
-                  updateConnectLink(link.clientKey, {
-                    label: event.target.value,
-                  })
-                }
-                placeholder="Platform"
-              />
-              <Input
-                className="flex-[2]"
                 value={link.linkUrl}
                 onChange={(event) =>
                   updateConnectLink(link.clientKey, {
                     linkUrl: event.target.value,
                   })
                 }
-                placeholder="URL"
+                placeholder={footerConnectPlaceholder(link.platform)}
               />
               <Button
                 type="button"
@@ -332,8 +354,8 @@ export function ManageHeaderFooterSettings({
                     {
                       id: null,
                       clientKey: clientKey("footer-connect"),
-                      label: "",
-                      linkUrl: "#",
+                      platform: "instagram",
+                      linkUrl: "https://",
                       position: current.footer.connectLinks.length + 1,
                       isVisible: true,
                     },
@@ -348,84 +370,23 @@ export function ManageHeaderFooterSettings({
       </SectionCard>
 
       <SectionCard
-        title="Footer — Contact & Copyright"
-        desc="Informasi kontak dan hak cipta di bagian bawah footer."
+        title="Footer — Copyright"
+        desc="Satu teks hak cipta yang ditampilkan di bagian bawah footer."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Email Kontak">
-            <Input
-              type="email"
-              value={data.footer.contactEmail}
-              onChange={(event) =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    contactEmail: event.target.value,
-                  },
-                }))
-              }
-            />
-          </Field>
-          <Field label="Nomor HP / WhatsApp">
-            <Input
-              value={data.footer.contactPhone}
-              onChange={(event) =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    contactPhone: event.target.value,
-                  },
-                }))
-              }
-            />
-          </Field>
-        </div>
-        <Field label="Alamat">
+        <Field label="Copyright Text">
           <Input
-            value={data.footer.contactAddress}
+            value={data.footer.copyrightText}
             onChange={(event) =>
               onChange((current) => ({
                 ...current,
                 footer: {
                   ...current.footer,
-                  contactAddress: event.target.value,
+                  copyrightText: event.target.value,
                 },
               }))
             }
           />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Copyright">
-            <Input
-              value={data.footer.copyrightText}
-              onChange={(event) =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    copyrightText: event.target.value,
-                  },
-                }))
-              }
-            />
-          </Field>
-          <Field label="Teks Penutup">
-            <Input
-              value={data.footer.closingText}
-              onChange={(event) =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    closingText: event.target.value,
-                  },
-                }))
-              }
-            />
-          </Field>
-        </div>
       </SectionCard>
     </div>
   )

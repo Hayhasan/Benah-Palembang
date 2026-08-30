@@ -8,7 +8,6 @@ import {
   RotateCcw,
   Search,
   Trash2,
-  Users,
   XCircle,
 } from "lucide-react"
 import Image from "next/image"
@@ -35,8 +34,10 @@ const DEFAULT_BANNER =
 
 export function ManageContentList({
   data,
+  contentType,
 }: {
   data: ManagedContentListResult
+  contentType: "ARTICLE" | "EVENT"
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -44,6 +45,8 @@ export function ManageContentList({
 
   const [searchTerm, setSearchTerm] = useState(data.query)
   const [isPending, startTransition] = useTransition()
+  const isArticlePage = contentType === "ARTICLE"
+  const contentLabel = isArticlePage ? "Article" : "Event"
 
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean
@@ -138,10 +141,10 @@ export function ManageContentList({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-3xl font-bold tracking-tight">
-            Manage Content
+            Manage Content — {contentLabel}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Moderasi artikel dan event yang diajukan oleh pengguna.
+            Moderasi {contentLabel.toLowerCase()} yang diajukan oleh pengguna.
           </p>
         </div>
       </div>
@@ -157,7 +160,9 @@ export function ManageContentList({
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Cari konten atau author..."
+                placeholder={`Cari ${contentLabel.toLowerCase()} atau ${
+                  isArticlePage ? "author" : "owner"
+                }...`}
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -193,9 +198,10 @@ export function ManageContentList({
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-6 py-4 font-semibold">Tipe</th>
                 <th className="px-6 py-4 font-semibold">Banner & Judul</th>
-                <th className="px-6 py-4 font-semibold">Author / Owner</th>
+                <th className="px-6 py-4 font-semibold">
+                  {isArticlePage ? "Author" : "Owner"}
+                </th>
                 <th className="px-6 py-4 font-semibold">Date & Time</th>
                 <th className="px-6 py-4 font-semibold">Statistik</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
@@ -205,26 +211,11 @@ export function ManageContentList({
             <tbody className="divide-y">
               {data.items.length > 0 ? (
                 data.items.map((content) => {
-                  const isArticle = content.type === "ARTICLE"
-
                   return (
                     <tr
                       key={`${content.type}-${content.id}`}
                       className="transition-colors hover:bg-muted/30"
                     >
-                      {/* Tipe */}
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            isArticle
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-purple-50 text-purple-600"
-                          }`}
-                        >
-                          {content.typeLabel}
-                        </span>
-                      </td>
-
                       {/* Banner & Judul */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -256,7 +247,7 @@ export function ManageContentList({
                         {content.dateLabel}
                       </td>
 
-                      {/* Statistik (Article: Comments; Event: Participants) */}
+                      {/* Statistik */}
                       <td className="whitespace-nowrap px-6 py-4">
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span
@@ -273,7 +264,7 @@ export function ManageContentList({
                             <Heart className="size-3.5 text-red-500" />{" "}
                             {content.stats.likes}
                           </span>
-                          {isArticle ? (
+                          {isArticlePage ? (
                             <span
                               className="flex items-center gap-1 font-medium"
                               title="Comments"
@@ -281,15 +272,7 @@ export function ManageContentList({
                               <MessageCircle className="size-3.5 text-emerald-500" />{" "}
                               {content.stats.comments}
                             </span>
-                          ) : (
-                            <span
-                              className="flex items-center gap-1 font-medium"
-                              title="Participants"
-                            >
-                              <Users className="size-3.5 text-purple-500" />{" "}
-                              {content.stats.participants}
-                            </span>
-                          )}
+                          ) : null}
                         </div>
                       </td>
 
@@ -317,15 +300,11 @@ export function ManageContentList({
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              if (content.type === "ARTICLE") {
-                                router.push(
-                                  `/dashboard/content/${content.id}/article`,
-                                )
-                              } else {
-                                router.push(
-                                  `/dashboard/content/${content.id}/event`,
-                                )
-                              }
+                              router.push(
+                                `/dashboard/content/${
+                                  isArticlePage ? "article" : "event"
+                                }/${content.id}`,
+                              )
                             }}
                             className="gap-1.5 text-xs text-foreground hover:bg-muted"
                           >
@@ -395,10 +374,10 @@ export function ManageContentList({
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-6 py-8 text-center text-muted-foreground"
                   >
-                    Tidak ada konten ditemukan.
+                    Tidak ada {contentLabel.toLowerCase()} ditemukan.
                   </td>
                 </tr>
               )}

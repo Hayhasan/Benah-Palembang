@@ -1,6 +1,5 @@
 import type { Article, Event, User } from "@prisma/client"
 
-import { getManagedContentStatistics } from "../constants/mock-content-statistics"
 import type {
   ManagedContentListItem,
   ManagedContentStatus,
@@ -46,7 +45,6 @@ export interface EventModerationRecord extends Event {
   owner: Pick<User, "id" | "name" | "avatarUrl">
   _count?: {
     likes?: number
-    participants?: number
   }
 }
 
@@ -63,8 +61,6 @@ export function mapArticleToManagedContent(
 ): ManagedContentListItem {
   const status = article.status as ManagedContentStatus
   const displayDate = article.submittedAt ?? article.updatedAt
-  const baseStats = getManagedContentStatistics("ARTICLE", article.id)
-
   return {
     id: article.id,
     type: "ARTICLE",
@@ -85,7 +81,6 @@ export function mapArticleToManagedContent(
     updatedAt: article.updatedAt.toISOString(),
     dateLabel: formatManagedDate(displayDate),
     stats: {
-      ...baseStats,
       views: formatCompactNumber(article.views),
       likes: (article._count?.likes ?? 0).toString(),
       comments: article._count?.comments ?? 0,
@@ -98,8 +93,6 @@ export function mapEventToManagedContent(
 ): ManagedContentListItem {
   const status = event.status as ManagedContentStatus
   const displayDate = event.submittedAt ?? event.updatedAt
-  const baseStats = getManagedContentStatistics("EVENT", event.id)
-
   return {
     id: event.id,
     type: "EVENT",
@@ -120,10 +113,8 @@ export function mapEventToManagedContent(
     updatedAt: event.updatedAt.toISOString(),
     dateLabel: formatManagedDate(displayDate),
     stats: {
-      ...baseStats,
       views: formatCompactNumber(event.views),
       likes: (event._count?.likes ?? 0).toString(),
-      participants: event._count?.participants ?? 0,
     },
   }
 }

@@ -1,4 +1,4 @@
-import { requireRole } from "@/modules/auth/data/session-dal"
+import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 import { OverviewPage } from "@/modules/overview/components/overview-page"
 import { getOverviewData } from "@/modules/overview/data/get-overview-data"
 
@@ -10,7 +10,7 @@ interface DashboardPageProps {
 }
 
 export default async function Page({ searchParams }: DashboardPageProps) {
-  await requireRole(["ADMIN", "SUPERADMIN"])
+  await requireCurrentUser()
 
   const params = await searchParams
   const period = Array.isArray(params.period) ? params.period[0] : params.period

@@ -46,6 +46,7 @@ export const publicEventDetailSelect = {
   ...publicEventListSelect,
   content: true,
   registrationUrl: true,
+  whatsappUrl: true,
   tags: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -56,15 +57,9 @@ export const publicEventDetailSelect = {
       userId: true,
     },
   },
-  participants: {
-    select: {
-      identifier: true,
-    },
-  },
   _count: {
     select: {
       likes: true,
-      participants: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.EventSelect
@@ -117,24 +112,17 @@ export function mapPublicEventListItem(
 export function mapPublicEventDetail(
   event: PublicEventDetailRecord,
   currentUserId?: string | null,
-  currentIdentifier?: string | null,
 ): PublicEventDetail {
   const hasLiked = Boolean(
     currentUserId && event.likes.some((like) => like.userId === currentUserId),
   )
-  const hasRegistered = Boolean(
-    currentIdentifier &&
-      event.participants.some((p) => p.identifier === currentIdentifier),
-  )
-
   return {
     ...mapPublicEventListItem(event),
     content: event.content,
     registrationUrl: event.registrationUrl,
+    whatsappUrl: event.whatsappUrl,
     tags: event.tags.map((tag) => tag.label),
     likesCount: event._count.likes,
-    participantsCount: event._count.participants,
     hasLiked,
-    hasRegistered,
   }
 }

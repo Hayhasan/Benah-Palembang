@@ -129,6 +129,7 @@ export async function saveEventAction(
             location: data.location,
             organizer: data.organizer,
             registrationUrl: data.registrationUrl,
+            whatsappUrl: data.whatsappUrl,
             ...(data.intent === "POST"
               ? {
                   status: "PENDING_REVIEW" as const,
@@ -180,6 +181,7 @@ export async function saveEventAction(
           location: data.location,
           organizer: data.organizer,
           registrationUrl: data.registrationUrl,
+          whatsappUrl: data.whatsappUrl,
           status: data.intent === "POST" ? "PENDING_REVIEW" : "DRAFT",
           submittedAt: data.intent === "POST" ? new Date() : null,
           tags: {

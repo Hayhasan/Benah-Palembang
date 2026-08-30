@@ -11,7 +11,6 @@ export interface OwnedEventListItem {
   statusLabel: string
   views: number
   likes: number
-  participants: number
 }
 
 export interface OwnedEventList {
@@ -38,12 +37,12 @@ export interface OwnedEventEditorData {
   location: string
   organizer: string
   registrationUrl: string
+  whatsappUrl: string
   status: ContentStatus
   statusLabel: string
   tags: string[]
   views: number
   likesCount: number
-  participantsCount: number
 }
 
 export type EventSaveIntent = "SAVE" | "POST"

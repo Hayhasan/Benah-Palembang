@@ -14,6 +14,22 @@ import {
   publicArticleDetailSelect,
 } from "./article.mapper"
 
+const RELATED_ARTICLE_LIMIT = 2
+
+function pickRandomArticles<T>(articles: T[], limit: number): T[] {
+  const shuffled = [...articles]
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    ;[shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ]
+  }
+
+  return shuffled.slice(0, limit)
+}
+
 export async function getPublicArticle(
   slug: string,
 ): Promise<PublicArticlePageData | null> {
@@ -42,7 +58,7 @@ export async function getPublicArticle(
     articleDetail.views += 1
   }
 
-  const relatedArticles = await prisma.article.findMany({
+  const relatedArticleCandidates = await prisma.article.findMany({
     where: {
       id: { not: article.id },
       websiteArticleSectionId: article.websiteArticleSectionId,
@@ -50,14 +66,14 @@ export async function getPublicArticle(
       publishedAt: { not: null },
       deletedAt: null,
     },
-    orderBy: [
-      { isFeatured: "desc" },
-      { publishedAt: "desc" },
-      { id: "desc" },
-    ],
-    take: 3,
+    orderBy: { id: "asc" },
     select: publicArticleCardSelect,
   })
+
+  const relatedArticles = pickRandomArticles(
+    relatedArticleCandidates,
+    RELATED_ARTICLE_LIMIT,
+  )
 
   return {
     article: articleDetail,

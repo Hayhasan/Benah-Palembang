@@ -16,6 +16,7 @@ export interface PublicArticleCardData {
 
 export interface PublicArticleAuthorData {
   name: string
+  username: string
   avatarUrl: string
   bio: string
   roleLabel: string
@@ -51,4 +52,3 @@ export type LandingArticlesBySection = Record<
   string,
   PublicArticleCardData[]
 >
-

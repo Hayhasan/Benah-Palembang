@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -24,7 +25,7 @@ import type { PublicArticleCommentItem } from "../types/public-article"
 const DEFAULT_AVATAR =
   "https://images.pexels.com/photos/14795560/pexels-photo-14795560.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
 
-const INITIAL_VISIBLE_COUNT = 5
+const INITIAL_VISIBLE_COUNT = 4
 
 interface ArticleCommentsProps {
   articleId: number
@@ -37,6 +38,7 @@ export function ArticleComments({
   articleSlug,
   comments,
 }: ArticleCommentsProps) {
+  const router = useRouter()
   const { user, status } = useSession()
   const isAuthenticated = status === "authenticated" && Boolean(user)
 
@@ -81,6 +83,7 @@ export function ArticleComments({
 
       toast.success(result.message)
       setCommentText("")
+      router.refresh()
     })
   }
 
@@ -102,6 +105,7 @@ export function ArticleComments({
 
         toast.success(result.message)
         setCommentToDelete(null)
+        router.refresh()
       } finally {
         setDeletingCommentId(null)
       }
@@ -111,7 +115,7 @@ export function ArticleComments({
   const isFormDisabled = isCreatePending || isDeletePending
 
   return (
-    <section id="komentar" className="mt-16 border-t border-border pt-10">
+    <section id="komentar" className="mt-14 border-t border-border pt-10">
       {/* ── Heading ── */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -124,73 +128,64 @@ export function ArticleComments({
 
       {/* ── Comment Input Area ── */}
       {isAuthenticated && user ? (
-        <form onSubmit={handleCreateComment} className="mb-10 space-y-3">
-          <div className="flex items-start gap-3">
+        <form onSubmit={handleCreateComment} className="mb-8">
+          <div className="flex gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={user.avatarUrl || DEFAULT_AVATAR}
               alt={user.name}
-              className="size-10 shrink-0 rounded-full border border-border object-cover"
+              className="size-10 shrink-0 rounded-full border border-border bg-muted object-cover"
             />
-            <div className="flex-1 space-y-2">
-              <div className="relative rounded-2xl border border-border bg-muted/30 p-3 transition-colors focus-within:border-palembang-red focus-within:bg-background">
-                <textarea
-                  rows={3}
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Tulis tanggapan atau cerita Anda..."
-                  disabled={isFormDisabled}
-                  maxLength={1000}
-                  className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
-                />
-                <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2">
-                  <span className="text-[11px] text-muted-foreground">
-                    {commentText.length}/1000 karakter
-                  </span>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={isFormDisabled || !commentText.trim()}
-                    className="h-8 gap-1.5 bg-palembang-red px-3 text-xs text-white hover:bg-palembang-red/90 disabled:opacity-50"
-                  >
-                    {isCreatePending ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Send className="size-3.5" />
-                    )}
-                    Kirim
-                  </Button>
-                </div>
-              </div>
+            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-muted/50 px-4 py-2.5 transition-all focus-within:border-palembang-red focus-within:ring-2 focus-within:ring-palembang-red/20">
+              <input
+                value={commentText}
+                onChange={(event) => setCommentText(event.target.value)}
+                placeholder={`Tulis komentar sebagai ${user.name}...`}
+                disabled={isFormDisabled}
+                maxLength={1000}
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isFormDisabled || !commentText.trim()}
+                aria-label="Kirim komentar"
+                className="rounded-full bg-palembang-red p-2 text-white transition-all hover:scale-105 hover:bg-palembang-red/90 active:scale-95 disabled:opacity-50"
+              >
+                {isCreatePending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Send className="size-3.5" />
+                )}
+              </button>
             </div>
           </div>
         </form>
       ) : (
-        <div className="mb-10 rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center sm:p-8">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-palembang-red/10 text-palembang-red">
-            <LogIn className="size-5" />
+        <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-muted/40 p-5 sm:flex-row">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-palembang-red/10 text-palembang-red">
+              <MessageCircle className="size-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                Ingin ikut berkomentar?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Silakan masuk ke akun Anda terlebih dahulu.
+              </p>
+            </div>
           </div>
-          <h4 className="font-display text-base font-semibold">
-            Ingin berbagi tanggapan atau cerita?
-          </h4>
-          <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
-            Masuk dengan akun Anda untuk bergabung dalam diskusi dan menulis
-            komentar pada artikel ini.
-          </p>
-          <div className="mt-4">
-            <Button
-              asChild
-              size="sm"
-              className="bg-palembang-red text-xs font-semibold text-white hover:bg-palembang-red/90"
+          <Button
+            asChild
+            className="w-full bg-palembang-red px-5 text-xs font-semibold text-white hover:bg-palembang-red/90 sm:w-auto"
+          >
+            <Link
+              href={`/login?redirect=${encodeURIComponent(`/artikel/${articleSlug}#komentar`)}`}
             >
-              <Link
-                href={`/login?redirect=${encodeURIComponent(`/artikel/${articleSlug}#komentar`)}`}
-              >
-                <LogIn className="mr-1.5 size-3.5" />
-                Masuk untuk Berkomentar
-              </Link>
-            </Button>
-          </div>
+              <LogIn className="size-3.5" />
+              Masuk untuk Komentar
+            </Link>
+          </Button>
         </div>
       )}
 
@@ -215,7 +210,7 @@ export function ArticleComments({
               return (
                 <div
                   key={comment.id}
-                  className={`group flex items-start gap-3 rounded-xl p-2 transition-colors hover:bg-muted/20 ${
+                  className={`group flex items-start gap-3.5 rounded-xl border border-border/40 bg-muted/20 p-3.5 transition-colors hover:bg-muted/30 ${
                     isThisDeleting ? "pointer-events-none opacity-50" : ""
                   }`}
                 >

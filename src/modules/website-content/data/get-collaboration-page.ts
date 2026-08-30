@@ -10,6 +10,7 @@ import {
   collaborationPageSelect,
   mapCollaborationContentToPage,
 } from "./collaboration-content.mapper"
+import { resolveCollaborationContentPreview } from "./resolve-collaboration-content-preview"
 
 export async function getCollaborationPage(): Promise<CollaborationPageData> {
   await connection()
@@ -22,7 +23,21 @@ export async function getCollaborationPage(): Promise<CollaborationPageData> {
     select: collaborationPageSelect,
   })
 
-  return content
+  const page = content
     ? mapCollaborationContentToPage(content)
     : DEFAULT_COLLABORATION_PAGE
+
+  const previews = await Promise.all(
+    page.partnerContents.map((item) =>
+      resolveCollaborationContentPreview(item),
+    ),
+  )
+
+  return {
+    ...page,
+    partnerContents: page.partnerContents.map((item, index) => ({
+      ...item,
+      preview: previews[index],
+    })),
+  }
 }

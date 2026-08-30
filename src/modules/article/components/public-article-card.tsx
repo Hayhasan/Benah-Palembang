@@ -42,10 +42,10 @@ export function PublicArticleCard({
   return (
     <Link
       href={`/artikel/${article.slug}`}
-      className={`group relative block overflow-hidden ${masonry ? "mb-4 break-inside-avoid sm:mb-6" : ""} ${featured && !masonry ? "lg:col-span-2" : ""}`}
+      className={`group relative block overflow-hidden ${masonry ? "mb-4 break-inside-avoid sm:mb-6" : ""} ${featured && !masonry ? "col-span-2 lg:col-span-2" : ""}`}
     >
       <div
-        className={`img-zoom relative overflow-hidden rounded-xl sm:rounded-[1.5rem] ${aspect}`}
+        className={`img-zoom relative overflow-hidden rounded-xl border border-border/40 bg-card sm:rounded-[1.5rem] ${aspect}`}
       >
         <Image
           fill

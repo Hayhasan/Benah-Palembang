@@ -9,8 +9,6 @@ import {
 } from "react"
 import {
   Edit2,
-  Eye,
-  Heart,
   Loader2,
   MessageCircle,
   Save,
@@ -27,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
+import { ArticleGallery } from "@/modules/article/components/article-gallery"
 
 import { requestProfilePasswordResetAction } from "../actions/request-profile-password-reset"
 import { updateProfileAction } from "../actions/update-profile"
@@ -36,36 +35,10 @@ const DEFAULT_BANNER =
   "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop"
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=0"
 
-const DUMMY_ARTICLES = [
-  {
-    id: 1,
-    title: "Palembang di Balik Senja",
-    image:
-      "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
-    views: 1204,
-    likes: 340,
-  },
-  {
-    id: 2,
-    title: "Lorong Basah dan Kulinernya",
-    image:
-      "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
-    views: 3400,
-    likes: 890,
-  },
-  {
-    id: 3,
-    title: "Pusat Kebudayaan Sriwijaya",
-    image:
-      "https://images.pexels.com/photos/3321521/pexels-photo-3321521.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
-    views: 980,
-    likes: 210,
-  },
-]
-
 function toUpdateInput(profile: ProfileData): ProfileUpdateInput {
   return {
     name: profile.name,
+    username: profile.username,
     avatarUrl: profile.avatarUrl,
     bannerUrl: profile.bannerUrl,
     bio: profile.bio,
@@ -327,6 +300,32 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">
+                    Username
+                  </label>
+                  <div className="flex rounded-md border border-white/20 bg-white/10 focus-within:ring-2 focus-within:ring-white/30">
+                    <span className="flex items-center border-r border-white/15 px-3 text-sm text-white/50">
+                      @
+                    </span>
+                    <Input
+                      value={draft.username}
+                      maxLength={30}
+                      onChange={(event) =>
+                        updateField("username", event.target.value.toLowerCase())
+                      }
+                      className="border-0 bg-transparent text-white placeholder:text-white/50 focus-visible:ring-0"
+                      placeholder="nama_pengguna"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <p className="text-[11px] leading-4 text-white/50">
+                    Maksimal 30 karakter. Gunakan huruf, angka, titik, atau underscore; titik tidak boleh di awal, akhir, atau berurutan.
+                  </p>
+                  <FieldError message={fieldErrors.username?.[0]} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/80">
                     Email
                   </label>
                   <Input
@@ -436,6 +435,9 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
               <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-palembang-red">
                 {roleLabel(profile.role)}
               </p>
+              <p className="mt-1 text-sm font-medium text-white/60">
+                @{draft.username}
+              </p>
               <p className="mt-1 text-sm text-white/70">{profile.email}</p>
               <p className="mt-4 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-white/80">
                 {draft.bio || "Belum ada bio untuk profil ini."}
@@ -532,55 +534,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
         </div>
       </div>
 
-      <div>
-        <div className="mb-6 flex items-center justify-between border-b pb-2">
-          <h3 className="font-display text-xl font-bold">Galeri Artikel</h3>
-          <span className="text-xs text-muted-foreground">
-            Klik artikel untuk melihat pratinjau publik
-          </span>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {DUMMY_ARTICLES.map((article) => (
-            <button
-              key={article.id}
-              type="button"
-              onClick={() =>
-                router.push(`/dashboard/article/preview/${article.id}`)
-              }
-              className="group overflow-hidden rounded-xl border bg-background text-left shadow-sm transition-all hover:border-palembang-red/40 hover:shadow-md"
-            >
-              <div className="relative aspect-[4/3] overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-palembang-charcoal shadow-md">
-                    Lihat Pratinjau
-                  </span>
-                </div>
-              </div>
-              <div className="p-4">
-                <h4 className="mb-3 font-display text-lg font-bold leading-tight transition-colors group-hover:text-palembang-red">
-                  {article.title}
-                </h4>
-                <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Eye className="size-3.5" />
-                    {article.views.toLocaleString()}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="size-3.5 text-palembang-red" />
-                    {article.likes.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
+      <ArticleGallery data={profile.articleGallery} previewMode="owner" />
     </div>
   )
 }

@@ -7,7 +7,17 @@ import { prisma } from "@/lib/db/prisma"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { DEFAULT_LANDING_PAGE } from "../constants/default-landing-page"
-import type { LandingPageEditorData } from "../types/landing-page-editor"
+import type {
+  LandingArticlePinOption,
+  LandingPageEditorData,
+} from "../types/landing-page-editor"
+
+const publishedAtFormatter = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "Asia/Jakarta",
+})
 
 export const landingPageEditorSelect = {
   key: true,
@@ -26,6 +36,9 @@ export const landingPageEditorSelect = {
   ctaDescription: true,
   ctaButtonLabel: true,
   ctaButtonUrl: true,
+  ctaBackgroundImageUrl: true,
+  ctaContactLabel: true,
+  ctaContactEmail: true,
   heroSlides: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -66,11 +79,22 @@ export const landingPageEditorSelect = {
       description: true,
       backgroundImageUrl: true,
       linkLabel: true,
-      theme: true,
-      layout: true,
-      maxItems: true,
       position: true,
       isVisible: true,
+      pins: {
+        where: {
+          article: {
+            status: "PUBLISHED",
+            publishedAt: { not: null },
+            deletedAt: null,
+          },
+        },
+        orderBy: { position: "asc" },
+        select: {
+          articleId: true,
+          article: { select: { websiteArticleSectionId: true } },
+        },
+      },
     },
   },
   teamMembers: {
@@ -123,16 +147,25 @@ export function mapWebsiteContentToEditor(
     articleSections: DEFAULT_LANDING_PAGE.articleSections.map(
       (defaultSection, index) => {
         const section = articleSectionsByKey.get(defaultSection.sectionKey)
-        return section
-          ? {
-              ...section,
-              clientKey: `article-section-${section.id}`,
-            }
-          : {
-              ...defaultSection,
-              id: null,
-              clientKey: `default-article-section-${index + 1}`,
-            }
+        if (section) {
+          const { pins, ...sectionData } = section
+          return {
+            ...sectionData,
+            pinnedArticleIds: pins
+              .filter(
+                (pin) => pin.article.websiteArticleSectionId === section.id,
+              )
+              .map((pin) => pin.articleId),
+            clientKey: `article-section-${section.id}`,
+          }
+        }
+
+        return {
+          ...defaultSection,
+          pinnedArticleIds: [],
+          id: null,
+          clientKey: `default-article-section-${index + 1}`,
+        }
       },
     ),
     team: {
@@ -150,6 +183,9 @@ export function mapWebsiteContentToEditor(
       description: content.ctaDescription,
       buttonLabel: content.ctaButtonLabel,
       buttonUrl: content.ctaButtonUrl,
+      backgroundImageUrl: content.ctaBackgroundImageUrl,
+      contactLabel: content.ctaContactLabel,
+      contactEmail: content.ctaContactEmail,
     },
   }
 }
@@ -174,6 +210,7 @@ export function mapDefaultLandingPageToEditor(): LandingPageEditorData {
     articleSections: DEFAULT_LANDING_PAGE.articleSections.map(
       (section, index) => ({
         ...section,
+        pinnedArticleIds: [],
         id: null,
         clientKey: `default-article-section-${index + 1}`,
       }),
@@ -204,4 +241,40 @@ export async function getLandingPageEditor(): Promise<LandingPageEditorData> {
   await requireRole(["ADMIN", "SUPERADMIN"])
   await connection()
   return readLandingPageEditor()
+}
+
+export async function getLandingArticlePinOptions(): Promise<
+  LandingArticlePinOption[]
+> {
+  await requireRole(["ADMIN", "SUPERADMIN"])
+  await connection()
+
+  const articles = await prisma.article.findMany({
+    where: {
+      status: "PUBLISHED",
+      publishedAt: { not: null },
+      deletedAt: null,
+      websiteArticleSection: {
+        deletedAt: null,
+        websiteContent: { key: DEFAULT_LANDING_PAGE.key, deletedAt: null },
+      },
+    },
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      publishedAt: true,
+      websiteArticleSection: { select: { sectionKey: true } },
+    },
+  })
+
+  return articles.map((article) => ({
+    id: article.id,
+    sectionKey: article.websiteArticleSection.sectionKey,
+    title: article.title,
+    slug: article.slug,
+    publishedAtLabel: publishedAtFormatter.format(article.publishedAt!),
+    isAvailable: true,
+  }))
 }

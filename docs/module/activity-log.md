@@ -262,8 +262,8 @@ export default async function Page({ searchParams }: PageProps) {
 
 1. **Role Enforcement:** Sesuai matriks RBAC platform, hanya akun dengan peran **`SUPERADMIN`** yang diizinkan mengakses halaman `/dashboard/logs` dan query `getActivityLogs`.
 2. **Redirect Otomatis:**
-   - Peran `USER` yang mencoba mengakses `/dashboard/logs` dialihkan otomatis ke `/dashboard/create-article`.
-   - Peran `ADMIN` yang mencoba mengakses `/dashboard/logs` dialihkan otomatis ke `/dashboard`.
+   - Peran `USER` dan `ADMIN` yang mencoba mengakses `/dashboard/logs`
+     dialihkan otomatis ke `/dashboard`.
 3. **Data Sanitization:** Data sensitif seperti password plaintext atau password hash bcrypt **tidak pernah** dimasukkan ke dalam `beforeState` maupun `afterState`.
 
 ---
@@ -314,4 +314,3 @@ src/modules/activity-log/
   - `npx tsc --noEmit`
   - `npm run lint`
   - `npm run build`
-

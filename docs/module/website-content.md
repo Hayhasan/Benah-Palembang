@@ -11,27 +11,32 @@ canonical `header-footer`.
 - Hero carousel.
 - About section.
 - Explore category items.
-- Presentation configuration untuk featured/category article sections.
+- Content dan pin Article untuk featured/category article sections.
 - Hero untuk lima halaman kategori artikel.
 - Team section dan anggota tim.
 - CTA section.
 - Hero halaman agenda.
-- Hero, kontak, dan konfigurasi form halaman kolaborasi.
+- Hero dan kontak halaman kolaborasi.
 - Partner logo dan partner content pada halaman kolaborasi.
-- Logo global header, link footer, kontak, dan copyright.
+- Logo global header/footer, background text footer, link footer, deskripsi, dan
+  copyright.
 
-Data artikel belum menjadi bagian dari module ini. Article card tetap menjadi
-tanggung jawab module Article, sedangkan website content hanya menyimpan
-konfigurasi tampilan section.
+Record dan card Article tetap menjadi tanggung jawab module Article. Website
+Content menyimpan content section serta pilihan Article yang dipin untuk
+homepage, bukan salinan data Article.
 
 ## Database tables
 
 - `website_contents`: root landing page, expected satu active row dengan key
-  `home`.
+  `home`. Field scalar mencakup content About, Explore, Team, serta CTA termasuk
+  background khusus, label kontak, dan email kontak.
 - `website_hero_slides`: ordered hero carousel items.
 - `website_explore_items`: ordered explore/category links.
 - `website_article_sections`: lima row fixed yang menyimpan presentasi section
   Home, slug kategori, dan hero halaman kategori terkait.
+- `website_article_section_pins`: maksimal tiga relasi Article ordered untuk
+  setiap section homepage. Article hanya dapat mempunyai satu row pin dan posisi
+  wajib berada pada rentang 1-4.
 - `website_team_members`: ordered team members.
 - `website_agenda_contents`: root hero halaman agenda, expected satu active row
   dengan key `agenda`.
@@ -39,26 +44,35 @@ konfigurasi tampilan section.
   active row dengan key `collaboration`.
 - `website_collaboration_partner_logos`: ordered partner logos.
 - `website_collaboration_partner_contents`: ordered partner content beserta
-  platform, thumbnail, link, dan aspect ratio.
+  enum platform dan URL konten.
 - `website_header_footer_contents`: root konfigurasi global, expected satu
-  active row dengan key `header-footer`.
+  active row dengan key `header-footer`; menyimpan logo global, background text
+  footer, deskripsi website, dan satu copyright text.
 - `website_footer_explore_links`: ordered link pada kolom Explore.
-- `website_footer_connect_links`: ordered link pada kolom Connect.
+- `website_footer_connect_links`: ordered link pada kolom Connect; platform
+  disimpan sebagai enum `WebsiteFooterConnectPlatform`, bukan label bebas.
 
-Semua table menggunakan ID `Int`, timestamps, dan soft delete melalui
-`deletedAt`.
+Seluruh content table memakai ID `Int` dan timestamps. Content editable memakai
+soft delete melalui `deletedAt`, sedangkan table pin diganti secara transaksional
+dan tidak memakai soft delete.
 
 ## Seed
 
 ```text
 npm run seed:website-content
+npm run seed:article
 ```
 
 Seeder memakai dummy content yang sama dengan landing page, halaman kategori
 artikel, hero agenda, halaman kolaborasi, header, dan footer publik saat ini.
 Aggregate `home`, `agenda`, `collaboration`, dan `header-footer` diperiksa secara
 independen, bersifat create-if-missing, dan tidak menimpa content yang sudah
-tersedia.
+tersedia. CTA landing page memiliki default background, label `Hubungi Kami`,
+dan email kontak yang sama pada konstanta fallback, Prisma schema, dan seeder.
+Migration data footer hanya menyelaraskan nilai legacy yang masih sama persis
+dengan seed lama; content admin yang sudah dikustom tidak ditimpa.
+Article seeder mengisi maksimal tiga pin awal hanya saat suatu section belum
+memiliki pin, sehingga eksekusi ulang tidak menimpa pilihan admin.
 
 ## Public landing page
 
@@ -72,7 +86,32 @@ tersedia.
   sebagai fallback.
 - Hero carousel menjadi Client Component tersendiri. Section landing lain tetap
   berupa Server Component agar JavaScript client tidak membesar tanpa kebutuhan.
-- Data artikel masih menggunakan mock Article sampai module Article tersedia.
+- Lima shortcut kategori tetap berasal dari ordered Explore content. UI root
+  menambahkan shortcut presentasional keenam `Agenda Kota` ke `/agenda`; shortcut
+  tersebut bukan kategori artikel dan tidak disimpan sebagai article section.
+  Label bawahnya memakai count Event `PUBLISHED` aktif dari module Event dengan
+  format `<count> Agenda`.
+- Section artikel tidak memakai sticky stacking. Seluruh section berada pada
+  document flow biasa dan menggunakan background/foreground semantic agar
+  mengikuti light atau dark mode.
+- Presentasi root menampilkan maksimal tiga artikel yang dipin per section
+  dengan artikel pertama sebagai featured. Urutan berasal dari `position` pada
+  table pin; Article yang tidak dipin tidak muncul otomatis.
+- Field legacy `theme`, `layout`, dan `maxItems` masih tersedia pada table lama
+  untuk kompatibilitas migration, tetapi tidak lagi masuk DTO public/editor dan
+  tidak menentukan presentasi root.
+- Team memakai card semantic (`card`, `border`, dan `muted`) alih-alih background
+  charcoal penuh.
+- CTA ditampilkan sebagai panel gelap di atas background halaman dan memakai
+  `ctaBackgroundImageUrl` sebagai gambar dekoratif tersendiri. Judul mendukung
+  beberapa baris: baris pertama putih dan baris berikutnya merah. Tombol kontak
+  menggunakan `mailto:` dari `ctaContactEmail` serta label dari
+  `ctaContactLabel`.
+- Data artikel dibaca dari ordered pin, kemudian dipetakan oleh module Article
+  dan dikelompokkan berdasarkan `websiteArticleSection` masing-masing.
+- Hero memakai staged reveal untuk eyebrow, judul, deskripsi, CTA, dan kontrol
+  slider. About, Explore, lima section Article, Team, serta CTA memakai reveal
+  viewport; grid shortcut, Article, dan Team memakai stagger per card.
 - URL “Lihat semua” diturunkan dari `articleCategorySlug`; table tidak menyimpan
   `linkUrl` terpisah untuk article section.
 
@@ -102,6 +141,22 @@ tersedia.
   `DEFAULT_COLLABORATION_PAGE`. Error database tetap diteruskan.
 - Interaksi menampilkan seluruh partner content berada pada Client Component,
   sedangkan initial data tetap berasal dari SSR.
+- Hero tidak memiliki eyebrow/tagline terpisah. Judul, deskripsi, background,
+  email, WhatsApp, dan URL aksinya berasal dari root `collaboration`.
+- Halaman tidak mempunyai section Form Hubungi Kami. Kontak ditampilkan
+  langsung di hero.
+- Partner Content hanya menyimpan enum platform dan URL. Public UI menampilkan
+  masonry card dan membuka URL eksternal pada tab baru; thumbnail, judul, serta
+  aspect ratio diturunkan saat render dan tidak menjadi bagian model database.
+- YouTube dan TikTok memakai metadata oEmbed resmi yang di-cache selama enam
+  jam. Instagram Reel memakai shortcode URL untuk endpoint cover publik yang
+  diproxy melalui route same-origin, memvalidasi response image, dan di-cache
+  selama enam jam.
+- Hero, partner marquee, header Partner Contents, masonry content, empty state,
+  dan tombol show-more memakai reveal viewport yang sama dengan halaman public
+  lain. Masonry cards memakai stagger progresif.
+  Kegagalan provider tidak menggagalkan halaman karena setiap platform memiliki
+  fallback rasio, judul, dan background gradient.
 
 ## Public agenda page
 
@@ -122,23 +177,60 @@ tersedia.
 - DTO serializable diberikan melalui provider Client Component agar Header pada
   layout dan Footer yang dirender oleh berbagai halaman memakai sumber data yang
   sama tanpa browser fetch tambahan.
-- Logo, deskripsi, kontak, copyright, dan ordered link berasal dari Prisma.
+- Logo, deskripsi, background text footer, satu copyright, dan ordered link
+  berasal dari Prisma.
 - Jika root aktif tidak ditemukan, layout memakai
   `DEFAULT_HEADER_FOOTER_CONTENT`. Error database tetap diteruskan.
 - Header navigasi Home, Article, Agenda, Collaboration, dan tombol auth tetap
   hardcoded karena belum menjadi field pada editor original.
+- Footer memakai layout terpusat dengan logo, deskripsi, Connect, Explore,
+  background text dekoratif, badge logo, dan satu copyright. Logo header dan
+  footer memakai field global yang sama.
+- Field Contact footer, deskripsi Explore, dan closing text lama sudah dihapus
+  karena tidak dipakai oleh UI referensi.
+- Ikon Connect berasal dari enum platform database. Public footer dan dashboard
+  memakai komponen SVG brand yang sama sehingga ikon selalu konsisten.
+
+## Tema tampilan public dan dashboard
+
+- Website menyediakan light mode dan dark mode melalui satu theme provider pada
+  root layout. Dark mode menjadi default agar tampilan existing tetap konsisten.
+- Tombol tema tersedia pada navbar public desktop/mobile serta sidebar dan
+  header mobile dashboard. Pilihan pengguna disimpan di browser dengan key
+  `theme`, sehingga public, autentikasi, dan dashboard memakai preferensi yang
+  sama tanpa browser fetch tambahan.
+- Palet light mode mengikuti referensi revisi dengan background off-white,
+  foreground charcoal, aksen sage, dan warna brand merah Palembang. Dark mode
+  mempertahankan palet charcoal project sebelumnya.
+- Script tema dijalankan sebelum first paint agar class tema sudah diterapkan
+  sebelum hydration. Perubahan tema selanjutnya tetap dikelola Client Component.
+- Logo header tetap membaca URL dan alt dari Website Content. Tampilan monokrom
+  terang atau gelap dihasilkan melalui styling berdasarkan tema dan posisi
+  navbar, sehingga tidak membutuhkan field atau asset logo kedua di database.
+- Tema merupakan preferensi presentasional browser dan bukan website content
+  yang dikelola admin. Fitur ini tidak menambah table, migration, atau seeder.
 
 ## Dashboard editor
 
 - Route `/dashboard/website` membaca aggregate aktif `home` beserta editor
   kategori Article, `agenda`, `collaboration`, dan `header-footer` pada Server
   Component dan mengirim DTO serializable ke form Client Component.
-- Form Home mengelola hero carousel, about, explore, konfigurasi section
-  artikel, team, dan CTA. Seluruh field yang ada pada schema Prisma bersifat
-  controlled dan berasal dari data database.
+- Form Home mengelola hero carousel, about, explore, content dan pin section
+  artikel, team, dan CTA. Editor CTA mencakup background image, judul multiline,
+  deskripsi, tombol kolaborasi, label kontak, dan email kontak. Seluruh field
+  yang ada pada schema Prisma bersifat controlled dan berasal dari data
+  database.
 - Tab Home, Article, Agenda, Collaboration, dan Header & Footer memakai
   persistence database. Tab Home mengubah field landing section, sedangkan tab
   Article hanya mengubah field hero kategori pada row yang sama.
+- Editor Collaboration tidak menyediakan tagline hero atau Form Hubungi Kami.
+  Partner Content hanya meminta platform enum dan URL; preview presentasional
+  dibentuk pada public server render dan tidak dikirim kembali sebagai input.
+- Editor Header & Footer mengelola logo global, URL redirect, alt logo,
+  background text, deskripsi website, ordered link Explore/Connect, dan satu
+  copyright text.
+- Setiap Connect link dipilih melalui dropdown platform berikon, kemudian admin
+  hanya mengisi URL. Label platform tidak menjadi input bebas.
 - Perubahan disimpan melalui Server Action dengan validasi Zod dan transaction
   Prisma. Root scalar dan seluruh child collection disimpan sebagai satu
   aggregate.
@@ -154,6 +246,11 @@ tersedia.
 - Landing page selalu mempunyai lima article section fixed: Cerita Palembang,
   Gaya Hidup, Ruang Kota, Industri Kreatif, dan Kebudayaan. Admin dapat mengubah
   field presentasinya, tetapi tidak menambah, menghapus, atau mengubah urutannya.
+- Setiap section menyediakan pencarian Article published dari kategori yang
+  sama dan maksimal tiga pin ordered. Input Tema, Layout, serta Maks. Artikel
+  tidak lagi tersedia.
+- Save pin memverifikasi ID, status published, soft delete, kategori, duplikasi,
+  dan batas tiga item pada server sebelum mengganti relasi dalam transaction.
 - Slug kategori wajib berupa kebab-case, unik di dalam root `home`, dan tidak
   boleh memakai route statis yang dicadangkan. Pelanggaran ditolak Server Action
   dan ditampilkan sebagai toast dashboard.

@@ -1,21 +1,59 @@
 import "server-only"
 
-import type { Prisma } from "@prisma/client"
+import type {
+  Prisma,
+  WebsiteFooterConnectPlatform,
+} from "@prisma/client"
 
-import type { HeaderFooterContentData } from "../types/header-footer-content"
+import type {
+  FooterConnectPlatform,
+  HeaderFooterContentData,
+} from "../types/header-footer-content"
+
+const footerConnectPlatformMap: Record<
+  WebsiteFooterConnectPlatform,
+  FooterConnectPlatform
+> = {
+  INSTAGRAM: "instagram",
+  WHATSAPP: "whatsapp",
+  YOUTUBE: "youtube",
+  TIKTOK: "tiktok",
+  LINKEDIN: "linkedin",
+  X: "x",
+  FACEBOOK: "facebook",
+  MAIL: "mail",
+  WEBSITE: "website",
+}
+
+export const footerConnectPlatformToDatabase: Record<
+  FooterConnectPlatform,
+  WebsiteFooterConnectPlatform
+> = {
+  instagram: "INSTAGRAM",
+  whatsapp: "WHATSAPP",
+  youtube: "YOUTUBE",
+  tiktok: "TIKTOK",
+  linkedin: "LINKEDIN",
+  x: "X",
+  facebook: "FACEBOOK",
+  mail: "MAIL",
+  website: "WEBSITE",
+}
+
+export function footerConnectPlatformFromDatabase(
+  platform: WebsiteFooterConnectPlatform,
+) {
+  return footerConnectPlatformMap[platform]
+}
 
 export const headerFooterContentSelect = {
   key: true,
   logoImageUrl: true,
   logoImageAlt: true,
   logoLinkUrl: true,
+  footerBackgroundText: true,
   footerDescription: true,
-  exploreDescription: true,
-  contactEmail: true,
-  contactPhone: true,
-  contactAddress: true,
   copyrightText: true,
-  closingText: true,
   footerExploreLinks: {
     where: { deletedAt: null, isVisible: true },
     orderBy: { position: "asc" },
@@ -30,7 +68,7 @@ export const headerFooterContentSelect = {
     where: { deletedAt: null, isVisible: true },
     orderBy: { position: "asc" },
     select: {
-      label: true,
+      platform: true,
       linkUrl: true,
       position: true,
       isVisible: true,
@@ -54,15 +92,14 @@ export function mapHeaderFooterContent(
       linkUrl: content.logoLinkUrl,
     },
     footer: {
+      backgroundText: content.footerBackgroundText,
       description: content.footerDescription,
-      exploreDescription: content.exploreDescription,
-      contactEmail: content.contactEmail,
-      contactPhone: content.contactPhone,
-      contactAddress: content.contactAddress,
       copyrightText: content.copyrightText,
-      closingText: content.closingText,
       exploreLinks: content.footerExploreLinks,
-      connectLinks: content.footerConnectLinks,
+      connectLinks: content.footerConnectLinks.map((link) => ({
+        ...link,
+        platform: footerConnectPlatformFromDatabase(link.platform),
+      })),
     },
   }
 }

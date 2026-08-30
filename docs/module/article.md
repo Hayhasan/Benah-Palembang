@@ -153,6 +153,7 @@ model Article {
   websiteArticleSection   WebsiteArticleSection @relation(fields: [websiteArticleSectionId], references: [id])
   tags                    ArticleTag[]
   comments                ArticleComment[]
+  landingPins             WebsiteArticleSectionPin[]
 
   @@index([authorId, deletedAt, updatedAt])
   @@index([websiteArticleSectionId, status, deletedAt, publishedAt])
@@ -285,9 +286,19 @@ Alur seeder:
 6. Buat Article dan tags dalam transaction.
 7. Lewati Article yang slug canonical-nya sudah tersedia.
 8. Jangan menimpa content, author, status, atau category Article yang sudah ada.
+9. Isi maksimal tiga pin awal hanya untuk section yang belum memiliki pin.
 
 Random author hanya berlaku ketika record dibuat pertama kali. Re-run seeder
 tidak mengubah author Article existing.
+
+### Galeri Article pada dashboard account/profile
+
+Module Article menyediakan DTO dan komponen `ArticleGallery` reusable untuk
+`/dashboard/profile` serta detail Manage Account. Query mengambil maksimal enam
+Article aktif terbaru berdasarkan author, menghitung total Article aktif, dan
+menampilkan status, update terakhir, views, serta likes riil. Owner diarahkan ke
+preview author, sedangkan SuperAdmin diarahkan ke preview moderasi agar masing-
+masing route tetap memakai guard yang tepat.
 
 Aggregate runner menjalankan Article setelah `account-manage`,
 `website-content`, dan `event`.
@@ -296,14 +307,15 @@ Aggregate runner menjalankan Article setelah `account-manage`,
 
 ### Landing page `/`
 
-Module `website-content` tetap memiliki konfigurasi section seperti theme,
-layout, max items, title, dan background. Module Article menyediakan record yang
-ditampilkan pada masing-masing section.
+Module `website-content` menyimpan content section dan ordered pin maksimal
+tiga Article. Module Article menyediakan record lengkap yang ditampilkan pada
+masing-masing section.
 
 Route melakukan komposisi data server:
 
 - `getLandingPage()` dari module Website Content.
-- Query Article published yang dikelompokkan berdasarkan section.
+- Query pin ordered beserta Article published yang dikelompokkan berdasarkan
+  section.
 
 Komponen Landing Page tidak lagi mengimpor `articles` dari mock data.
 
@@ -451,20 +463,25 @@ Query category option dapat menggunakan query publik yang diekspos module
 
 ### Status integrasi halaman publik
 
-- Landing page mengambil Article `PUBLISHED` dari database, mengelompokkannya
-  berdasarkan `sectionKey`, lalu menerapkan `maxItems` dari konfigurasi Website
-  Content.
+- Landing page mengambil maksimal tiga Article `PUBLISHED` yang dipin dari
+  `website_article_section_pins`, mengelompokkannya berdasarkan `sectionKey`,
+  dan mempertahankan urutan pin. Article yang tidak dipin tidak ikut tampil.
 - Category route memvalidasi hero/category melalui Website Content dan mengirim
   DTO Article database ke Client Component untuk search serta show-all.
 - Detail route mencari slug exact, hanya menerima Article aktif yang sudah
   published, dan memanggil `notFound()` ketika record tidak tersedia.
 - Related stories berasal dari `WebsiteArticleSection` yang sama dengan Article
-  detail.
-- Nama, avatar, dan bio penulis berasal dari relasi `User`.
-- Views, likes, dan comments tetap menggunakan helper/data presentasional dan
-  belum mempunyai table database.
+  detail, dipilih random pada setiap request, dan dibatasi dua item.
+- Nama, username, avatar, dan bio penulis berasal dari relasi `User`.
+- Identitas penulis pada hero serta box `Ditulis Oleh` dapat diklik dan mengarah
+  ke `/penulis/[username]`.
+- Views membaca column `Article.views`, sedangkan likes dan comments membaca
+  relasi database `ArticleLike` dan `ArticleComment`.
 - Komponen card serta detail publik berada di `src/modules/article/components`;
   public Article tidak lagi mengimpor dataset `src/data/mockData.ts`.
+- Route kategori memakai staged hero dan stagger masonry cards. Detail Article
+  memakai staged hero, reveal body/author/engagement/comments, fade pada action
+  rail, serta stagger untuk dua More Stories.
 
 ### Status dashboard author
 
@@ -505,8 +522,8 @@ Article like diimplementasikan menggunakan table relasional `ArticleLike`:
   - User guest/unauthenticated akan menerima notifikasi toast ramah untuk login ke `/login?redirect=/artikel/[slug]`.
   - State optimis interaktif: icon hati merah menyala saat aktif, dan jumlah like ter-update instan.
 - **Dashboard Synchronization:**
-  - `/dashboard/content` menampilkan jumlah like riil database pada kolom statistik artikel.
-  - `/dashboard/content/[id]/article` menampilkan jumlah like riil pada metadata hero artikel.
+  - `/dashboard/content/article` menampilkan jumlah like riil database pada kolom statistik artikel.
+  - `/dashboard/content/article/[id]` menampilkan jumlah like riil pada metadata hero artikel.
   - `/dashboard/create-article` menampilkan jumlah like riil pada tabel artikel author.
   - `/dashboard/create-article/preview/[id]` menampilkan jumlah like riil pada metadata preview author.
 
@@ -526,3 +543,41 @@ Sistem view artikel mencatat pembacaan riil secara atomic dengan proteksi dedupl
 - **Sinkronisasi UI:**
   - Halaman detail publik `/artikel/[slug]`, dashboard author `/dashboard/create-article`, author preview, dan manage content membaca angka `views` riil dari database.
 
+## 16. Revisi Detail Artikel dan Related Stories
+
+Halaman `/artikel/[slug]` mengikuti presentasi revisi dengan tetap mempertahankan
+interaksi database existing:
+
+- Kartu engagement menyediakan aksi like, salin tautan, dan bagikan dalam satu
+  panel responsif di atas komentar.
+- Form komentar authenticated memakai input ringkas dengan avatar dan tombol
+  kirim. Guest melihat CTA login yang mempertahankan redirect ke artikel dan
+  anchor komentar.
+- Empat komentar terbaru tampil pertama kali. Komentar berikutnya dibuka melalui
+  tombol show more dengan gradient berbasis token `background`.
+- Pembuatan dan soft delete komentar memanggil `router.refresh()` setelah Server
+  Action sukses agar data komentar terbaru langsung masuk ke Client Component.
+- More Stories memakai grid dua kolom dan semantic color tokens supaya konsisten
+  pada light mode serta dark mode.
+- Hero detail dimulai dari top viewport dan menyediakan padding untuk navbar.
+  Dengan demikian navbar transparan tidak berada di atas ruang background terang
+  ketika halaman memakai light mode.
+
+Pemilihan More Stories dilakukan di server:
+
+1. `connection()` menghentikan prerender sebelum pembacaan user, query artikel,
+   dan pemanggilan `Math.random()`.
+2. Query mengambil seluruh artikel published aktif dari section yang sama,
+   dengan artikel detail dikecualikan berdasarkan ID.
+3. Kandidat diacak menggunakan Fisher-Yates dan diambil maksimal dua item.
+
+Dengan alur tersebut, setiap HTTP request melakukan pemilihan ulang. Pasangan
+yang sama tetap mungkin muncul pada dua request berbeda karena sifat random,
+tetapi hasil tidak berasal dari urutan statis atau cache prerender.
+
+## 17. Integrasi Halaman Penulis
+
+DTO detail Article memuat `author.username`. Kartu author pada hero dan box
+`Ditulis Oleh` menggunakan `next/link` menuju `/penulis/[username]`. Route
+tersebut hanya menampilkan Article berstatus `PUBLISHED`, mempunyai
+`publishedAt`, belum dihapus, dan masih berada pada Website Content aktif.

@@ -37,6 +37,7 @@ enum UserRole {
 model User {
   id                  String    @id @default(uuid()) @db.Uuid
   name                String    @db.VarChar(160)
+  username            String    @unique @db.VarChar(30)
   email               String    @unique @db.VarChar(255)
   originalEmail       String?   @db.VarChar(255)
   password            String    @db.Text
@@ -67,6 +68,7 @@ model User {
 | --- | --- | --- | --- |
 | `id` | `String (UUID)` | Read-only | Diambil dari server session actor (`requireCurrentUser`), tidak dipercaya dari input client. |
 | `name` | `String` | Editable | Wajib diisi, panjang 2–160 karakter setelah di-trim. |
+| `username` | `String` | Editable | Identitas public unique, lowercase, maksimal 30 karakter; route `/penulis/[username]`. |
 | `email` | `String` | Read-only | Ditampilkan di UI tetapi tidak dapat diubah melalui form profil. |
 | `role` | `UserRole` | Read-only | Label tampilan (`User`, `Admin`, `SuperAdmin`), tidak dapat diubah mandiri. |
 | `avatarUrl` | `String?` | Editable | URL gambar HTTPS permanen dari Cloudinary (rasio 1:1), nullable. |
@@ -259,11 +261,20 @@ Halaman profil terintegrasi dengan `UnsavedChangesContext` untuk mencegah kehila
 
 Pada bagian bawah halaman profil, terdapat bagian **Galeri Artikel** yang menampilkan karya artikel milik akun yang sedang login:
 
-- **Presentasi Saat Ini**: Menggunakan kumpulan kartu artikel pratinjau (`DUMMY_ARTICLES`) yang menampilkan thumbnail, judul, jumlah *views*, dan *likes*.
-- **Navigasi Pratinjau**: Setiap kartu dapat diklik untuk membuka halaman pratinjau publik artikel pada `/dashboard/article/preview/[id]`.
-- **Integrasi Module Article**:
-  - Ketika module Article aktif penuh, galeri ini akan memuat daftar artikel yang berelasi dengan `authorId = user.id`.
-  - Views, likes, dan status publikasi dihitung secara dinamis dari tabel `articles` tanpa perlu menambahkan field artikel ke tabel `users`.
+- **Sumber Data**: Article aktif dengan `authorId = user.id`, diurutkan dari
+  `updatedAt` terbaru dan dibatasi enam card. Total seluruh Article aktif tetap
+  tersedia untuk keterangan galeri.
+- **Presentasi**: Cover, judul, status workflow, tanggal pembaruan, views, dan
+  jumlah likes riil. Empty state ditampilkan jika account belum mempunyai
+  Article.
+- **Navigasi Profile**: Card pada `/dashboard/profile` membuka owner preview
+  `/dashboard/create-article/preview/[id]` yang tetap dilindungi ownership.
+- **Navigasi Manage Account**: Card pada `/dashboard/account/user/[id]` dan
+  `/dashboard/account/admin/[id]` membuka preview moderasi
+  `/dashboard/content/article/[id]` untuk SuperAdmin.
+- **Integrasi Module Article**: DTO, Prisma select, mapper, dan komponen card
+  reusable dimiliki module Article. Table User tidak menyimpan salinan statistik
+  Article.
 
 ---
 

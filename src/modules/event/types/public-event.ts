@@ -17,11 +17,10 @@ export interface PublicEventListItem {
 export interface PublicEventDetail extends PublicEventListItem {
   content: string
   registrationUrl: string | null
+  whatsappUrl: string
   tags: string[]
   likesCount: number
-  participantsCount: number
   hasLiked: boolean
-  hasRegistered: boolean
 }
 
 export interface PublicEventDetailData {

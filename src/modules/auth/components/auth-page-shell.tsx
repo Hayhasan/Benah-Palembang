@@ -12,7 +12,7 @@ export function AuthPageShell({
   children,
 }: AuthPageShellProps) {
   return (
-    <main className="flex min-h-svh items-center justify-center bg-palembang-charcoal px-6 py-32">
+    <main className="theme-dark-surface flex min-h-svh items-center justify-center bg-palembang-charcoal px-6 py-32">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/40 shadow-xl backdrop-blur-sm lg:grid-cols-2">
         <div className="relative hidden min-h-[600px] overflow-hidden bg-palembang-charcoal lg:block">
           <Image

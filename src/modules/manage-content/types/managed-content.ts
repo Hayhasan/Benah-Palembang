@@ -10,7 +10,6 @@ export interface ManagedContentStatistics {
   views: string
   likes: string
   comments?: number
-  participants?: number
 }
 
 export interface ManagedContentListItem {

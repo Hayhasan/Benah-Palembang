@@ -6,7 +6,11 @@ export function revalidateManagedContentRoutes(
   type: ManagedContentType,
   slugOrId?: string | number,
 ) {
-  revalidatePath("/dashboard/content")
+  revalidatePath(
+    type === "ARTICLE"
+      ? "/dashboard/content/article"
+      : "/dashboard/content/event",
+  )
 
   if (type === "ARTICLE") {
     revalidatePath("/dashboard/create-article")

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
+import { generateUniqueUsername } from "@/modules/auth/data/generate-unique-username"
 import { hashPassword } from "@/modules/auth/data/password"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
@@ -44,9 +45,11 @@ export async function createAccountAction(
     const password = await hashPassword(data.password)
 
     await prisma.$transaction(async (tx) => {
+      const username = await generateUniqueUsername(tx, data.name)
       const newUser = await tx.user.create({
         data: {
           name: data.name,
+          username,
           email: data.email,
           password,
           role: data.role,
@@ -65,6 +68,7 @@ export async function createAccountAction(
           afterState: {
             id: newUser.id,
             name: data.name,
+            username,
             email: data.email,
             role: data.role,
           },

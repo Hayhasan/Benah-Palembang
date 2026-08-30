@@ -17,9 +17,12 @@ export interface DefaultEvent {
   location: string
   organizer: string
   registrationUrl: string | null
+  whatsappUrl: string
   status: DefaultEventStatus
   tags: string[]
 }
+
+const DEFAULT_EVENT_WHATSAPP_URL = "https://wa.me/628551241878"
 
 type DashboardEventStatus = "Draf" | "Post" | "Takedown"
 
@@ -192,6 +195,7 @@ function dashboardEventToDefault(
     location: "Palembang, Sumatera Selatan",
     organizer: "Benah Palembang",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: STATUS_TO_DATABASE[status],
     tags: [category, "Palembang", "Agenda"],
   }
@@ -213,6 +217,7 @@ const PUBLIC_AGENDA_EVENTS = [
     location: "Benteng Kuto Besak, Palembang",
     organizer: "Benah Palembang x Komunitas Kota Kita",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: "PUBLISHED",
     tags: ["Diskusi", "Ruang Publik", "Palembang"],
   },
@@ -231,6 +236,7 @@ const PUBLIC_AGENDA_EVENTS = [
     location: "Rumah Songket Zainal, Kawasan 30 Ilir",
     organizer: "Benah Palembang x Rumah Songket Zainal",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: "PUBLISHED",
     tags: ["Workshop", "Songket", "Kebudayaan"],
   },
@@ -249,6 +255,7 @@ const PUBLIC_AGENDA_EVENTS = [
     location: "Galeri Sriwijaya, Jl. Sudirman",
     organizer: "Benah Palembang x Palembang Photography Club",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: "PUBLISHED",
     tags: ["Pameran", "Fotografi", "Sungai Musi"],
   },
@@ -267,6 +274,7 @@ const PUBLIC_AGENDA_EVENTS = [
     location: "Universitas Sriwijaya, Aula Utama",
     organizer: "Benah Palembang x Universitas Sriwijaya",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: "PUBLISHED",
     tags: ["Kuliah Umum", "Arsitektur", "Warisan"],
   },
@@ -285,6 +293,7 @@ const PUBLIC_AGENDA_EVENTS = [
     location: "Lapangan Merdeka Palembang",
     organizer: "Benah Palembang x Dinas Pariwisata Palembang",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: "PUBLISHED",
     tags: ["Festival", "Kuliner", "Palembang"],
   },
@@ -303,6 +312,7 @@ const PUBLIC_AGENDA_EVENTS = [
     location: "Coworking Space Musi, Jl. Angkatan 45",
     organizer: "Benah Palembang",
     registrationUrl: null,
+    whatsappUrl: DEFAULT_EVENT_WHATSAPP_URL,
     status: "PUBLISHED",
     tags: ["Networking", "Industri Kreatif", "Palembang"],
   },

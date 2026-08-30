@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db/prisma"
 
 import { recordLoginActivity } from "../data/activity"
+import { generateUniqueUsername } from "../data/generate-unique-username"
 import { hashPassword } from "../data/password"
 import {
   checkRegisterRateLimit,
@@ -55,9 +56,11 @@ export async function registerAction(
     }
 
     const passwordHash = await hashPassword(password)
+    const username = await generateUniqueUsername(prisma, name)
     const account = await prisma.user.create({
       data: {
         name,
+        username,
         email,
         password: passwordHash,
         role: "USER",

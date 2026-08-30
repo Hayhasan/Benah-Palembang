@@ -77,64 +77,99 @@ export async function seedArticle(prisma: PrismaClient) {
 
   if (missingArticles.length === 0) {
     console.log("[article] skipped: all default articles already exist")
-    return
+  } else {
+    console.log(`[article] creating ${missingArticles.length} default articles`)
+
+    await prisma.$transaction(
+      async (transaction) => {
+        for (const article of missingArticles) {
+          const author = users[randomInt(users.length)]
+          const section = sectionsBySlug.get(article.categorySlug)
+
+          if (!author) {
+            throw new Error("[article] failed to select a random author")
+          }
+          if (!section) {
+            throw new Error(
+              `[article] WebsiteArticleSection ${article.categorySlug} is missing`,
+            )
+          }
+
+          const status = article.status as ContentStatus
+          await transaction.article.create({
+            data: {
+              authorId: author.id,
+              websiteArticleSectionId: section.id,
+              slug: article.slug,
+              title: article.title,
+              excerpt: article.excerpt,
+              content: article.content,
+              coverImageUrl: article.coverImageUrl,
+              readingTime: article.readingTime,
+              isFeatured: article.isFeatured,
+              status,
+              moderationNote:
+                status === "TAKEN_DOWN"
+                  ? "Article diturunkan pada data mock awal."
+                  : null,
+              createdAt: new Date(article.createdAt),
+              submittedAt: article.submittedAt
+                ? new Date(article.submittedAt)
+                : null,
+              publishedAt: article.publishedAt
+                ? new Date(article.publishedAt)
+                : null,
+              tags: {
+                create: article.tags.map((label, index) => ({
+                  label,
+                  position: index + 1,
+                })),
+              },
+            },
+          })
+        }
+      },
+      { maxWait: 10_000, timeout: 120_000 },
+    )
+
+    console.log(
+      `[article] created: ${missingArticles.length}, skipped: ${DEFAULT_ARTICLES.length - missingArticles.length}`,
+    )
   }
 
-  console.log(`[article] creating ${missingArticles.length} default articles`)
+  let pinnedSections = 0
+  for (const section of sections) {
+    const existingPins = await prisma.websiteArticleSectionPin.count({
+      where: { websiteArticleSectionId: section.id },
+    })
+    if (existingPins > 0) continue
 
-  await prisma.$transaction(
-    async (transaction) => {
-      for (const article of missingArticles) {
-        const author = users[randomInt(users.length)]
-        const section = sectionsBySlug.get(article.categorySlug)
+    const articles = await prisma.article.findMany({
+      where: {
+        websiteArticleSectionId: section.id,
+        status: "PUBLISHED",
+        publishedAt: { not: null },
+        deletedAt: null,
+      },
+      orderBy: [
+        { isFeatured: "desc" },
+        { publishedAt: "desc" },
+        { id: "desc" },
+      ],
+      take: 3,
+      select: { id: true },
+    })
+    if (articles.length === 0) continue
 
-        if (!author) {
-          throw new Error("[article] failed to select a random author")
-        }
-        if (!section) {
-          throw new Error(
-            `[article] WebsiteArticleSection ${article.categorySlug} is missing`,
-          )
-        }
+    await prisma.websiteArticleSectionPin.createMany({
+      data: articles.map((article, index) => ({
+        websiteArticleSectionId: section.id,
+        articleId: article.id,
+        position: index + 1,
+      })),
+    })
+    pinnedSections += 1
+  }
 
-        const status = article.status as ContentStatus
-        await transaction.article.create({
-          data: {
-            authorId: author.id,
-            websiteArticleSectionId: section.id,
-            slug: article.slug,
-            title: article.title,
-            excerpt: article.excerpt,
-            content: article.content,
-            coverImageUrl: article.coverImageUrl,
-            readingTime: article.readingTime,
-            isFeatured: article.isFeatured,
-            status,
-            moderationNote:
-              status === "TAKEN_DOWN"
-                ? "Article diturunkan pada data mock awal."
-                : null,
-            createdAt: new Date(article.createdAt),
-            submittedAt: article.submittedAt
-              ? new Date(article.submittedAt)
-              : null,
-            publishedAt: article.publishedAt
-              ? new Date(article.publishedAt)
-              : null,
-            tags: {
-              create: article.tags.map((label, index) => ({
-                label,
-                position: index + 1,
-              })),
-            },
-          },
-        })
-      }
-    },
-    { maxWait: 10_000, timeout: 120_000 },
-  )
-
-  console.log(
-    `[article] created: ${missingArticles.length}, skipped: ${DEFAULT_ARTICLES.length - missingArticles.length}`,
-  )
+  console.log(`[article] initialized homepage pins for ${pinnedSections} section(s)`)
 }

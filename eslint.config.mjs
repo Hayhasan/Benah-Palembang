@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "benah-palembang-legacy-vite/**",
     // Snapshot project original hanya digunakan sebagai referensi UI.
     "benah-palembang-original-project/**",
+    // Snapshot revisi juga hanya digunakan sebagai referensi UI.
+    "benah-palembang-revision-project/**",
   ]),
   {
     // Kode yang dipindahkan apa adanya dari proyek Vite. Proyek lama tidak

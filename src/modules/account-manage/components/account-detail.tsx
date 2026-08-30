@@ -6,8 +6,6 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock3,
-  Eye as EyeIcon,
-  Heart,
   MessageCircle,
   ShieldAlert,
   ShieldCheck,
@@ -17,6 +15,7 @@ import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
+import { ArticleGallery } from "@/modules/article/components/article-gallery"
 
 import { changeAccountRoleAction } from "../actions/change-account-role"
 import type {
@@ -27,33 +26,6 @@ import type {
 const DEFAULT_BANNER =
   "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop"
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=0"
-const DUMMY_ARTICLES = [
-  {
-    id: 1,
-    title: "Palembang di Balik Senja",
-    image:
-      "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
-    views: 1204,
-    likes: 340,
-  },
-  {
-    id: 2,
-    title: "Lorong Basah dan Kulinernya",
-    image:
-      "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
-    views: 3400,
-    likes: 890,
-  },
-  {
-    id: 3,
-    title: "Pusat Kebudayaan Sriwijaya",
-    image:
-      "https://images.pexels.com/photos/3321521/pexels-photo-3321521.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop",
-    views: 980,
-    likes: 210,
-  },
-]
-
 const activityDateFormatter = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -280,54 +252,7 @@ export function AccountDetail({ routeRole, account }: AccountDetailProps) {
         </div>
       </div>
 
-      <div>
-        <div className="mb-6 flex items-center justify-between border-b pb-2">
-          <h3 className="font-display text-xl font-bold">Galeri Artikel</h3>
-          <span className="text-xs text-muted-foreground">
-            Klik artikel untuk melihat pratinjau publik
-          </span>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {DUMMY_ARTICLES.map((article) => (
-            <button
-              key={article.id}
-              type="button"
-              onClick={() =>
-                router.push(`/dashboard/article/preview/${article.id}`)
-              }
-              className="group overflow-hidden rounded-xl border bg-background text-left shadow-sm transition-all hover:border-palembang-red/40 hover:shadow-md"
-            >
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-palembang-charcoal shadow-md">
-                    Lihat Pratinjau
-                  </span>
-                </div>
-              </div>
-              <div className="p-4">
-                <h4 className="mb-3 font-display text-lg font-bold leading-tight transition-colors group-hover:text-palembang-red">
-                  {article.title}
-                </h4>
-                <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <EyeIcon className="size-3.5" />
-                    {article.views.toLocaleString("id-ID")}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="size-3.5 text-palembang-red" />
-                    {article.likes.toLocaleString("id-ID")}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
+      <ArticleGallery data={account.articleGallery} previewMode="manage" />
 
       {canChangeRole && (
         <ConfirmActionDialog

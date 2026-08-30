@@ -13,10 +13,7 @@ import type {
   CollaborationPartnerContentEditorData,
   CollaborationPartnerLogoEditorData,
 } from "../types/collaboration-page-editor"
-import type {
-  CollaborationAspectRatio,
-  CollaborationPlatform,
-} from "../types/collaboration-page"
+import type { CollaborationPlatform } from "../types/collaboration-page"
 
 function SectionCard({
   title,
@@ -119,11 +116,7 @@ export function ManageCollaborationSettings({
   const [newLogoName, setNewLogoName] = useState("")
   const [newContentPlatform, setNewContentPlatform] =
     useState<CollaborationPlatform>("youtube")
-  const [newContentTitle, setNewContentTitle] = useState("")
   const [newContentLink, setNewContentLink] = useState("")
-  const [newContentThumbnailUrl, setNewContentThumbnailUrl] = useState("")
-  const [newContentAspectRatio, setNewContentAspectRatio] =
-    useState<CollaborationAspectRatio>("9:16")
 
   const changeData = onChange
 
@@ -152,8 +145,8 @@ export function ManageCollaborationSettings({
   }
 
   const addPartnerContent = () => {
-    if (!newContentTitle.trim() || !newContentThumbnailUrl) {
-      toast.error("Judul dan thumbnail konten wajib diisi.")
+    if (!newContentLink.trim()) {
+      toast.error("URL konten wajib diisi.")
       return
     }
 
@@ -165,19 +158,13 @@ export function ManageCollaborationSettings({
           id: null,
           clientKey: clientKey("collaboration-content"),
           platform: newContentPlatform,
-          title: newContentTitle,
-          thumbnailUrl: newContentThumbnailUrl,
-          contentUrl: newContentLink,
-          aspectRatio: newContentAspectRatio,
+          contentUrl: newContentLink.trim(),
           position: current.partnerContents.length + 1,
           isVisible: true,
         },
       ],
     }))
-    setNewContentTitle("")
     setNewContentLink("")
-    setNewContentThumbnailUrl("")
-    setNewContentAspectRatio("9:16")
   }
 
   return (
@@ -199,30 +186,17 @@ export function ManageCollaborationSettings({
             aspect={16 / 9}
           />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tagline">
-            <Input
-              value={data.hero.eyebrow}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  hero: { ...current.hero, eyebrow: event.target.value },
-                }))
-              }
-            />
-          </Field>
-          <Field label="Alt Gambar">
-            <Input
-              value={data.hero.imageAlt}
-              onChange={(event) =>
-                changeData((current) => ({
-                  ...current,
-                  hero: { ...current.hero, imageAlt: event.target.value },
-                }))
-              }
-            />
-          </Field>
-        </div>
+        <Field label="Alt Gambar">
+          <Input
+            value={data.hero.imageAlt}
+            onChange={(event) =>
+              changeData((current) => ({
+                ...current,
+                hero: { ...current.hero, imageAlt: event.target.value },
+              }))
+            }
+          />
+        </Field>
         <Field label="Judul Halaman">
           <Input
             value={data.hero.title}
@@ -309,34 +283,6 @@ export function ManageCollaborationSettings({
       </SectionCard>
 
       <SectionCard
-        title="Form Hubungi Kami"
-        desc="Konfigurasi judul dan deskripsi form kontak kolaborasi."
-      >
-        <Field label="Judul Form">
-          <Input
-            value={data.form.title}
-            onChange={(event) =>
-              changeData((current) => ({
-                ...current,
-                form: { ...current.form, title: event.target.value },
-              }))
-            }
-          />
-        </Field>
-        <Field label="Deskripsi Form">
-          <Textarea
-            value={data.form.description}
-            onChange={(description) =>
-              changeData((current) => ({
-                ...current,
-                form: { ...current.form, description },
-              }))
-            }
-          />
-        </Field>
-      </SectionCard>
-
-      <SectionCard
         title="Partner Logos"
         desc="Upload logo partner yang ditampilkan di halaman kolaborasi. Logo akan ditampilkan grayscale dan berwarna saat di-hover."
       >
@@ -418,7 +364,7 @@ export function ManageCollaborationSettings({
 
       <SectionCard
         title="Partner Content"
-        desc="Kelola konten video kolaborasi dari berbagai platform (YouTube, Instagram, TikTok, dll)."
+        desc="Kelola platform dan URL konten. Thumbnail serta rasio public diturunkan otomatis dari link dan dibuka pada tab baru."
       >
         <div className="space-y-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -441,7 +387,7 @@ export function ManageCollaborationSettings({
                   {content.platform}
                 </span>
                 <span className="flex-1 truncate text-sm text-muted-foreground">
-                  {content.contentUrl || content.title}
+                  {content.contentUrl}
                 </span>
                 <Button
                   type="button"
@@ -465,66 +411,31 @@ export function ManageCollaborationSettings({
                   <Trash2 className="size-4" />
                 </Button>
               </div>
-              <div className="grid gap-4 md:grid-cols-[180px_1fr]">
-                <ImageUpload
-                  value={content.thumbnailUrl}
-                  onChange={(thumbnailUrl) =>
-                    updateContent(content.clientKey, { thumbnailUrl })
+              <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
+                <select
+                  value={content.platform}
+                  onChange={(event) =>
+                    updateContent(content.clientKey, {
+                      platform: event.target.value as CollaborationPlatform,
+                    })
                   }
-                  placeholder="Upload thumbnail..."
+                  className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="youtube">YouTube</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="x">X (Twitter)</option>
+                </select>
+                <Input
+                  value={content.contentUrl}
+                  onChange={(event) =>
+                    updateContent(content.clientKey, {
+                      contentUrl: event.target.value,
+                    })
+                  }
+                  placeholder="https://youtube.com/..."
                 />
-                <div className="space-y-3">
-                  <Input
-                    value={content.title}
-                    onChange={(event) =>
-                      updateContent(content.clientKey, {
-                        title: event.target.value,
-                      })
-                    }
-                    placeholder="Judul konten"
-                  />
-                  <Input
-                    value={content.contentUrl}
-                    onChange={(event) =>
-                      updateContent(content.clientKey, {
-                        contentUrl: event.target.value,
-                      })
-                    }
-                    placeholder="Masukkan link video..."
-                  />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <select
-                      value={content.platform}
-                      onChange={(event) =>
-                        updateContent(content.clientKey, {
-                          platform: event.target.value as CollaborationPlatform,
-                        })
-                      }
-                      className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-                    >
-                      <option value="youtube">YouTube</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="tiktok">TikTok</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="x">X (Twitter)</option>
-                    </select>
-                    <select
-                      value={content.aspectRatio}
-                      onChange={(event) =>
-                        updateContent(content.clientKey, {
-                          aspectRatio: event.target
-                            .value as CollaborationAspectRatio,
-                        })
-                      }
-                      className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-                    >
-                      <option value="9:16">9:16</option>
-                      <option value="4:5">4:5</option>
-                      <option value="16:9">16:9</option>
-                      <option value="1:1">1:1</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </div>
           ))}
@@ -534,7 +445,7 @@ export function ManageCollaborationSettings({
               Tambah Konten Baru
             </p>
             <div className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
                 <select
                   value={newContentPlatform}
                   onChange={(event) =>
@@ -550,36 +461,15 @@ export function ManageCollaborationSettings({
                   <option value="facebook">Facebook</option>
                   <option value="x">X (Twitter)</option>
                 </select>
-                <select
-                  value={newContentAspectRatio}
-                  onChange={(event) =>
-                    setNewContentAspectRatio(
-                      event.target.value as CollaborationAspectRatio,
-                    )
-                  }
-                  className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="9:16">9:16</option>
-                  <option value="4:5">4:5</option>
-                  <option value="16:9">16:9</option>
-                  <option value="1:1">1:1</option>
-                </select>
+                <Input
+                  value={newContentLink}
+                  onChange={(event) => setNewContentLink(event.target.value)}
+                  placeholder="https://youtube.com/..."
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") addPartnerContent()
+                  }}
+                />
               </div>
-              <Input
-                value={newContentTitle}
-                onChange={(event) => setNewContentTitle(event.target.value)}
-                placeholder="Judul konten"
-              />
-              <Input
-                value={newContentLink}
-                onChange={(event) => setNewContentLink(event.target.value)}
-                placeholder="Masukkan link video..."
-              />
-              <ImageUpload
-                value={newContentThumbnailUrl}
-                onChange={setNewContentThumbnailUrl}
-                placeholder="Upload thumbnail konten..."
-              />
               <Button
                 type="button"
                 onClick={addPartnerContent}

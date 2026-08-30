@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache"
 
 export function revalidateEventRoutes(id?: number) {
   revalidatePath("/agenda")
-  revalidatePath("/dashboard/content")
+  revalidatePath("/dashboard/content/event")
   revalidatePath("/dashboard/create-event")
 
   if (id) {

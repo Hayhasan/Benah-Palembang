@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { usernameSchema } from "@/modules/auth/schemas/username.schema"
+
 function emptyStringToNull(value: unknown) {
   if (typeof value !== "string") return value
   const normalized = value.trim()
@@ -58,6 +60,7 @@ export const updateProfileSchema = z
       .trim()
       .min(2, "Nama minimal 2 karakter.")
       .max(160, "Nama maksimal 160 karakter."),
+    username: usernameSchema,
     avatarUrl: nullableHttpsUrlSchema,
     bannerUrl: nullableHttpsUrlSchema,
     bio: nullableBioSchema,

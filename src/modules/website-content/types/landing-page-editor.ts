@@ -16,7 +16,18 @@ export type LandingHeroSlideEditorData = LandingHeroSlideData & EditorRecord
 export type LandingExploreItemEditorData = LandingExploreItemData & EditorRecord
 
 export type LandingArticleSectionEditorData = LandingArticleSectionData &
-  EditorRecord
+  EditorRecord & {
+    pinnedArticleIds: number[]
+  }
+
+export interface LandingArticlePinOption {
+  id: number
+  sectionKey: string
+  title: string
+  slug: string
+  publishedAtLabel: string
+  isAvailable: boolean
+}
 
 export type LandingTeamMemberEditorData = LandingTeamMemberData & EditorRecord
 

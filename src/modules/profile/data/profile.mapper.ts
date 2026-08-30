@@ -2,11 +2,19 @@ import "server-only"
 
 import type { Prisma } from "@prisma/client"
 
+import {
+  ARTICLE_GALLERY_LIMIT,
+  articleGallerySelect,
+  articleGalleryWhere,
+  mapArticleGallery,
+} from "@/modules/article/data/article-gallery.mapper"
+
 import type { ProfileData } from "../types/profile"
 
 export const profileSelect = {
   id: true,
   name: true,
+  username: true,
   email: true,
   role: true,
   avatarUrl: true,
@@ -17,6 +25,17 @@ export const profileSelect = {
   instagramUrl: true,
   xUrl: true,
   linkedinUrl: true,
+  authoredArticles: {
+    where: articleGalleryWhere,
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    take: ARTICLE_GALLERY_LIMIT,
+    select: articleGallerySelect,
+  },
+  _count: {
+    select: {
+      authoredArticles: { where: articleGalleryWhere },
+    },
+  },
 } satisfies Prisma.UserSelect
 
 type ProfileRecord = Prisma.UserGetPayload<{
@@ -27,6 +46,7 @@ export function mapProfile(record: ProfileRecord): ProfileData {
   return {
     id: record.id,
     name: record.name,
+    username: record.username,
     email: record.email,
     role: record.role,
     avatarUrl: record.avatarUrl,
@@ -37,5 +57,9 @@ export function mapProfile(record: ProfileRecord): ProfileData {
     instagramUrl: record.instagramUrl,
     xUrl: record.xUrl,
     linkedinUrl: record.linkedinUrl,
+    articleGallery: mapArticleGallery(
+      record.authoredArticles,
+      record._count.authoredArticles,
+    ),
   }
 }

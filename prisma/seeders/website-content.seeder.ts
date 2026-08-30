@@ -1,7 +1,7 @@
 import type {
   PrismaClient,
-  WebsiteCollaborationAspectRatio,
   WebsiteCollaborationPlatform,
+  WebsiteFooterConnectPlatform,
 } from "@prisma/client"
 
 import { DEFAULT_AGENDA_PAGE } from "../../src/modules/website-content/constants/default-agenda-page"
@@ -10,9 +10,9 @@ import { DEFAULT_COLLABORATION_PAGE } from "../../src/modules/website-content/co
 import { DEFAULT_HEADER_FOOTER_CONTENT } from "../../src/modules/website-content/constants/default-header-footer-content"
 import { DEFAULT_LANDING_PAGE } from "../../src/modules/website-content/constants/default-landing-page"
 import type {
-  CollaborationAspectRatio,
   CollaborationPlatform,
 } from "../../src/modules/website-content/types/collaboration-page"
+import type { FooterConnectPlatform } from "../../src/modules/website-content/types/header-footer-content"
 
 const collaborationPlatformToDatabase: Record<
   CollaborationPlatform,
@@ -25,14 +25,19 @@ const collaborationPlatformToDatabase: Record<
   x: "X",
 }
 
-const collaborationAspectRatioToDatabase: Record<
-  CollaborationAspectRatio,
-  WebsiteCollaborationAspectRatio
+const footerConnectPlatformToDatabase: Record<
+  FooterConnectPlatform,
+  WebsiteFooterConnectPlatform
 > = {
-  "9:16": "PORTRAIT_9_16",
-  "4:5": "PORTRAIT_4_5",
-  "16:9": "LANDSCAPE_16_9",
-  "1:1": "SQUARE_1_1",
+  instagram: "INSTAGRAM",
+  whatsapp: "WHATSAPP",
+  youtube: "YOUTUBE",
+  tiktok: "TIKTOK",
+  linkedin: "LINKEDIN",
+  x: "X",
+  facebook: "FACEBOOK",
+  mail: "MAIL",
+  website: "WEBSITE",
 }
 
 function defaultArticleCategoryHeroData(sectionKey: string) {
@@ -87,6 +92,9 @@ async function seedLandingPage(prisma: PrismaClient) {
         ctaDescription: DEFAULT_LANDING_PAGE.cta.description,
         ctaButtonLabel: DEFAULT_LANDING_PAGE.cta.buttonLabel,
         ctaButtonUrl: DEFAULT_LANDING_PAGE.cta.buttonUrl,
+        ctaBackgroundImageUrl: DEFAULT_LANDING_PAGE.cta.backgroundImageUrl,
+        ctaContactLabel: DEFAULT_LANDING_PAGE.cta.contactLabel,
+        ctaContactEmail: DEFAULT_LANDING_PAGE.cta.contactEmail,
         heroSlides: {
           create: DEFAULT_LANDING_PAGE.heroSlides,
         },
@@ -136,15 +144,12 @@ async function seedCollaborationPage(prisma: PrismaClient) {
         key: DEFAULT_COLLABORATION_PAGE.key,
         heroImageUrl: DEFAULT_COLLABORATION_PAGE.hero.imageUrl,
         heroImageAlt: DEFAULT_COLLABORATION_PAGE.hero.imageAlt,
-        heroEyebrow: DEFAULT_COLLABORATION_PAGE.hero.eyebrow,
         heroTitle: DEFAULT_COLLABORATION_PAGE.hero.title,
         heroDescription: DEFAULT_COLLABORATION_PAGE.hero.description,
         contactEmail: DEFAULT_COLLABORATION_PAGE.contact.email,
         contactPhone: DEFAULT_COLLABORATION_PAGE.contact.phone,
         emailUrl: DEFAULT_COLLABORATION_PAGE.contact.emailUrl,
         whatsappUrl: DEFAULT_COLLABORATION_PAGE.contact.whatsappUrl,
-        formTitle: DEFAULT_COLLABORATION_PAGE.form.title,
-        formDescription: DEFAULT_COLLABORATION_PAGE.form.description,
         partnerLogos: {
           create: DEFAULT_COLLABORATION_PAGE.partnerLogos,
         },
@@ -152,8 +157,6 @@ async function seedCollaborationPage(prisma: PrismaClient) {
           create: DEFAULT_COLLABORATION_PAGE.partnerContents.map((item) => ({
             ...item,
             platform: collaborationPlatformToDatabase[item.platform],
-            aspectRatio:
-              collaborationAspectRatioToDatabase[item.aspectRatio],
           })),
         },
       },
@@ -191,20 +194,21 @@ async function seedHeaderFooterContent(prisma: PrismaClient) {
         logoImageUrl: DEFAULT_HEADER_FOOTER_CONTENT.logo.imageUrl,
         logoImageAlt: DEFAULT_HEADER_FOOTER_CONTENT.logo.imageAlt,
         logoLinkUrl: DEFAULT_HEADER_FOOTER_CONTENT.logo.linkUrl,
+        footerBackgroundText:
+          DEFAULT_HEADER_FOOTER_CONTENT.footer.backgroundText,
         footerDescription:
           DEFAULT_HEADER_FOOTER_CONTENT.footer.description,
-        exploreDescription:
-          DEFAULT_HEADER_FOOTER_CONTENT.footer.exploreDescription,
-        contactEmail: DEFAULT_HEADER_FOOTER_CONTENT.footer.contactEmail,
-        contactPhone: DEFAULT_HEADER_FOOTER_CONTENT.footer.contactPhone,
-        contactAddress: DEFAULT_HEADER_FOOTER_CONTENT.footer.contactAddress,
         copyrightText: DEFAULT_HEADER_FOOTER_CONTENT.footer.copyrightText,
-        closingText: DEFAULT_HEADER_FOOTER_CONTENT.footer.closingText,
         footerExploreLinks: {
           create: DEFAULT_HEADER_FOOTER_CONTENT.footer.exploreLinks,
         },
         footerConnectLinks: {
-          create: DEFAULT_HEADER_FOOTER_CONTENT.footer.connectLinks,
+          create: DEFAULT_HEADER_FOOTER_CONTENT.footer.connectLinks.map(
+            (link) => ({
+              ...link,
+              platform: footerConnectPlatformToDatabase[link.platform],
+            }),
+          ),
         },
       },
     })

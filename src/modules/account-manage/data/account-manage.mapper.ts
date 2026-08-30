@@ -2,6 +2,13 @@ import "server-only"
 
 import type { Prisma } from "@prisma/client"
 
+import {
+  ARTICLE_GALLERY_LIMIT,
+  articleGallerySelect,
+  articleGalleryWhere,
+  mapArticleGallery,
+} from "@/modules/article/data/article-gallery.mapper"
+
 import type {
   ManagedAccountDetail,
   ManagedAccountListItem,
@@ -28,6 +35,17 @@ export const managedAccountDetailSelect = {
   linkedinUrl: true,
   bannedAt: true,
   updatedAt: true,
+  authoredArticles: {
+    where: articleGalleryWhere,
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    take: ARTICLE_GALLERY_LIMIT,
+    select: articleGallerySelect,
+  },
+  _count: {
+    select: {
+      authoredArticles: { where: articleGalleryWhere },
+    },
+  },
 } satisfies Prisma.UserSelect
 
 type AccountListRecord = Prisma.UserGetPayload<{
@@ -78,5 +96,9 @@ export function mapManagedAccountDetail(
     bannedAt: account.bannedAt?.toISOString() ?? null,
     updatedAt: account.updatedAt.toISOString(),
     updatedAtLabel: dateFormatter.format(account.updatedAt),
+    articleGallery: mapArticleGallery(
+      account.authoredArticles,
+      account._count.authoredArticles,
+    ),
   }
 }
