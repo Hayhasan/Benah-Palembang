@@ -232,7 +232,11 @@ export const useTheme = () => {
   const context = React.useContext(ThemeProviderContext)
 
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider")
+    return {
+      theme: "dark" as Theme,
+      setTheme: () => null,
+      toggleTheme: () => null,
+    }
   }
 
   return context
