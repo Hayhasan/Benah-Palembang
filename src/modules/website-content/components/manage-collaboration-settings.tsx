@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
+import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -125,6 +126,16 @@ export function ManageCollaborationSettings({
   const [newContentAspectRatio, setNewContentAspectRatio] =
     useState<CollaborationAspectRatio>("9:16")
 
+  const [deleteLogoDialog, setDeleteLogoDialog] = useState<{
+    open: boolean
+    logo: CollaborationPartnerLogoEditorData | null
+  }>({ open: false, logo: null })
+
+  const [deleteContentDialog, setDeleteContentDialog] = useState<{
+    open: boolean
+    content: CollaborationPartnerContentEditorData | null
+  }>({ open: false, content: null })
+
   const changeData = onChange
 
   const updateLogo = (
@@ -139,6 +150,22 @@ export function ManageCollaborationSettings({
     }))
   }
 
+  const confirmDeleteLogo = () => {
+    if (!deleteLogoDialog.logo) return
+    const targetKey = deleteLogoDialog.logo.clientKey
+    changeData((current) => ({
+      ...current,
+      partnerLogos: current.partnerLogos
+        .filter((item) => item.clientKey !== targetKey)
+        .map((item, index) => ({
+          ...item,
+          position: index + 1,
+        })),
+    }))
+    toast.success("Logo partner berhasil dihapus")
+    setDeleteLogoDialog({ open: false, logo: null })
+  }
+
   const updateContent = (
     clientKeyValue: string,
     values: Partial<CollaborationPartnerContentEditorData>,
@@ -151,9 +178,25 @@ export function ManageCollaborationSettings({
     }))
   }
 
+  const confirmDeleteContent = () => {
+    if (!deleteContentDialog.content) return
+    const targetKey = deleteContentDialog.content.clientKey
+    changeData((current) => ({
+      ...current,
+      partnerContents: current.partnerContents
+        .filter((item) => item.clientKey !== targetKey)
+        .map((item, index) => ({
+          ...item,
+          position: index + 1,
+        })),
+    }))
+    toast.success("Konten partner berhasil dihapus")
+    setDeleteContentDialog({ open: false, content: null })
+  }
+
   const addPartnerContent = () => {
-    if (!newContentTitle.trim() || !newContentThumbnailUrl) {
-      toast.error("Judul dan thumbnail konten wajib diisi.")
+    if (!newContentTitle.trim() && !newContentLink.trim()) {
+      toast.error("Judul atau link konten tidak boleh kosong.")
       return
     }
 
@@ -165,9 +208,9 @@ export function ManageCollaborationSettings({
           id: null,
           clientKey: clientKey("collaboration-content"),
           platform: newContentPlatform,
-          title: newContentTitle,
-          thumbnailUrl: newContentThumbnailUrl,
-          contentUrl: newContentLink,
+          title: newContentTitle.trim() || `Konten ${newContentPlatform}`,
+          thumbnailUrl: newContentThumbnailUrl || "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=800",
+          contentUrl: newContentLink.trim(),
           aspectRatio: newContentAspectRatio,
           position: current.partnerContents.length + 1,
           isVisible: true,
@@ -178,6 +221,7 @@ export function ManageCollaborationSettings({
     setNewContentLink("")
     setNewContentThumbnailUrl("")
     setNewContentAspectRatio("9:16")
+    toast.success("Konten partner berhasil ditambahkan")
   }
 
   return (
@@ -363,19 +407,10 @@ export function ManageCollaborationSettings({
                 />
                 <button
                   type="button"
-                  onClick={() =>
-                    changeData((current) => ({
-                      ...current,
-                      partnerLogos: current.partnerLogos
-                        .filter((item) => item.clientKey !== logo.clientKey)
-                        .map((item, index) => ({
-                          ...item,
-                          position: index + 1,
-                        })),
-                    }))
-                  }
-                  className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
+                  onClick={() => setDeleteLogoDialog({ open: true, logo })}
+                  className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100 cursor-pointer shadow-xs"
                   aria-label={`Hapus logo ${logo.name}`}
+                  title="Hapus logo"
                 >
                   x
                 </button>
@@ -409,6 +444,7 @@ export function ManageCollaborationSettings({
                 ],
               }))
               setNewLogoName("")
+              toast.success("Logo partner berhasil ditambahkan")
             }}
             placeholder="Upload Logo Partner"
             aspect={1}
@@ -447,20 +483,9 @@ export function ManageCollaborationSettings({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600"
-                  onClick={() =>
-                    changeData((current) => ({
-                      ...current,
-                      partnerContents: current.partnerContents
-                        .filter(
-                          (item) => item.clientKey !== content.clientKey,
-                        )
-                        .map((item, index) => ({
-                          ...item,
-                          position: index + 1,
-                        })),
-                    }))
-                  }
+                  className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                  onClick={() => setDeleteContentDialog({ open: true, content })}
+                  title="Hapus konten"
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -568,7 +593,7 @@ export function ManageCollaborationSettings({
               <Input
                 value={newContentTitle}
                 onChange={(event) => setNewContentTitle(event.target.value)}
-                placeholder="Judul konten"
+                placeholder="Judul konten (opsional)"
               />
               <Input
                 value={newContentLink}
@@ -578,19 +603,41 @@ export function ManageCollaborationSettings({
               <ImageUpload
                 value={newContentThumbnailUrl}
                 onChange={setNewContentThumbnailUrl}
-                placeholder="Upload thumbnail konten..."
+                placeholder="Upload thumbnail konten (opsional)..."
               />
               <Button
                 type="button"
                 onClick={addPartnerContent}
-                className="w-full bg-palembang-red text-white hover:bg-palembang-red/90"
+                className="w-full bg-palembang-red text-white hover:bg-palembang-red/90 cursor-pointer"
               >
-                <Plus className="mr-2 size-4" /> Add
+                <Plus className="mr-2 size-4" /> Tambah Konten Partner
               </Button>
             </div>
           </div>
         </div>
       </SectionCard>
+
+      {/* Delete Partner Logo Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteLogoDialog.open}
+        onOpenChange={(open) => setDeleteLogoDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Logo Partner"
+        description={`Apakah Anda yakin ingin menghapus logo "${deleteLogoDialog.logo?.name || "Partner"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Logo"
+        variant="destructive"
+        onConfirm={confirmDeleteLogo}
+      />
+
+      {/* Delete Partner Content Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteContentDialog.open}
+        onOpenChange={(open) => setDeleteContentDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Konten Partner"
+        description={`Apakah Anda yakin ingin menghapus konten "${deleteContentDialog.content?.title || deleteContentDialog.content?.contentUrl || "Partner"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Konten"
+        variant="destructive"
+        onConfirm={confirmDeleteContent}
+      />
     </div>
   )
 }

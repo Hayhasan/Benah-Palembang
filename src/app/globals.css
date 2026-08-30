@@ -52,55 +52,61 @@
   --color-palembang-gold: var(--palembang-gold);
   --color-palembang-charcoal: var(--palembang-charcoal);
   --color-palembang-off-white: var(--palembang-off-white);
+  --color-palembang-sage: var(--palembang-sage);
+  --color-palembang-peach: var(--palembang-peach);
   --font-display: var(--font-playfair);
   --font-sans: var(--font-inter);
 }
 
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.13 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.18 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.22 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.13 0 0);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.60 0 0);
-  --accent: oklch(0.30 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.50 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.18 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* Light Mode Palette */
+  --background: #f8efea;
+  --foreground: #22201d;
+  --card: #ffffff;
+  --card-foreground: #22201d;
+  --popover: #ffffff;
+  --popover-foreground: #22201d;
+  --primary: #9e2a2b;
+  --primary-foreground: #ffffff;
+  --secondary: #6d8261;
+  --secondary-foreground: #ffffff;
+  --muted: #ece0d8;
+  --muted-foreground: #6b6660;
+  --accent: #e5d4cb;
+  --accent-foreground: #22201d;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+  --border: #dfcec4;
+  --input: #dfcec4;
+  --ring: #6d8261;
+  --chart-1: #6d8261;
+  --chart-2: #9e2a2b;
+  --chart-3: #c88a2e;
+  --chart-4: #4a5d43;
+  --chart-5: #7c3a3b;
+  --sidebar: #f3e7e0;
+  --sidebar-foreground: #22201d;
+  --sidebar-primary: #6d8261;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8dbd2;
+  --sidebar-accent-foreground: #22201d;
+  --sidebar-border: #dfcec4;
+  --sidebar-ring: #6d8261;
   /* Benah Palembang Brand Colors */
-  --palembang-red: oklch(0.47 0.22 25);
-  --palembang-red-dark: oklch(0.36 0.20 25);
-  --palembang-gold: oklch(0.72 0.14 75);
-  --palembang-charcoal: oklch(0.15 0 0);
-  --palembang-off-white: oklch(0.98 0.005 80);
+  --palembang-red: #a32223;
+  --palembang-red-dark: #841819;
+  --palembang-gold: #c88a2e;
+  --palembang-charcoal: #23201d;
+  --palembang-off-white: #f8efea;
+  --palembang-sage: #6d8261;
+  --palembang-peach: #f8efea;
   --font-playfair: var(--font-playfair-family), 'Playfair Display', Georgia, serif;
   --font-inter: var(--font-inter-family), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .dark {
+  /* Dark Mode Palette (Current Aesthetic) */
   --background: oklch(0.13 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.18 0 0);
@@ -128,6 +134,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+  --palembang-red: oklch(0.47 0.22 25);
+  --palembang-red-dark: oklch(0.36 0.20 25);
+  --palembang-gold: oklch(0.72 0.14 75);
+  --palembang-charcoal: oklch(0.15 0 0);
+  --palembang-off-white: oklch(0.98 0.005 80);
+  --palembang-sage: #6d8261;
+  --palembang-peach: #f8efea;
 }
 
 @layer base {

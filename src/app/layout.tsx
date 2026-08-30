@@ -22,6 +22,9 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Benah Palembang Editorial Platform",
+  icons: {
+    icon: "/logocircle.jpeg",
+  },
   openGraph: {
     images: "https://bolt.new/static/og_default.png",
   },

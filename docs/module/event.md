@@ -511,4 +511,8 @@ Sistem partisipan agenda/event mencatat pengunjung yang mengklik tombol CTA **"D
   - `/dashboard/create-event` menampilkan jumlah partisipan riil pada tabel event milik author.
   - `/dashboard/create-event/preview/[id]` dan preview Manage Content menampilkan jumlah partisipan riil.
 
+## 16. Penyesuaian UI & Interaksi (Vite to Next Migration)
 
+- **Tombol WhatsApp "Hubungi Kami"**: Pada halaman detail agenda publik (`/agenda/[id]`), ditambahkan tombol WhatsApp *"Hubungi Kami"* berdampingan secara responsif (`grid-cols-2`) dengan tombol *"Bagikan Acara"* tepat di bawah tombol *"Daftar Sekarang"*.
+- **Konfirmasi Modal Delete**: Penghapusan event di dashboard author (`/dashboard/create-event`) menggunakan `<ConfirmActionDialog>` dengan feedback toast Sonner 3 detik.
+- **Dynamic Theme & Toast Notifications**: Seluruh interaksi simpan, ajukan publikasi, dan copy link dilengkapi feedback Sonner toast dengan durasi 3000ms.

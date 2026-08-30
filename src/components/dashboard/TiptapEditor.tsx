@@ -113,8 +113,10 @@ const MenuBar = ({
   const saveLink = () => {
     if (linkUrl === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      toast.success("Tautan berhasil dihapus!")
     } else {
       editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run()
+      toast.success("Tautan berhasil disimpan!")
     }
     setLinkModalOpen(false)
   }

@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner"
 
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
+import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -194,6 +195,66 @@ export function ManageLandingPageForm({
   const activeTabRef = useRef(activeTab)
   const dirtyModulesRef = useRef<Set<EditableModule>>(new Set())
   const { setIsDirty, registerSaveHandler } = useUnsavedChanges()
+
+  const [deleteSlideDialog, setDeleteSlideDialog] = useState<{
+    open: boolean
+    slide: LandingHeroSlideEditorData | null
+  }>({ open: false, slide: null })
+
+  const [deleteExploreDialog, setDeleteExploreDialog] = useState<{
+    open: boolean
+    item: LandingExploreItemEditorData | null
+  }>({ open: false, item: null })
+
+  const [deleteTeamDialog, setDeleteTeamDialog] = useState<{
+    open: boolean
+    member: LandingTeamMemberEditorData | null
+  }>({ open: false, member: null })
+
+  const confirmDeleteSlide = () => {
+    if (!deleteSlideDialog.slide) return
+    const targetKey = deleteSlideDialog.slide.clientKey
+    changeData((current) => ({
+      ...current,
+      heroSlides: normalizePositions(
+        current.heroSlides.filter((item) => item.clientKey !== targetKey),
+      ),
+    }))
+    toast.success("Slide carousel berhasil dihapus")
+    setDeleteSlideDialog({ open: false, slide: null })
+  }
+
+  const confirmDeleteExplore = () => {
+    if (!deleteExploreDialog.item) return
+    const targetKey = deleteExploreDialog.item.clientKey
+    changeData((current) => ({
+      ...current,
+      explore: {
+        ...current.explore,
+        items: normalizePositions(
+          current.explore.items.filter((item) => item.clientKey !== targetKey),
+        ),
+      },
+    }))
+    toast.success("Card jelajahi berhasil dihapus")
+    setDeleteExploreDialog({ open: false, item: null })
+  }
+
+  const confirmDeleteTeam = () => {
+    if (!deleteTeamDialog.member) return
+    const targetKey = deleteTeamDialog.member.clientKey
+    changeData((current) => ({
+      ...current,
+      team: {
+        ...current.team,
+        members: normalizePositions(
+          current.team.members.filter((item) => item.clientKey !== targetKey),
+        ),
+      },
+    }))
+    toast.success("Anggota tim berhasil dihapus")
+    setDeleteTeamDialog({ open: false, member: null })
+  }
 
   useEffect(() => {
     dataRef.current = data
@@ -577,21 +638,15 @@ export function ManageLandingPageForm({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600"
+                          className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
                           onClick={() => {
                             if (data.heroSlides.length <= 1) {
                               toast.error("Minimal harus ada 1 carousel!")
                               return
                             }
-                            changeData((current) => ({
-                              ...current,
-                              heroSlides: normalizePositions(
-                                current.heroSlides.filter(
-                                  (item) => item.clientKey !== slide.clientKey,
-                                ),
-                              ),
-                            }))
+                            setDeleteSlideDialog({ open: true, slide })
                           }}
+                          title="Hapus carousel"
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -911,20 +966,9 @@ export function ManageLandingPageForm({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8 text-red-500 hover:bg-red-50 hover:text-red-600"
-                      onClick={() =>
-                        changeData((current) => ({
-                          ...current,
-                          explore: {
-                            ...current.explore,
-                            items: normalizePositions(
-                              current.explore.items.filter(
-                                (record) => record.clientKey !== item.clientKey,
-                              ),
-                            ),
-                          },
-                        }))
-                      }
+                      className="size-8 text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                      onClick={() => setDeleteExploreDialog({ open: true, item })}
+                      title="Hapus card"
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -1162,21 +1206,9 @@ export function ManageLandingPageForm({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="-mr-2 -mt-2 size-7 text-red-500 hover:bg-red-50 hover:text-red-600"
-                            onClick={() =>
-                              changeData((current) => ({
-                                ...current,
-                                team: {
-                                  ...current.team,
-                                  members: normalizePositions(
-                                    current.team.members.filter(
-                                      (record) =>
-                                        record.clientKey !== member.clientKey,
-                                    ),
-                                  ),
-                                },
-                              }))
-                            }
+                            className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                            onClick={() => setDeleteTeamDialog({ open: true, member })}
+                            title="Hapus anggota"
                           >
                             <Trash2 className="size-4" />
                           </Button>
@@ -1331,6 +1363,39 @@ export function ManageLandingPageForm({
           />
         ) : null}
       </div>
+
+      {/* Delete Carousel Slide Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteSlideDialog.open}
+        onOpenChange={(open) => setDeleteSlideDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Slide Carousel"
+        description={`Apakah Anda yakin ingin menghapus slide "${deleteSlideDialog.slide?.title || "Hero Slide"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Slide"
+        variant="destructive"
+        onConfirm={confirmDeleteSlide}
+      />
+
+      {/* Delete Explore Item Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteExploreDialog.open}
+        onOpenChange={(open) => setDeleteExploreDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Card Jelajahi"
+        description={`Apakah Anda yakin ingin menghapus card "${deleteExploreDialog.item?.label || "Jelajahi"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Card"
+        variant="destructive"
+        onConfirm={confirmDeleteExplore}
+      />
+
+      {/* Delete Team Member Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteTeamDialog.open}
+        onOpenChange={(open) => setDeleteTeamDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Anggota Tim"
+        description={`Apakah Anda yakin ingin menghapus anggota tim "${deleteTeamDialog.member?.name || "Anggota"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Anggota"
+        variant="destructive"
+        onConfirm={confirmDeleteTeam}
+      />
     </div>
   )
 }

@@ -526,3 +526,10 @@ Sistem view artikel mencatat pembacaan riil secara atomic dengan proteksi dedupl
 - **Sinkronisasi UI:**
   - Halaman detail publik `/artikel/[slug]`, dashboard author `/dashboard/create-article`, author preview, dan manage content membaca angka `views` riil dari database.
 
+## 16. Penyesuaian UI & Interaksi (Vite to Next Migration)
+
+- **Proteksi Pengguna Belum Login**: Pengunjung yang belum login yang menekan tombol *Like* atau mengirim *Komentar* pada halaman publik detail artikel akan langsung dialihkan ke `/login?redirect=...` disertai notifikasi toast peringatan selama 3 detik.
+- **Konfirmasi Modal Delete**: Penghapusan artikel di dashboard author (`/dashboard/create-article`) dan penghapusan komentar menggunakan `<ConfirmActionDialog>`.
+- **Toast Feedback**: Seluruh aksi simpan draft, ajukan publikasi, salin tautan, dan komentar memicu Sonner toast feedback dengan durasi 3000ms.
+
+

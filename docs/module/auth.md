@@ -757,3 +757,11 @@ npm run build
 
 Dokumen ini harus diperbarui jika session duration, online threshold, password
 policy, atau role matrix berubah.
+
+## Penyesuaian UI & Interaksi (Vite to Next Migration)
+
+- **Dark/Light Mode pada Halaman Auth**: Halaman `/login`, `/register`, `/lupa-password`, dan `/reset-password` kini mendukung switch tema dark dan light mode secara mandiri melalui floating theme toggle di pojok kanan atas shell auth.
+- **Dynamic Logo**: Menggunakan `/logohitam.png` pada mode terang dan `/logo.png` pada mode gelap.
+- **Pembersihan Tombol Navigasi**: Tombol "Kembali ke Beranda" pada header / form login dihapus sesuai preferensi pengguna.
+- **Sonner Toast Feedback**: Notifikasi toast 3 detik (`duration={3000}`) untuk aksi autentikasi, proteksi redirect unauthenticated user ke login, dan notifikasi error/sukses.
+

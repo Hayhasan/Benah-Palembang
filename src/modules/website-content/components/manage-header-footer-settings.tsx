@@ -2,8 +2,10 @@
 
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
 import { useState, type ReactNode } from "react"
+import { toast } from "sonner"
 
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
+import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -83,6 +85,48 @@ export function ManageHeaderFooterSettings({
     ) => HeaderFooterContentEditorData,
   ) => void
 }) {
+  const [deleteExploreDialog, setDeleteExploreDialog] = useState<{
+    open: boolean
+    link: WebsiteFooterLinkEditorData | null
+  }>({ open: false, link: null })
+
+  const [deleteConnectDialog, setDeleteConnectDialog] = useState<{
+    open: boolean
+    link: WebsiteFooterLinkEditorData | null
+  }>({ open: false, link: null })
+
+  const confirmDeleteExplore = () => {
+    if (!deleteExploreDialog.link) return
+    const targetKey = deleteExploreDialog.link.clientKey
+    onChange((current) => ({
+      ...current,
+      footer: {
+        ...current.footer,
+        exploreLinks: normalizePositions(
+          current.footer.exploreLinks.filter((item) => item.clientKey !== targetKey),
+        ),
+      },
+    }))
+    toast.success("Link explore berhasil dihapus")
+    setDeleteExploreDialog({ open: false, link: null })
+  }
+
+  const confirmDeleteConnect = () => {
+    if (!deleteConnectDialog.link) return
+    const targetKey = deleteConnectDialog.link.clientKey
+    onChange((current) => ({
+      ...current,
+      footer: {
+        ...current.footer,
+        connectLinks: normalizePositions(
+          current.footer.connectLinks.filter((item) => item.clientKey !== targetKey),
+        ),
+      },
+    }))
+    toast.success("Link connect berhasil dihapus")
+    setDeleteConnectDialog({ open: false, link: null })
+  }
+
   const updateExploreLink = (
     clientKeyValue: string,
     values: Partial<WebsiteFooterLinkEditorData>,
@@ -219,20 +263,9 @@ export function ManageHeaderFooterSettings({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                  onClick={() =>
-                    onChange((current) => ({
-                      ...current,
-                      footer: {
-                        ...current.footer,
-                        exploreLinks: normalizePositions(
-                          current.footer.exploreLinks.filter(
-                            (item) => item.clientKey !== link.clientKey,
-                          ),
-                        ),
-                      },
-                    }))
-                  }
+                  className="text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                  onClick={() => setDeleteExploreDialog({ open: true, link })}
+                  title="Hapus link"
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -299,20 +332,9 @@ export function ManageHeaderFooterSettings({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                onClick={() =>
-                  onChange((current) => ({
-                    ...current,
-                    footer: {
-                      ...current.footer,
-                      connectLinks: normalizePositions(
-                        current.footer.connectLinks.filter(
-                          (item) => item.clientKey !== link.clientKey,
-                        ),
-                      ),
-                    },
-                  }))
-                }
+                className="text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                onClick={() => setDeleteConnectDialog({ open: true, link })}
+                title="Hapus link"
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -427,6 +449,28 @@ export function ManageHeaderFooterSettings({
           </Field>
         </div>
       </SectionCard>
+
+      {/* Delete Explore Link Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteExploreDialog.open}
+        onOpenChange={(open) => setDeleteExploreDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Link Explore"
+        description={`Apakah Anda yakin ingin menghapus link explore "${deleteExploreDialog.link?.label || "Explore"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Link"
+        variant="destructive"
+        onConfirm={confirmDeleteExplore}
+      />
+
+      {/* Delete Connect Link Confirmation Dialog */}
+      <ConfirmActionDialog
+        open={deleteConnectDialog.open}
+        onOpenChange={(open) => setDeleteConnectDialog((prev) => ({ ...prev, open }))}
+        title="Hapus Link Connect"
+        description={`Apakah Anda yakin ingin menghapus link connect "${deleteConnectDialog.link?.label || "Connect"}"? Perubahan ini akan diterapkan setelah disimpan.`}
+        confirmText="Hapus Link"
+        variant="destructive"
+        onConfirm={confirmDeleteConnect}
+      />
     </div>
   )
 }

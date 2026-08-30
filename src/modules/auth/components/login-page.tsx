@@ -20,22 +20,22 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
 
   return (
     <AuthPageShell asideDescription="Masuk untuk menyimpan cerita dan mengikuti agenda pilihanmu.">
-      <h1 className="mt-16 font-display text-4xl font-bold tracking-[-0.04em]">
+      <h1 className="mt-12 sm:mt-16 font-display text-4xl font-bold tracking-[-0.04em]">
         Selamat datang kembali.
       </h1>
-      <p className="mt-3 text-sm leading-6 text-white/60">
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
         Masuk ke ruang personalmu di Benah Palembang.
       </p>
       <form action={formAction} className="mt-8 space-y-4" noValidate>
         {passwordResetSuccess && (
           <p
             role="status"
-            className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-2.5 text-xs leading-5 text-emerald-200"
+            className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-xs leading-5 text-emerald-600 dark:text-emerald-400"
           >
             Password berhasil diperbarui. Silakan login dengan password baru.
           </p>
         )}
-        <label className="block text-xs font-semibold text-white/80">
+        <label className="block text-xs font-semibold text-foreground">
           Email
           <input
             name="email"
@@ -46,15 +46,15 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
             value={email}
             onChange={(event) => setEmail(event.target.value.toLowerCase())}
             aria-invalid={Boolean(state.fieldErrors?.email)}
-            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+            className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-palembang-red focus:ring-[3px] focus:ring-palembang-red/20 transition-colors"
           />
           {state.fieldErrors?.email?.[0] && (
-            <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+            <span className="mt-1.5 block text-[11px] font-medium text-red-500">
               {state.fieldErrors.email[0]}
             </span>
           )}
         </label>
-        <label className="block text-xs font-semibold text-white/80">
+        <label className="block text-xs font-semibold text-foreground">
           Password
           <div className="relative mt-2">
             <input
@@ -64,12 +64,12 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
               autoComplete="current-password"
               placeholder="••••••••"
               aria-invalid={Boolean(state.fieldErrors?.password)}
-              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+              className="h-11 w-full rounded-md border border-input bg-background px-3 pr-10 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-palembang-red focus:ring-[3px] focus:ring-palembang-red/20 transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowPassword((visible) => !visible)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition-colors hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
               tabIndex={-1}
             >
               {showPassword ? (
@@ -80,7 +80,7 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
             </button>
           </div>
           {state.fieldErrors?.password?.[0] && (
-            <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+            <span className="mt-1.5 block text-[11px] font-medium text-red-500">
               {state.fieldErrors.password[0]}
             </span>
           )}
@@ -88,7 +88,7 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
         <div className="flex justify-end">
           <Link
             href="/lupa-password"
-            className="text-[11px] font-medium text-palembang-gold/80 transition-colors hover:text-palembang-gold hover:underline"
+            className="text-[11px] font-medium text-palembang-red transition-colors hover:underline"
           >
             Lupa password?
           </Link>
@@ -96,7 +96,7 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
         {state.message && (
           <p
             role="alert"
-            className="rounded-md border border-red-400/20 bg-red-400/10 px-3 py-2.5 text-xs leading-5 text-red-200"
+            className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-xs leading-5 text-red-600 dark:text-red-400"
           >
             {state.message}
           </p>
@@ -104,17 +104,17 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
         <Button
           type="submit"
           disabled={isPending}
-          className="mt-1 h-11 w-full bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
+          className="mt-1 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90 cursor-pointer shadow-sm"
         >
           {isPending ? "Memproses..." : "Masuk"}{" "}
           {!isPending && <ArrowRight className="size-4" />}
         </Button>
       </form>
-      <p className="mt-8 text-center text-xs text-white/50">
+      <p className="mt-8 text-center text-xs text-muted-foreground">
         Belum punya akun?{" "}
         <Link
           href="/register"
-          className="font-semibold text-palembang-gold hover:underline"
+          className="font-semibold text-palembang-red hover:underline"
         >
           Daftar sekarang
         </Link>

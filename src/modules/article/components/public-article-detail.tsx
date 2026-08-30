@@ -59,15 +59,10 @@ export function PublicArticleDetail({
 
   function handleToggleLike() {
     if (!isAuthenticated) {
-      toast.info("Silakan masuk terlebih dahulu untuk menyukai artikel ini.", {
-        action: {
-          label: "Masuk",
-          onClick: () =>
-            router.push(
-              `/login?redirect=${encodeURIComponent(`/artikel/${article.slug}`)}`,
-            ),
-        },
-      })
+      toast.error("Silakan login terlebih dahulu untuk menyukai artikel.")
+      router.push(
+        `/login?redirect=${encodeURIComponent(`/artikel/${article.slug}`)}`,
+      )
       return
     }
 

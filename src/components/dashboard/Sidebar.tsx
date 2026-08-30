@@ -11,8 +11,10 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/components/theme-provider"
 
 export function Sidebar() {
+    const { theme } = useTheme()
     const user = useCurrentUser()
     const { logout, isLoggingOut } = useSession()
     const { requestNavigation } = useUnsavedChanges()
@@ -62,12 +64,12 @@ export function Sidebar() {
             <div>
                 <div className={cn("flex h-16 items-center px-4", collapsed ? "justify-center" : "justify-between")}>
                     {!collapsed && (
-                        <button onClick={() => handleNav("/")} className="flex items-center gap-2 text-left">
-                            <img src="/logo.png" alt="Benah Palembang" className="h-5" />
+                        <button onClick={() => handleNav("/")} className="flex items-center gap-2 text-left cursor-pointer">
+                            <img src={theme === "light" ? "/logohitam.png" : "/logo.png"} alt="Benah Palembang" className="h-5" />
                         </button>
                     )}
                     {!isMobile && (
-                        <button onClick={() => setCollapsed(!collapsed)} className="rounded-md p-1.5 hover:bg-muted">
+                        <button onClick={() => setCollapsed(!collapsed)} className="rounded-md p-1.5 hover:bg-muted cursor-pointer">
                             {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
                         </button>
                     )}
@@ -182,10 +184,10 @@ export function Sidebar() {
         <>
             {isMobile && (
                 <div className="fixed left-0 top-0 z-40 flex h-16 w-full items-center border-b bg-background px-4">
-                    <button onClick={() => setMobileOpen(true)} className="mr-4">
+                    <button onClick={() => setMobileOpen(true)} className="mr-4 cursor-pointer">
                         <Menu className="size-6" />
                     </button>
-                    <img src="/logo.png" alt="Benah Palembang" className="h-5" />
+                    <img src={theme === "light" ? "/logohitam.png" : "/logo.png"} alt="Benah Palembang" className="h-5" />
                 </div>
             )}
 

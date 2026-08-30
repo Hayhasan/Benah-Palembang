@@ -15,6 +15,7 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme
   setTheme: (theme: Theme) => void
+  toggleTheme: () => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
@@ -33,6 +34,9 @@ function isTheme(value: string | null): value is Theme {
 }
 
 function getSystemTheme(): ResolvedTheme {
+  if (typeof window === "undefined") {
+    return "dark"
+  }
   if (window.matchMedia(COLOR_SCHEME_QUERY).matches) {
     return "dark"
   }
@@ -80,14 +84,11 @@ function isEditableTarget(target: EventTarget | null) {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
   storageKey = "theme",
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
-  // Dirender juga di server saat prerender, jadi localStorage harus dijaga.
-  // Nilai tersimpan dibaca ulang di effect di bawah supaya tidak terjadi
-  // hydration mismatch.
   const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
 
   React.useEffect(() => {
@@ -104,6 +105,21 @@ export function ThemeProvider({
     },
     [storageKey]
   )
+
+  const toggleTheme = React.useCallback(() => {
+    setThemeState((currentTheme) => {
+      const nextTheme =
+        currentTheme === "dark"
+          ? "light"
+          : currentTheme === "light"
+            ? "dark"
+            : getSystemTheme() === "dark"
+              ? "light"
+              : "dark"
+      window.localStorage.setItem(storageKey, nextTheme)
+      return nextTheme
+    })
+  }, [storageKey])
 
   const applyTheme = React.useCallback(
     (nextTheme: Theme) => {
@@ -161,19 +177,7 @@ export function ThemeProvider({
         return
       }
 
-      setThemeState((currentTheme) => {
-        const nextTheme =
-          currentTheme === "dark"
-            ? "light"
-            : currentTheme === "light"
-              ? "dark"
-              : getSystemTheme() === "dark"
-                ? "light"
-                : "dark"
-
-        window.localStorage.setItem(storageKey, nextTheme)
-        return nextTheme
-      })
+      toggleTheme()
     }
 
     window.addEventListener("keydown", handleKeyDown)
@@ -181,7 +185,7 @@ export function ThemeProvider({
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [storageKey])
+  }, [toggleTheme])
 
   React.useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -212,8 +216,9 @@ export function ThemeProvider({
     () => ({
       theme,
       setTheme,
+      toggleTheme,
     }),
-    [theme, setTheme]
+    [theme, setTheme, toggleTheme]
   )
 
   return (

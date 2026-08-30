@@ -7,6 +7,7 @@ import {
   Eye,
   Heart,
   MapPin,
+  MessageCircle,
   Sparkles,
   Ticket,
   Users,
@@ -229,26 +230,36 @@ export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
                     )}
 
                     <div className="grid grid-cols-2 gap-2.5">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleToggleLike}
-                        className={`h-11 w-full font-semibold ${
-                          isLiked
-                            ? "border-palembang-red text-palembang-red hover:bg-red-50 hover:text-palembang-red"
-                            : "hover:border-palembang-red hover:text-palembang-red"
-                        }`}
+                      <a
+                        href={`https://wa.me/628551241878?text=${encodeURIComponent(`Halo Benah Palembang, saya ingin bertanya mengenai agenda: ${event.title}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-emerald-600/30 bg-emerald-600/10 text-xs sm:text-sm font-bold text-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white transition-all duration-200"
                       >
-                        <Heart
-                          className={`size-4 ${
-                            isLiked ? "fill-palembang-red text-palembang-red" : ""
-                          }`}
-                        />
-                        <span>{isLiked ? "Disukai" : "Suka"}</span>
-                      </Button>
+                        <MessageCircle className="size-4 shrink-0" />
+                        <span>Hubungi Kami</span>
+                      </a>
 
                       <EventShareButton title={event.title} />
                     </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleToggleLike}
+                      className={`h-11 w-full font-semibold ${
+                        isLiked
+                          ? "border-palembang-red text-palembang-red hover:bg-red-50 hover:text-palembang-red"
+                          : "hover:border-palembang-red hover:text-palembang-red"
+                      }`}
+                    >
+                      <Heart
+                        className={`size-4 ${
+                          isLiked ? "fill-palembang-red text-palembang-red" : ""
+                        }`}
+                      />
+                      <span>{isLiked ? "Disukai" : "Suka Acara Ini"}</span>
+                    </Button>
                   </div>
                 </div>
 

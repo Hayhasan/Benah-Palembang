@@ -179,3 +179,17 @@ memanggil guard server yang:
 
 TODO tersebut ditempatkan langsung pada awal Server Action agar tidak terlewat
 saat module auth backend diimplementasikan.
+
+## Penyesuaian UI & Interaksi (Vite to Next Migration)
+
+- **Konfirmasi Modal Delete**: Seluruh fitur delete/hapus pada form pengaturan website content kini dilengkapi modal konfirmasi (`ConfirmActionDialog`) sebelum diterapkan, mencakup:
+  - Slide Carousel Hero (dilengkapi validasi batas minimal 1 slide).
+  - Card Jelajahi / Explore Items.
+  - Anggota Tim / Team Members.
+  - Logo Partner pada tab Kolaborasi.
+  - Konten Video Partner pada tab Kolaborasi.
+  - Explore Links & Connect Links pada footer.
+- **Tab Kolaborasi — Partner Content**: Input penambahan konten partner menggunakan form 2 kolom (platform & link URL) dengan tombol aksi yang jelas.
+- **Dynamic Logo & Themes**: Integrasi dark/light mode dengan logo dinamis (`/logohitam.png` pada mode terang dan `/logo.png` pada mode gelap di Sidebar Dashboard serta Floating Navbar saat keluar dari hero).
+- **Toast Notifications**: Seluruh aksi simpan, tambah, dan hapus menampilkan Sonner toast feedback dengan durasi 3 detik (`duration={3000}`).
+
