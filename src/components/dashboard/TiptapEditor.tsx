@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
+  getImageUploadErrorMessage,
   type ImageUploadScope,
   uploadImageToCloudinary,
   validateImageUpload,
@@ -83,11 +84,7 @@ const MenuBar = ({
       toast.success("Gambar berhasil diunggah dan ditambahkan ke konten.")
     } catch (error) {
       console.error("Rich text image upload failed:", error)
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Upload gambar ke Cloudinary gagal.",
-      )
+      toast.error(getImageUploadErrorMessage(error))
     } finally {
       setIsUploadingImage(false)
       onUploadingChange?.(false)
