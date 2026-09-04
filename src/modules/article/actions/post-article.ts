@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db/prisma"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
+import { isResubmittableArticleStatus } from "../constants/article-status"
 import { articleIdSchema } from "../schemas/article.schema"
 import type { ArticleActionResult } from "../types/article"
 import { revalidateArticleRoutes } from "./revalidate-article-routes"
@@ -34,13 +35,16 @@ export async function postArticleAction(
       })
 
       if (!article) return { kind: "not-found" as const }
-      if (article.status !== "DRAFT") return { kind: "invalid-status" as const }
+      if (!isResubmittableArticleStatus(article.status)) {
+        return { kind: "invalid-status" as const }
+      }
 
       await transaction.article.update({
         where: { id },
         data: {
           status: "PENDING_REVIEW",
           submittedAt: new Date(),
+          moderationNote: null,
         },
       })
 
@@ -57,7 +61,8 @@ export async function postArticleAction(
     if (result.kind === "invalid-status") {
       return {
         success: false,
-        message: "Hanya Artikel berstatus Draf yang dapat diposting.",
+        message:
+          "Hanya Artikel berstatus Draf atau Rejected yang dapat diposting.",
       }
     }
 

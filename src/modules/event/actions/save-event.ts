@@ -1,13 +1,16 @@
 "use server"
 
 import { Prisma } from "@prisma/client"
+import type { ContentStatus } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
+import { RESUBMITTABLE_EVENT_STATUSES } from "../constants/event-status"
 import { eventEditorSchema } from "../schemas/event.schema"
 import type { EventActionResult } from "../types/owned-event"
+import { buildEventChangeSummary } from "../data/event-change-summary"
 import {
   eventContentHasText,
   sanitizeEventContent,
@@ -59,6 +62,20 @@ function parseStartsAt(startsOn: string, startsTime: string) {
   return Number.isNaN(startsAt.getTime()) ? null : startsAt
 }
 
+/**
+ * Event `PUBLISHED` dapat disunting tanpa review ulang, sehingga deskripsi log
+ * dibedakan agar admin langsung mengenali suntingan pada konten yang tayang.
+ */
+function editDescription(
+  title: string,
+  previousStatus: ContentStatus,
+  intent: "SAVE" | "POST",
+) {
+  if (intent === "POST") return `Mengajukan review event '${title}'`
+  if (previousStatus === "PUBLISHED") return `Menyunting event tayang '${title}'`
+  return `Menyimpan perubahan event '${title}'`
+}
+
 export async function saveEventAction(
   input: unknown,
 ): Promise<EventActionResult> {
@@ -102,11 +119,32 @@ export async function saveEventAction(
             ownerId: actor.id,
             deletedAt: null,
           },
-          select: { id: true, status: true },
+          select: {
+            id: true,
+            status: true,
+            title: true,
+            description: true,
+            content: true,
+            bannerUrl: true,
+            category: true,
+            startsAt: true,
+            location: true,
+            organizer: true,
+            registrationUrl: true,
+            whatsappUrl: true,
+            tags: {
+              where: { deletedAt: null },
+              orderBy: { position: "asc" },
+              select: { label: true },
+            },
+          },
         })
 
         if (!currentEvent) return { kind: "not-found" as const }
-        if (data.intent === "POST" && currentEvent.status !== "DRAFT") {
+        if (
+          data.intent === "POST" &&
+          !RESUBMITTABLE_EVENT_STATUSES.includes(currentEvent.status)
+        ) {
           return { kind: "invalid-status" as const }
         }
 
@@ -134,6 +172,7 @@ export async function saveEventAction(
               ? {
                   status: "PENDING_REVIEW" as const,
                   submittedAt: now,
+                  moderationNote: null,
                 }
               : {}),
             tags: {
@@ -146,6 +185,35 @@ export async function saveEventAction(
           select: { id: true, title: true, status: true },
         })
 
+        const changes = buildEventChangeSummary(
+          {
+            title: currentEvent.title,
+            description: currentEvent.description,
+            content: currentEvent.content,
+            bannerUrl: currentEvent.bannerUrl,
+            category: currentEvent.category,
+            startsAt: currentEvent.startsAt,
+            location: currentEvent.location,
+            organizer: currentEvent.organizer,
+            registrationUrl: currentEvent.registrationUrl,
+            whatsappUrl: currentEvent.whatsappUrl,
+            tags: currentEvent.tags.map((tag) => tag.label),
+          },
+          {
+            title: data.title,
+            description: data.description,
+            content,
+            bannerUrl: data.bannerUrl,
+            category: data.category,
+            startsAt,
+            location: data.location,
+            organizer: data.organizer,
+            registrationUrl: data.registrationUrl,
+            whatsappUrl: data.whatsappUrl,
+            tags: data.tags,
+          },
+        )
+
         await recordActivityLog(
           {
             userId: actor.id,
@@ -153,12 +221,20 @@ export async function saveEventAction(
             userRole: actor.role,
             action: "UPDATE",
             module: "EVENT",
-            description:
-              data.intent === "POST"
-                ? `Mengajukan review agenda event '${event.title}'`
-                : `Menyimpan perubahan draf agenda event '${event.title}'`,
-            beforeState: { status: currentEvent.status },
-            afterState: { status: event.status },
+            description: editDescription(
+              event.title,
+              currentEvent.status,
+              data.intent,
+            ),
+            beforeState: {
+              status: currentEvent.status,
+              ...changes.before,
+            },
+            afterState: {
+              status: event.status,
+              changedFields: changes.changedFields,
+              ...changes.after,
+            },
           },
           transaction,
         )
@@ -224,7 +300,8 @@ export async function saveEventAction(
     if (result.kind === "invalid-status") {
       return {
         success: false,
-        message: "Hanya Event berstatus Draf yang dapat diposting.",
+        message:
+          "Hanya Event berstatus Draf atau Rejected yang dapat diposting.",
       }
     }
 

@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
+import { ModerationConfirmDialog } from "./moderation-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import type { OwnedArticleEditorData } from "@/modules/article/types/article"
 
@@ -76,32 +76,21 @@ export function ManagedArticlePreview({
     })
   }
 
-  function handleConfirmAction() {
+  function handleConfirmAction(note: string) {
     const { action } = confirmModal
 
     startTransition(async () => {
       let result = { success: false, message: "" }
+      const payload = { type: "ARTICLE" as const, id: article.id, note }
 
       if (action === "approve") {
-        result = await approveContentAction({
-          type: "ARTICLE",
-          id: article.id,
-        })
+        result = await approveContentAction(payload)
       } else if (action === "reject") {
-        result = await rejectContentAction({
-          type: "ARTICLE",
-          id: article.id,
-        })
+        result = await rejectContentAction(payload)
       } else if (action === "takedown") {
-        result = await takedownContentAction({
-          type: "ARTICLE",
-          id: article.id,
-        })
+        result = await takedownContentAction(payload)
       } else if (action === "restore") {
-        result = await restoreContentAction({
-          type: "ARTICLE",
-          id: article.id,
-        })
+        result = await restoreContentAction(payload)
       }
 
       if (result.success) {
@@ -378,47 +367,17 @@ export function ManagedArticlePreview({
       </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmActionDialog
+      <ModerationConfirmDialog
         open={confirmModal.open}
         onOpenChange={(open) => {
           if (!open) {
             setConfirmModal((prev) => ({ ...prev, open: false }))
           }
         }}
-        title={
-          confirmModal.action === "approve"
-            ? "Konfirmasi Persetujuan Artikel"
-            : confirmModal.action === "reject"
-              ? "Konfirmasi Penolakan Artikel"
-              : confirmModal.action === "takedown"
-                ? "Konfirmasi Takedown Artikel"
-                : "Konfirmasi Pemulihan Artikel"
-        }
-        description={
-          confirmModal.action === "approve"
-            ? `Apakah Anda yakin ingin menyetujui dan mempublikasikan artikel "${article.title}"?`
-            : confirmModal.action === "reject"
-              ? `Apakah Anda yakin ingin menolak pengajuan artikel "${article.title}"?`
-              : confirmModal.action === "takedown"
-                ? `Apakah Anda yakin ingin men-takedown artikel "${article.title}" dari penayangan publik?`
-                : `Apakah Anda yakin ingin memulihkan artikel "${article.title}" ke status Posted?`
-        }
-        confirmText={
-          confirmModal.action === "approve"
-            ? "Ya, Setujui"
-            : confirmModal.action === "reject"
-              ? "Ya, Tolak"
-              : confirmModal.action === "takedown"
-                ? "Ya, Takedown"
-                : "Ya, Pulihkan"
-        }
-        cancelText="Batal"
-        variant={
-          confirmModal.action === "takedown" ||
-          confirmModal.action === "reject"
-            ? "destructive"
-            : "default"
-        }
+        action={confirmModal.action}
+        contentLabel="Artikel"
+        contentTitle={article.title}
+        isPending={isPending}
         onConfirm={handleConfirmAction}
       />
     </div>

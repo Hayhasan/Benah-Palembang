@@ -11,6 +11,7 @@ export interface OwnedArticleListItem {
   updatedAtLabel: string
   status: ContentStatus
   statusLabel: string
+  moderationNote: string | null
   views: number
   likes: number
   comments: number
@@ -43,6 +44,7 @@ export interface OwnedArticleEditorData {
   categorySlug: string
   status: ContentStatus
   statusLabel: string
+  moderationNote: string | null
   tags: string[]
   readingTime: number
   author: {

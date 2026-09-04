@@ -1,13 +1,16 @@
 "use server"
 
 import { Prisma } from "@prisma/client"
+import type { ContentStatus } from "@prisma/client"
 
 import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
+import { RESUBMITTABLE_ARTICLE_STATUSES } from "../constants/article-status"
 import { articleEditorSchema } from "../schemas/article.schema"
 import type { ArticleActionResult } from "../types/article"
+import { buildArticleChangeSummary } from "../data/article-change-summary"
 import {
   articleContentHasText,
   calculateReadingTime,
@@ -43,6 +46,22 @@ async function createAvailableSlug(
   }
 
   throw new Error("Tidak dapat membuat slug Artikel yang unik.")
+}
+
+/**
+ * Artikel `PUBLISHED` dapat disunting tanpa review ulang, sehingga deskripsi log
+ * dibedakan agar admin langsung mengenali suntingan pada konten yang tayang.
+ */
+function editDescription(
+  title: string,
+  previousStatus: ContentStatus,
+  intent: "SAVE" | "POST",
+) {
+  if (intent === "POST") return `Mengajukan review artikel '${title}'`
+  if (previousStatus === "PUBLISHED") {
+    return `Menyunting artikel tayang '${title}'`
+  }
+  return `Menyimpan perubahan artikel '${title}'`
 }
 
 export async function saveArticleAction(
@@ -94,11 +113,30 @@ export async function saveArticleAction(
             authorId: actor.id,
             deletedAt: null,
           },
-          select: { id: true, slug: true, status: true },
+          select: {
+            id: true,
+            slug: true,
+            status: true,
+            title: true,
+            excerpt: true,
+            content: true,
+            coverImageUrl: true,
+            websiteArticleSection: {
+              select: { articleCategorySlug: true },
+            },
+            tags: {
+              where: { deletedAt: null },
+              orderBy: { position: "asc" },
+              select: { label: true },
+            },
+          },
         })
 
         if (!currentArticle) return { kind: "not-found" as const }
-        if (data.intent === "POST" && currentArticle.status !== "DRAFT") {
+        if (
+          data.intent === "POST" &&
+          !RESUBMITTABLE_ARTICLE_STATUSES.includes(currentArticle.status)
+        ) {
           return { kind: "invalid-status" as const }
         }
 
@@ -121,6 +159,7 @@ export async function saveArticleAction(
               ? {
                   status: "PENDING_REVIEW" as const,
                   submittedAt: now,
+                  moderationNote: null,
                 }
               : {}),
             tags: {
@@ -141,6 +180,26 @@ export async function saveArticleAction(
           },
         })
 
+        const changes = buildArticleChangeSummary(
+          {
+            title: currentArticle.title,
+            excerpt: currentArticle.excerpt,
+            content: currentArticle.content,
+            coverImageUrl: currentArticle.coverImageUrl,
+            categorySlug:
+              currentArticle.websiteArticleSection.articleCategorySlug,
+            tags: currentArticle.tags.map((tag) => tag.label),
+          },
+          {
+            title: data.title,
+            excerpt: data.excerpt,
+            content,
+            coverImageUrl: data.coverImageUrl,
+            categorySlug: section.articleCategorySlug,
+            tags: data.tags,
+          },
+        )
+
         await recordActivityLog(
           {
             userId: actor.id,
@@ -148,12 +207,20 @@ export async function saveArticleAction(
             userRole: actor.role,
             action: "UPDATE",
             module: "ARTICLE",
-            description:
-              data.intent === "POST"
-                ? `Mengajukan review artikel '${article.title}'`
-                : `Menyimpan perubahan draf artikel '${article.title}'`,
-            beforeState: { status: currentArticle.status },
-            afterState: { status: article.status },
+            description: editDescription(
+              article.title,
+              currentArticle.status,
+              data.intent,
+            ),
+            beforeState: {
+              status: currentArticle.status,
+              ...changes.before,
+            },
+            afterState: {
+              status: article.status,
+              changedFields: changes.changedFields,
+              ...changes.after,
+            },
           },
           transaction,
         )
@@ -230,7 +297,8 @@ export async function saveArticleAction(
     if (result.kind === "invalid-status") {
       return {
         success: false,
-        message: "Hanya Artikel berstatus Draf yang dapat diposting.",
+        message:
+          "Hanya Artikel berstatus Draf atau Rejected yang dapat diposting.",
       }
     }
 

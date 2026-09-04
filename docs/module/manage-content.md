@@ -66,10 +66,15 @@ PENDING_REVIEW
 PUBLISHED
 REJECTED
 TAKEN_DOWN
+ARCHIVED
 ```
 
-Daftar moderation secara default tidak perlu menampilkan `DRAFT` karena draft
-belum diajukan oleh owner. Status yang ditampilkan:
+Daftar moderation tidak menampilkan `DRAFT` karena draft belum diajukan oleh
+owner, dan tidak menampilkan `ARCHIVED` karena konten arsip sudah diturunkan
+sendiri oleh owner sehingga tidak menunggu keputusan admin. Jejaknya tetap
+terekam pada Activity Log melalui action `ARCHIVE`, dan konten kembali muncul
+pada daftar moderation begitu owner mempublikasikannya ulang. Status yang
+ditampilkan:
 
 - `PENDING_REVIEW` sebagai Request.
 - `PUBLISHED` sebagai Posted.
@@ -227,6 +232,53 @@ Conditional transition:
 
 Action harus idempotent atau mengembalikan conflict yang jelas jika status
 record sudah berubah oleh request lain.
+
+`moderationNote` yang diisi saat Reject dan Takedown ditampilkan kepada owner
+pada daftar dan editor miliknya. Catatan tersebut dikosongkan otomatis ketika
+owner mengajukan ulang konten `REJECTED` ke `PENDING_REVIEW`, sehingga admin
+tidak membaca alasan penolakan versi sebelumnya.
+
+### Form alasan moderasi
+
+Reject dan Takedown **wajib** menyertakan alasan. Dialog konfirmasi pada daftar
+maupun halaman detail moderasi memakai komponen bersama
+`ModerationConfirmDialog` yang menampilkan textarea alasan (maksimal 1.000
+karakter) dan menonaktifkan tombol konfirmasi selama alasan masih kosong.
+Server tidak bergantung pada guard UI tersebut: `rejectContentAction` dan
+`takedownContentAction` memvalidasi payload dengan
+`moderationNotePayloadSchema` yang mewajibkan `note` minimal satu karakter
+setelah trim.
+
+Approve dan Restore tidak memakai form alasan. Approve tetap menerima `note`
+opsional pada payload, sedangkan Restore selalu mengosongkan `moderationNote`.
+
+### Notifikasi email
+
+Setiap keputusan moderasi mengirim email ke pemilik konten:
+
+| Aksi | Isi email | Tautan tujuan |
+| --- | --- | --- |
+| Approve | Konten disetujui dan sudah tayang | Halaman publik konten |
+| Reject | Konten belum disetujui beserta alasan admin | Editor dashboard milik owner |
+| Takedown | Konten diturunkan beserta alasan admin | Editor dashboard milik owner |
+| Restore | Konten dipulihkan dan tayang kembali | Halaman publik konten |
+
+Aturan implementasi:
+
+- Transport SMTP berada pada `src/lib/mail/mailer.ts` dan dipakai bersama oleh
+  email reset password serta notifikasi moderasi. Tidak ada environment
+  variable baru; konfigurasi memakai `SMTP_*` dan `APP_URL` yang sudah ada.
+- Template dan copy berada pada
+  `src/modules/manage-content/data/moderation-mailer.ts`.
+  `buildContentModerationEmail` menyusun isi email sebagai fungsi murni agar
+  dapat diperiksa tanpa koneksi SMTP.
+- Email dikirim **setelah** transaction commit dan setelah revalidate, bukan di
+  dalam transaction, sehingga tidak ada email terkirim untuk perubahan yang
+  gagal disimpan.
+- `notifyContentDecision` tidak pernah melempar error. Kegagalan SMTP dicatat
+  pada server log dan keputusan moderasi tetap dilaporkan berhasil, karena
+  perubahan status sudah tersimpan sebelum email dikirim.
+- Seluruh nilai dinamis pada body HTML di-escape.
 
 Role permission tidak ditentukan dalam action versi awal. Module Permission
 nantinya menambahkan guard sebelum mutation tanpa menerima role dari client.

@@ -16,7 +16,7 @@ export interface OverviewRecentContentItem {
   type: "Article" | "Event"
   title: string
   author: string
-  status: "Request" | "Posted" | "Rejected" | "Takedown"
+  status: "Request" | "Posted" | "Rejected" | "Takedown" | "Arsip"
   timeAgo: string
 }
 

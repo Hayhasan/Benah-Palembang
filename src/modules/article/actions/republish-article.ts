@@ -4,25 +4,11 @@ import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
-import { isDeletableArticleStatus } from "../constants/article-status"
 import { articleIdSchema } from "../schemas/article.schema"
 import type { ArticleActionResult } from "../types/article"
 import { revalidateArticleRoutes } from "./revalidate-article-routes"
 
-function deletionTimestamp(date: Date) {
-  return date
-    .toISOString()
-    .replace(/[-:T]/g, "")
-    .slice(0, 14)
-}
-
-function deletedSlug(slug: string, id: number, date: Date) {
-  const suffix = `-deleted-${deletionTimestamp(date)}-${id}`
-  const base = slug.slice(0, 180 - suffix.length).replace(/-+$/g, "")
-  return `${base || "artikel"}${suffix}`
-}
-
-export async function softDeleteArticleAction(
+export async function republishArticleAction(
   input: unknown,
 ): Promise<ArticleActionResult> {
   const actor = await requireCurrentUser()
@@ -42,8 +28,8 @@ export async function softDeleteArticleAction(
           id: true,
           title: true,
           slug: true,
-          originalSlug: true,
           status: true,
+          publishedAt: true,
           websiteArticleSection: {
             select: { articleCategorySlug: true },
           },
@@ -51,25 +37,15 @@ export async function softDeleteArticleAction(
       })
 
       if (!article) return { kind: "not-found" as const }
-      if (!isDeletableArticleStatus(article.status)) {
+      if (article.status !== "ARCHIVED") {
         return { kind: "invalid-status" as const }
       }
 
-      const now = new Date()
-      await transaction.articleTag.updateMany({
-        where: { articleId: article.id, deletedAt: null },
-        data: { deletedAt: now },
-      })
       await transaction.article.update({
         where: { id: article.id },
         data: {
-          originalSlug: article.originalSlug ?? article.slug,
-          slug: deletedSlug(
-            article.originalSlug ?? article.slug,
-            article.id,
-            now,
-          ),
-          deletedAt: now,
+          status: "PUBLISHED",
+          publishedAt: article.publishedAt ?? new Date(),
         },
       })
 
@@ -78,24 +54,16 @@ export async function softDeleteArticleAction(
           userId: actor.id,
           userName: actor.name,
           userRole: actor.role,
-          action: "DELETE",
+          action: "RESTORE",
           module: "ARTICLE",
-          description: `Menghapus artikel '${article.title}'`,
-          beforeState: {
-            id: article.id,
-            status: article.status,
-            deletedAt: null,
-          },
-          afterState: {
-            id: article.id,
-            status: article.status,
-            deletedAt: now.toISOString(),
-          },
+          description: `Mempublikasikan ulang artikel arsip '${article.title}'`,
+          beforeState: { id: article.id, status: article.status },
+          afterState: { id: article.id, status: "PUBLISHED" },
         },
         transaction,
       )
 
-      return { kind: "deleted" as const, article }
+      return { kind: "republished" as const, article }
     })
 
     if (result.kind === "not-found") {
@@ -109,7 +77,7 @@ export async function softDeleteArticleAction(
       return {
         success: false,
         message:
-          "Hanya Artikel berstatus Draf, Rejected, atau Arsip yang dapat dihapus.",
+          "Hanya Artikel berstatus Arsip yang dapat dipublikasikan ulang.",
       }
     }
 
@@ -121,15 +89,15 @@ export async function softDeleteArticleAction(
 
     return {
       success: true,
-      message: "Artikel berhasil dihapus.",
+      message: "Artikel berhasil dipublikasikan ulang tanpa review.",
       id,
-      status: result.article.status,
+      status: "PUBLISHED",
     }
   } catch (error) {
-    console.error("Failed to delete Article:", error)
+    console.error("Failed to republish Article:", error)
     return {
       success: false,
-      message: "Artikel gagal dihapus. Silakan coba lagi.",
+      message: "Artikel gagal dipublikasikan ulang. Silakan coba lagi.",
     }
   }
 }

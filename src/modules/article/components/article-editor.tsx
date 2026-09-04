@@ -1,6 +1,6 @@
 "use client"
 
-import { Archive, Eye, Save, Send } from "lucide-react"
+import { Archive, Eye, RotateCcw, Save, Send } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
 import { archiveArticleAction } from "../actions/archive-article"
+import { isResubmittableArticleStatus } from "../constants/article-status"
+import { republishArticleAction } from "../actions/republish-article"
 import { saveArticleAction } from "../actions/save-article"
 import type {
   ArticleActionResult,
@@ -49,6 +51,7 @@ export function ArticleEditor({
     initialArticle?.tags ?? ["Palembang", "Budaya"],
   )
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
+  const [republishDialogOpen, setRepublishDialogOpen] = useState(false)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
   const [isUploadingContentImage, setIsUploadingContentImage] = useState(false)
 
@@ -159,8 +162,27 @@ export function ArticleEditor({
     })
   }
 
-  const canPost = status === undefined || status === "DRAFT"
+  function handleRepublish() {
+    if (!articleId) return
+
+    startTransition(async () => {
+      const result = await republishArticleAction({ id: articleId })
+      if (!result.success) {
+        toast.error(result.message)
+        return
+      }
+
+      setIsDirty(false)
+      toast.success(result.message)
+      router.push("/dashboard/create-article")
+      router.refresh()
+    })
+  }
+
+  const canPost =
+    status === undefined || isResubmittableArticleStatus(status)
   const canArchive = status === "PUBLISHED" && articleId !== undefined
+  const canRepublish = status === "ARCHIVED" && articleId !== undefined
   const isBusy = isPending || isUploadingBanner || isUploadingContentImage
 
   return (
@@ -220,14 +242,44 @@ export function ArticleEditor({
               variant="outline"
               disabled={isBusy}
               onClick={() => setArchiveDialogOpen(true)}
-              className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
             >
               <Archive className="size-4" />
               Archive
             </Button>
           ) : null}
+          {canRepublish ? (
+            <Button
+              type="button"
+              disabled={isBusy}
+              onClick={() => setRepublishDialogOpen(true)}
+              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              <RotateCcw className="size-4" />
+              Publikasikan
+            </Button>
+          ) : null}
         </div>
       </div>
+
+      {status === "REJECTED" || status === "TAKEN_DOWN" ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm dark:border-red-500/30 dark:bg-red-500/10">
+          <p className="font-semibold text-red-700 dark:text-red-300">
+            {status === "REJECTED"
+              ? "Artikel ini ditolak admin"
+              : "Artikel ini diturunkan admin"}
+          </p>
+          <p className="mt-1 text-red-700/90 dark:text-red-200/90">
+            {initialArticle?.moderationNote ||
+              "Admin tidak mencantumkan alasan. Silakan hubungi admin sebelum mengajukan ulang."}
+          </p>
+          {status === "REJECTED" ? (
+            <p className="mt-2 text-xs text-red-700/80 dark:text-red-200/80">
+              Perbaiki Artikel ini lalu tekan Post untuk mengajukannya kembali.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Kolom Kiri: Form Judul, Excerpt & Rich Text Editor */}
@@ -321,10 +373,20 @@ export function ArticleEditor({
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
         title="Konfirmasi Archive Artikel"
-        description={`Artikel "${title || "ini"}" akan diarsipkan dan tidak lagi tampil pada halaman publik maupun daftar Artikel aktif.`}
+        description={`Artikel "${title || "ini"}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Artikel tetap tampil pada daftar Kelola Artikel dan dapat dipublikasikan ulang tanpa review.`}
         confirmText="Ya, Archive Artikel"
-        variant="destructive"
+        variant="default"
         onConfirm={handleArchive}
+      />
+
+      <ConfirmActionDialog
+        open={republishDialogOpen}
+        onOpenChange={setRepublishDialogOpen}
+        title="Konfirmasi Publikasi Ulang"
+        description={`Artikel "${title || "ini"}" akan kembali tampil pada halaman publik. Artikel ini sudah pernah disetujui sehingga tidak perlu review ulang.`}
+        confirmText="Ya, Publikasikan"
+        variant="default"
+        onConfirm={handleRepublish}
       />
     </div>
   )

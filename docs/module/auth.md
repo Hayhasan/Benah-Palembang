@@ -374,7 +374,8 @@ Session server berada pada server-only Data Access Layer. API utamanya sebagai
 berikut:
 
 - `getSession()`: mengembalikan session DTO atau `null`, tanpa redirect.
-- `requireSession()`: mengembalikan session valid atau redirect ke Login.
+- `requireSession()`: mengembalikan session valid atau redirect ke Login dengan
+  `?from=<path asal>`.
 - `getCurrentUser()`: mengambil safe User DTO berdasarkan verified session dan
   memastikan current row tidak banned atau soft-deleted.
 - `requireCurrentUser()`: verified session ditambah pemeriksaan current User
@@ -384,6 +385,11 @@ berikut:
 - `createSession(user)`: membuat Redis session dan cookie.
 - `deleteCurrentSession()`: menghapus Redis session dan cookie.
 - `revokeUserSessions(userId)`: menaikkan user-version dan menghapus Presence.
+
+Seluruh redirect ke Login dibangun oleh `loginRedirectUrl()` pada
+`src/modules/auth/data/return-path.ts`, sehingga tujuan asal pengguna terbawa
+sebagai `from` dan dipulihkan setelah login. Aturan validasinya berada pada
+`docs/rules/auth-rules.md` bagian Return path setelah login.
 
 `getSession()` dan `getCurrentUser()` memakai React `cache()` untuk dedupe per
 request/render. Cache tersebut bukan cross-request cache dan tidak menggantikan

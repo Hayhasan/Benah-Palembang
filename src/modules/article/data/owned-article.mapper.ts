@@ -34,6 +34,7 @@ export const ownedArticleListSelect = {
   excerpt: true,
   coverImageUrl: true,
   status: true,
+  moderationNote: true,
   views: true,
   updatedAt: true,
   websiteArticleSection: {
@@ -62,6 +63,7 @@ export const ownedArticleEditorSelect = {
   readingTime: true,
   views: true,
   status: true,
+  moderationNote: true,
   publishedAt: true,
   updatedAt: true,
   websiteArticleSection: {
@@ -101,11 +103,20 @@ type OwnedArticleEditorRecord = Prisma.ArticleGetPayload<{
 }>
 
 export function ownedArticleStatusLabel(status: ContentStatus) {
-  if (status === "DRAFT") return "Draf"
-  if (status === "PENDING_REVIEW") return "Request"
-  if (status === "PUBLISHED") return "Post"
-  if (status === "REJECTED") return "Rejected"
-  return "Takedown"
+  switch (status) {
+    case "DRAFT":
+      return "Draf"
+    case "PENDING_REVIEW":
+      return "Request"
+    case "PUBLISHED":
+      return "Post"
+    case "REJECTED":
+      return "Rejected"
+    case "TAKEN_DOWN":
+      return "Takedown"
+    case "ARCHIVED":
+      return "Arsip"
+  }
 }
 
 export function mapOwnedArticleListItem(
@@ -122,6 +133,7 @@ export function mapOwnedArticleListItem(
     updatedAtLabel: `${listDateFormatter.format(article.updatedAt)} WIB`,
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
+    moderationNote: article.moderationNote,
     views: article.views,
     likes: article._count.likes,
     comments: article._count.comments,
@@ -142,6 +154,7 @@ export function mapOwnedArticleEditor(
     categorySlug: article.websiteArticleSection.articleCategorySlug,
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
+    moderationNote: article.moderationNote,
     tags: article.tags.map((tag) => tag.label),
     readingTime: article.readingTime,
     author: {

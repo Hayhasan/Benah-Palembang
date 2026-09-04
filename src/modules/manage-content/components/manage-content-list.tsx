@@ -15,7 +15,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
+import { ModerationConfirmDialog } from "./moderation-confirm-dialog"
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -94,33 +94,22 @@ export function ManageContentList({
     })
   }
 
-  function handleConfirmAction() {
+  function handleConfirmAction(note: string) {
     const { content, action } = confirmModal
     if (!content) return
 
     startTransition(async () => {
       let result = { success: false, message: "" }
+      const payload = { type: content.type, id: content.id, note }
 
       if (action === "approve") {
-        result = await approveContentAction({
-          type: content.type,
-          id: content.id,
-        })
+        result = await approveContentAction(payload)
       } else if (action === "reject") {
-        result = await rejectContentAction({
-          type: content.type,
-          id: content.id,
-        })
+        result = await rejectContentAction(payload)
       } else if (action === "takedown") {
-        result = await takedownContentAction({
-          type: content.type,
-          id: content.id,
-        })
+        result = await takedownContentAction(payload)
       } else if (action === "restore") {
-        result = await restoreContentAction({
-          type: content.type,
-          id: content.id,
-        })
+        result = await restoreContentAction(payload)
       }
 
       if (result.success) {
@@ -395,47 +384,19 @@ export function ManageContentList({
       </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmActionDialog
+      <ModerationConfirmDialog
         open={confirmModal.open}
         onOpenChange={(open) => {
           if (!open) {
             setConfirmModal((prev) => ({ ...prev, open: false }))
           }
         }}
-        title={
-          confirmModal.action === "approve"
-            ? "Konfirmasi Persetujuan Konten"
-            : confirmModal.action === "reject"
-              ? "Konfirmasi Penolakan Konten"
-              : confirmModal.action === "takedown"
-                ? "Konfirmasi Takedown Konten"
-                : "Konfirmasi Pemulihan Konten"
+        action={confirmModal.action}
+        contentLabel={
+          confirmModal.content?.type === "ARTICLE" ? "Artikel" : "Event"
         }
-        description={
-          confirmModal.action === "approve"
-            ? `Apakah Anda yakin ingin menyetujui dan mempublikasikan ${confirmModal.content?.typeLabel.toLowerCase()} "${confirmModal.content?.title}"?`
-            : confirmModal.action === "reject"
-              ? `Apakah Anda yakin ingin menolak pengajuan ${confirmModal.content?.typeLabel.toLowerCase()} "${confirmModal.content?.title}"?`
-              : confirmModal.action === "takedown"
-                ? `Apakah Anda yakin ingin men-takedown ${confirmModal.content?.typeLabel.toLowerCase()} "${confirmModal.content?.title}" dari penayangan publik?`
-                : `Apakah Anda yakin ingin memulihkan ${confirmModal.content?.typeLabel.toLowerCase()} "${confirmModal.content?.title}" ke status Posted?`
-        }
-        confirmText={
-          confirmModal.action === "approve"
-            ? "Ya, Setujui"
-            : confirmModal.action === "reject"
-              ? "Ya, Tolak"
-              : confirmModal.action === "takedown"
-                ? "Ya, Takedown"
-                : "Ya, Pulihkan"
-        }
-        cancelText="Batal"
-        variant={
-          confirmModal.action === "takedown" ||
-          confirmModal.action === "reject"
-            ? "destructive"
-            : "default"
-        }
+        contentTitle={confirmModal.content?.title ?? ""}
+        isPending={isPending}
         onConfirm={handleConfirmAction}
       />
     </div>

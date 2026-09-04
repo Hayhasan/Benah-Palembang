@@ -8,19 +8,6 @@ import { articleIdSchema } from "../schemas/article.schema"
 import type { ArticleActionResult } from "../types/article"
 import { revalidateArticleRoutes } from "./revalidate-article-routes"
 
-function deletionTimestamp(date: Date) {
-  return date
-    .toISOString()
-    .replace(/[-:T]/g, "")
-    .slice(0, 14)
-}
-
-function deletedSlug(slug: string, id: number, date: Date) {
-  const suffix = `-deleted-${deletionTimestamp(date)}-${id}`
-  const base = slug.slice(0, 180 - suffix.length).replace(/-+$/g, "")
-  return `${base || "artikel"}${suffix}`
-}
-
 export async function archiveArticleAction(
   input: unknown,
 ): Promise<ArticleActionResult> {
@@ -39,8 +26,8 @@ export async function archiveArticleAction(
         where: { id, authorId: actor.id, deletedAt: null },
         select: {
           id: true,
+          title: true,
           slug: true,
-          originalSlug: true,
           status: true,
           websiteArticleSection: {
             select: { articleCategorySlug: true },
@@ -53,18 +40,9 @@ export async function archiveArticleAction(
         return { kind: "invalid-status" as const }
       }
 
-      const now = new Date()
-      await transaction.articleTag.updateMany({
-        where: { articleId: article.id, deletedAt: null },
-        data: { deletedAt: now },
-      })
       await transaction.article.update({
         where: { id: article.id },
-        data: {
-          originalSlug: article.originalSlug ?? article.slug,
-          slug: deletedSlug(article.originalSlug ?? article.slug, article.id, now),
-          deletedAt: now,
-        },
+        data: { status: "ARCHIVED" },
       })
 
       await recordActivityLog(
@@ -72,11 +50,11 @@ export async function archiveArticleAction(
           userId: actor.id,
           userName: actor.name,
           userRole: actor.role,
-          action: "DELETE",
+          action: "ARCHIVE",
           module: "ARTICLE",
-          description: `Mengarsipkan artikel '${article.slug}'`,
-          beforeState: { id: article.id, status: article.status, active: true },
-          afterState: { active: false, deletedAt: now.toISOString() },
+          description: `Mengarsipkan artikel '${article.title}'`,
+          beforeState: { id: article.id, status: article.status },
+          afterState: { id: article.id, status: "ARCHIVED" },
         },
         transaction,
       )
@@ -106,9 +84,10 @@ export async function archiveArticleAction(
 
     return {
       success: true,
-      message: "Artikel berhasil diarsipkan.",
+      message:
+        "Artikel berhasil diarsipkan dan tidak lagi tampil pada halaman publik.",
       id,
-      status: "PUBLISHED",
+      status: "ARCHIVED",
     }
   } catch (error) {
     console.error("Failed to archive Article:", error)

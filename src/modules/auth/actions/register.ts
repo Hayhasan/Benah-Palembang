@@ -12,6 +12,7 @@ import {
   checkRegisterRateLimit,
   clearEmailRateLimit,
 } from "../data/rate-limit"
+import { sanitizeReturnPath } from "../data/return-path"
 import { createSession } from "../data/session"
 import { registerSchema } from "../schemas/auth.schema"
 import type { AuthActionState } from "../types/auth-action-state"
@@ -44,6 +45,11 @@ export async function registerAction(
   }
 
   const { name, email, password } = parsed.data
+  const returnPath = sanitizeReturnPath(
+    typeof formData.get("from") === "string"
+      ? String(formData.get("from"))
+      : null,
+  )
   let accountId: string
 
   try {
@@ -107,5 +113,5 @@ export async function registerAction(
     console.error("Failed to record registration activity:", error)
   }
 
-  redirect("/dashboard")
+  redirect(returnPath ?? "/dashboard")
 }

@@ -1,14 +1,14 @@
 "use server"
 
 import { prisma } from "@/lib/db/prisma"
+import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
-import { isResubmittableEventStatus } from "../constants/event-status"
 import { eventIdSchema } from "../schemas/event.schema"
 import type { EventActionResult } from "../types/owned-event"
 import { revalidateEventRoutes } from "./revalidate-event-routes"
 
-export async function postEventAction(
+export async function republishEventAction(
   input: unknown,
 ): Promise<EventActionResult> {
   const actor = await requireCurrentUser()
@@ -24,24 +24,35 @@ export async function postEventAction(
     const result = await prisma.$transaction(async (transaction) => {
       const event = await transaction.event.findFirst({
         where: { id, ownerId: actor.id, deletedAt: null },
-        select: { status: true },
+        select: { id: true, title: true, status: true, publishedAt: true },
       })
 
       if (!event) return "not-found" as const
-      if (!isResubmittableEventStatus(event.status)) {
-        return "invalid-status" as const
-      }
+      if (event.status !== "ARCHIVED") return "invalid-status" as const
 
       await transaction.event.update({
-        where: { id },
+        where: { id: event.id },
         data: {
-          status: "PENDING_REVIEW",
-          submittedAt: new Date(),
-          moderationNote: null,
+          status: "PUBLISHED",
+          publishedAt: event.publishedAt ?? new Date(),
         },
       })
 
-      return "posted" as const
+      await recordActivityLog(
+        {
+          userId: actor.id,
+          userName: actor.name,
+          userRole: actor.role,
+          action: "RESTORE",
+          module: "EVENT",
+          description: `Mempublikasikan ulang event arsip '${event.title}'`,
+          beforeState: { id: event.id, status: event.status },
+          afterState: { id: event.id, status: "PUBLISHED" },
+        },
+        transaction,
+      )
+
+      return "republished" as const
     })
 
     if (result === "not-found") {
@@ -54,23 +65,22 @@ export async function postEventAction(
     if (result === "invalid-status") {
       return {
         success: false,
-        message:
-          "Hanya Event berstatus Draf atau Rejected yang dapat diposting.",
+        message: "Hanya Event berstatus Arsip yang dapat dipublikasikan ulang.",
       }
     }
 
     revalidateEventRoutes(id)
     return {
       success: true,
-      message: "Event berhasil diajukan untuk review.",
+      message: "Event berhasil dipublikasikan ulang tanpa review.",
       id,
-      status: "PENDING_REVIEW",
+      status: "PUBLISHED",
     }
   } catch (error) {
-    console.error("Failed to post Event:", error)
+    console.error("Failed to republish Event:", error)
     return {
       success: false,
-      message: "Event gagal diposting. Silakan coba lagi.",
+      message: "Event gagal dipublikasikan ulang. Silakan coba lagi.",
     }
   }
 }
