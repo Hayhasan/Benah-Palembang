@@ -2,14 +2,14 @@ import "server-only"
 
 import type { ContentStatus, Prisma } from "@prisma/client"
 
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
+
 import type {
   OwnedArticleEditorData,
   OwnedArticleListItem,
 } from "../types/article"
 
 const ARTICLE_TIME_ZONE = "Asia/Jakarta"
-const DEFAULT_AUTHOR_AVATAR =
-  "https://images.pexels.com/photos/14795560/pexels-photo-14795560.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
 
 const listDateFormatter = new Intl.DateTimeFormat("id-ID", {
   day: "2-digit",
@@ -146,7 +146,7 @@ export function mapOwnedArticleEditor(
     readingTime: article.readingTime,
     author: {
       name: article.author.name,
-      avatarUrl: article.author.avatarUrl || DEFAULT_AUTHOR_AVATAR,
+      avatarUrl: article.author.avatarUrl || DEFAULT_AVATAR,
       bio:
         article.author.bio ||
         "Penulis dan kontributor yang berbagi cerita tentang Palembang.",

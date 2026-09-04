@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Foto profil belum tersedia">
+  <rect width="128" height="128" fill="#e4e4e7"/>
+  <circle cx="64" cy="50" r="22" fill="#a1a1aa"/>
+  <path d="M64 78c-22.1 0-40 14.3-40 32v18h80v-18c0-17.7-17.9-32-40-32z" fill="#a1a1aa"/>
+</svg>

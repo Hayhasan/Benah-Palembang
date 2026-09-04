@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-label="Banner belum tersedia">
+  <rect width="1200" height="400" fill="#e4e4e7"/>
+  <g fill="#a1a1aa">
+    <rect x="530" y="150" width="140" height="100" rx="10" fill="none" stroke="#a1a1aa" stroke-width="8"/>
+    <circle cx="566" cy="182" r="12"/>
+    <path d="M542 242l38-42 26 30 20-22 32 34z"/>
+  </g>
+</svg>

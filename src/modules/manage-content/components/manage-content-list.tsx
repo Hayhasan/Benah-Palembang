@@ -19,6 +19,7 @@ import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DEFAULT_BANNER } from "@/lib/constants/placeholder"
 
 import { approveContentAction } from "../actions/approve-content"
 import { rejectContentAction } from "../actions/reject-content"
@@ -28,9 +29,6 @@ import type {
   ManagedContentListItem,
   ManagedContentListResult,
 } from "../types/managed-content"
-
-const DEFAULT_BANNER =
-  "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop"
 
 export function ManageContentList({
   data,
@@ -225,6 +223,7 @@ export function ManageContentList({
                               alt={content.title}
                               fill
                               sizes="64px"
+                              unoptimized={!content.bannerUrl}
                               className="object-cover"
                             />
                           </div>

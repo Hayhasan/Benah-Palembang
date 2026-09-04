@@ -25,15 +25,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
+import { DEFAULT_AVATAR, DEFAULT_BANNER } from "@/lib/constants/placeholder"
 import { ArticleGallery } from "@/modules/article/components/article-gallery"
 
 import { requestProfilePasswordResetAction } from "../actions/request-profile-password-reset"
 import { updateProfileAction } from "../actions/update-profile"
 import type { ProfileData, ProfileUpdateInput } from "../types/profile"
-
-const DEFAULT_BANNER =
-  "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop"
-const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=0"
 
 function toUpdateInput(profile: ProfileData): ProfileUpdateInput {
   return {

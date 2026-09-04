@@ -2,15 +2,11 @@ import "server-only"
 
 import { connection } from "next/server"
 
+import { DEFAULT_AVATAR, DEFAULT_BANNER } from "@/lib/constants/placeholder"
 import { prisma } from "@/lib/db/prisma"
 import { usernameSchema } from "@/modules/auth/schemas/username.schema"
 
 import type { PublicProfileData } from "../types/public-profile"
-
-const DEFAULT_BANNER =
-  "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop"
-const DEFAULT_AVATAR =
-  "https://images.pexels.com/photos/14795560/pexels-photo-14795560.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
 
 const publishedAtFormatter = new Intl.DateTimeFormat("id-ID", {
   day: "numeric",

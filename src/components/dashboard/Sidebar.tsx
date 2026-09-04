@@ -10,6 +10,7 @@ import {
     ChevronLeft, ChevronRight, Menu, ChevronDown, LogOut
 } from "lucide-react"
 import { useState, useEffect } from "react"
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
 
@@ -173,7 +174,7 @@ export function Sidebar() {
                     )}
                 >
                     <img
-                        src={user.avatarUrl || "https://i.pravatar.cc/150?img=0"}
+                        src={user.avatarUrl || DEFAULT_AVATAR}
                         alt={user.name}
                         className="size-8 shrink-0 rounded-full bg-muted object-cover"
                     />
