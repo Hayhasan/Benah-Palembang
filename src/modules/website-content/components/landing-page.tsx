@@ -19,6 +19,16 @@ interface LandingPageProps {
   articlesBySection: LandingArticlesBySection
 }
 
+// Tailwind hanya membaca class literal, jadi jumlah kolom dipetakan eksplisit.
+const exploreGridColumns: Record<number, string> = {
+  1: "lg:grid-cols-1",
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+  5: "lg:grid-cols-5",
+  6: "lg:grid-cols-6",
+}
+
 const articleSectionStyle = {
   background: "bg-background text-foreground",
   gradientHorizontal: "from-background via-background/70",
@@ -324,35 +334,44 @@ export function LandingPage({ data, articlesBySection }: LandingPageProps) {
                 eyebrow={data.explore.eyebrow}
                 title={data.explore.title}
               />
-              <div className="reveal-stagger mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-[1.5rem] border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
-                {perspectives.map((item, index) => (
-                  <Link
-                    key={`${item.position}-${item.linkUrl}`}
-                    href={item.linkUrl}
-                    className="group relative min-h-48 overflow-hidden bg-card p-4 text-foreground transition-colors hover:bg-muted sm:min-h-64 sm:p-6"
-                  >
-                    <div className="flex h-full flex-col justify-between">
-                      <div>
-                        <span className="font-display text-3xl text-palembang-red sm:text-5xl">
-                          {String(index + 1).padStart(2, "0")}
+              {/*
+                Garis pemisah digambar oleh border kiri/atas tiap card, bukan
+                oleh background container. Baris terakhir yang tidak penuh
+                karena itu tidak memunculkan blok kosong berwarna border.
+              */}
+              <div className="mt-12 overflow-hidden rounded-[1.5rem] border border-border bg-card">
+                <div
+                  className={`reveal-stagger -ml-px -mt-px grid grid-cols-2 sm:grid-cols-3 ${
+                    exploreGridColumns[perspectives.length] ?? "lg:grid-cols-6"
+                  }`}
+                >
+                  {perspectives.map((item, index) => (
+                    <Link
+                      key={`${item.position}-${item.linkUrl}`}
+                      href={item.linkUrl}
+                      className="group relative min-h-48 overflow-hidden border-l border-t border-border bg-card p-4 text-foreground transition-colors hover:bg-muted sm:min-h-64 sm:p-6"
+                    >
+                      <div className="flex h-full flex-col justify-between">
+                        <div>
+                          <span className="font-display text-3xl text-palembang-red sm:text-5xl">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <h3 className="mt-3 font-display text-lg font-bold leading-tight transition-colors group-hover:text-palembang-red sm:mt-5 sm:text-2xl">
+                            {item.label}
+                          </h3>
+                        </div>
+                        <span className="mt-4 flex flex-col justify-between text-[10px] uppercase tracking-[0.13em] text-muted-foreground group-hover:text-foreground sm:mt-0 sm:flex-row sm:items-center sm:text-xs">
+                          <span>
+                            {[item.count, item.countLabel]
+                              .filter((part) => part !== null && part !== undefined)
+                              .join(" ")}
+                          </span>
+                          <ArrowUpRight className="mt-1 size-4 text-palembang-red transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 sm:mt-0 sm:size-5" />
                         </span>
-                        <h3 className="mt-3 font-display text-lg font-bold leading-tight transition-colors group-hover:text-palembang-red sm:mt-5 sm:text-2xl">
-                          {item.label}
-                        </h3>
                       </div>
-                      <span className="mt-4 flex flex-col justify-between text-[10px] uppercase tracking-[0.13em] text-muted-foreground group-hover:text-foreground sm:mt-0 sm:flex-row sm:items-center sm:text-xs">
-                        <span>
-                          {[item.count, item.countLabel]
-                            .filter(
-                              (part) => part !== null && part !== undefined,
-                            )
-                            .join(" ")}
-                        </span>
-                        <ArrowUpRight className="mt-1 size-4 text-palembang-red transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 sm:mt-0 sm:size-5" />
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
