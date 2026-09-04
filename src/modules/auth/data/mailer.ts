@@ -49,6 +49,16 @@ function getTransporter() {
   return transporter
 }
 
+/**
+ * Dipakai module Health Check untuk memverifikasi koneksi dan autentikasi SMTP
+ * tanpa mengirim email. Transporter tetap memakai satu sumber canonical ini.
+ */
+export async function verifySmtpConnection() {
+  const config = smtpConfig()
+  await getTransporter().verify()
+  return `${config.host}:${config.port}`
+}
+
 function applicationUrl() {
   const url = new URL(requireEnvironment("APP_URL"))
   if (url.protocol !== "http:" && url.protocol !== "https:") {

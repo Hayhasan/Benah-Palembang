@@ -65,4 +65,4 @@ Seluruh dokumentasi teknis dan arsitektural diorganisasikan pada direktori `docs
 | [`docs/SEEDING_PLAN.md`](file:///Users/lanstheprodigy/Data/project/benah-palembang/docs/SEEDING_PLAN.md) | Strategi seeding database, urutan dependensi, dan panduan verifikasi. |
 | [`docs/MIGRATION_PLAN.md`](file:///Users/lanstheprodigy/Data/project/benah-palembang/docs/MIGRATION_PLAN.md) | Dokumentasi historis migrasi dari Vite SPA ke Next.js 16 App Router. |
 | [`docs/rules/`](file:///Users/lanstheprodigy/Data/project/benah-palembang/docs/rules) | Pedoman umum coding, struktur proyek, aturan otentikasi, dan aturan seeding. |
-| [`docs/module/`](file:///Users/lanstheprodigy/Data/project/benah-palembang/docs/module) | Spesifikasi teknis per modul domain (Auth, Article, Event, Manage Content, Website, Account, Activity Log, Profile, Overview, Permission). |
+| [`docs/module/`](file:///Users/lanstheprodigy/Data/project/benah-palembang/docs/module) | Spesifikasi teknis per modul domain (Auth, Article, Event, Manage Content, Website, Account, Activity Log, Profile, Overview, Permission, Health Check). |
