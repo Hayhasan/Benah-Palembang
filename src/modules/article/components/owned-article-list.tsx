@@ -7,8 +7,10 @@ import {
   Heart,
   MessageCircle,
   Plus,
+  RotateCcw,
   Search,
   Send,
+  Trash2,
 } from "lucide-react"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
@@ -22,13 +24,21 @@ import { Input } from "@/components/ui/input"
 
 import { archiveArticleAction } from "../actions/archive-article"
 import { postArticleAction } from "../actions/post-article"
+import { republishArticleAction } from "../actions/republish-article"
+import { softDeleteArticleAction } from "../actions/soft-delete-article"
+import {
+  isDeletableArticleStatus,
+  isResubmittableArticleStatus,
+} from "../constants/article-status"
 import type {
   OwnedArticleList as OwnedArticleListData,
   OwnedArticleListItem,
 } from "../types/article"
 
+type OwnedArticleAction = "post" | "archive" | "republish" | "delete"
+
 type ConfirmationState =
-  | { action: "archive" | "post"; article: OwnedArticleListItem }
+  | { action: OwnedArticleAction; article: OwnedArticleListItem }
   | null
 
 function statusClassName(status: OwnedArticleListItem["status"]) {
@@ -36,7 +46,31 @@ function statusClassName(status: OwnedArticleListItem["status"]) {
   if (status === "TAKEN_DOWN") return "bg-red-50 text-red-700"
   if (status === "REJECTED") return "bg-rose-50 text-rose-700"
   if (status === "PENDING_REVIEW") return "bg-blue-50 text-blue-700"
+  if (status === "ARCHIVED") return "bg-slate-100 text-slate-700"
   return "bg-amber-50 text-amber-700"
+}
+
+/**
+ * Alasan moderasi ditampilkan kepada author supaya Artikel `REJECTED` dapat
+ * diperbaiki lalu diajukan ulang, dan Artikel `TAKEN_DOWN` jelas sebabnya.
+ */
+function ModerationNote({
+  status,
+  note,
+}: {
+  status: OwnedArticleListItem["status"]
+  note: string | null
+}) {
+  if (status !== "REJECTED" && status !== "TAKEN_DOWN") return null
+
+  const label = status === "REJECTED" ? "Alasan ditolak" : "Alasan takedown"
+
+  return (
+    <p className="mt-1.5 max-w-[220px] whitespace-normal text-xs text-muted-foreground">
+      <span className="font-semibold text-foreground">{label}:</span>{" "}
+      {note || "tidak dicantumkan admin."}
+    </p>
+  )
 }
 
 export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
@@ -62,14 +96,21 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
     router.push(buildHref(1, String(formData.get("q") ?? "")))
   }
 
+  function runAction(action: OwnedArticleAction, id: number) {
+    if (action === "post") return postArticleAction({ id })
+    if (action === "archive") return archiveArticleAction({ id })
+    if (action === "republish") return republishArticleAction({ id })
+    return softDeleteArticleAction({ id })
+  }
+
   function handleConfirm() {
     if (!confirmation) return
 
     startTransition(async () => {
-      const result =
-        confirmation.action === "post"
-          ? await postArticleAction({ id: confirmation.article.id })
-          : await archiveArticleAction({ id: confirmation.article.id })
+      const result = await runAction(
+        confirmation.action,
+        confirmation.article.id,
+      )
 
       if (!result.success) {
         toast.error(result.message)
@@ -83,19 +124,32 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
   }
 
   const confirmationCopy = confirmation
-    ? confirmation.action === "post"
-      ? {
+    ? {
+        post: {
           title: "Konfirmasi Post Artikel",
           description: `Artikel "${confirmation.article.title}" akan diajukan untuk review sebelum tampil pada halaman publik.`,
           confirmText: "Ya, Post Artikel",
           variant: "default" as const,
-        }
-      : {
+        },
+        archive: {
           title: "Konfirmasi Archive Artikel",
-          description: `Artikel "${confirmation.article.title}" akan diarsipkan dan tidak lagi tampil pada halaman publik maupun daftar Artikel aktif.`,
+          description: `Artikel "${confirmation.article.title}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Artikel tetap tampil pada daftar ini dan dapat dipublikasikan ulang kapan saja tanpa review.`,
           confirmText: "Ya, Archive Artikel",
+          variant: "default" as const,
+        },
+        republish: {
+          title: "Konfirmasi Publikasi Ulang",
+          description: `Artikel "${confirmation.article.title}" akan kembali tampil pada halaman publik. Artikel ini sudah pernah disetujui sehingga tidak perlu review ulang.`,
+          confirmText: "Ya, Publikasikan",
+          variant: "default" as const,
+        },
+        delete: {
+          title: "Konfirmasi Hapus Artikel",
+          description: `Artikel "${confirmation.article.title}" akan dihapus dan tidak dapat dikembalikan dari dashboard.`,
+          confirmText: "Ya, Hapus Artikel",
           variant: "destructive" as const,
-        }
+        },
+      }[confirmation.action]
     : null
 
   return (
@@ -202,12 +256,16 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4">
+                    <td className="px-6 py-4 align-top">
                       <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClassName(article.status)}`}
+                        className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${statusClassName(article.status)}`}
                       >
                         {article.statusLabel}
                       </span>
+                      <ModerationNote
+                        status={article.status}
+                        note={article.moderationNote}
+                      />
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -225,7 +283,7 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
                           View
                         </Button>
 
-                        {article.status === "DRAFT" ? (
+                        {isResubmittableArticleStatus(article.status) ? (
                           <Button
                             size="sm"
                             disabled={isPending}
@@ -247,10 +305,24 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
                             onClick={() =>
                               setConfirmation({ action: "archive", article })
                             }
-                            className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                            className="gap-1.5 border-slate-200 text-xs text-slate-600 hover:bg-slate-50"
                           >
                             <Archive className="size-3.5" />
                             Archive
+                          </Button>
+                        ) : null}
+
+                        {article.status === "ARCHIVED" ? (
+                          <Button
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() =>
+                              setConfirmation({ action: "republish", article })
+                            }
+                            className="gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                          >
+                            <RotateCcw className="size-3.5" />
+                            Publikasikan
                           </Button>
                         ) : null}
 
@@ -267,6 +339,21 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
                           <Edit2 className="size-3.5" />
                           Edit
                         </Button>
+
+                        {isDeletableArticleStatus(article.status) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() =>
+                              setConfirmation({ action: "delete", article })
+                            }
+                            className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="size-3.5" />
+                            Hapus
+                          </Button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

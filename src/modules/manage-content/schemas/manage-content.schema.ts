@@ -11,4 +11,16 @@ export const moderationPayloadSchema = z.object({
   note: z.string().trim().max(1000, "Catatan maksimal 1.000 karakter.").optional(),
 })
 
+/**
+ * Reject dan Takedown wajib menyertakan alasan karena catatan tersebut
+ * ditampilkan kepada pemilik konten pada dashboard dan email notifikasi.
+ */
+export const moderationNotePayloadSchema = moderationPayloadSchema.extend({
+  note: z
+    .string()
+    .trim()
+    .min(1, "Alasan wajib diisi.")
+    .max(1000, "Catatan maksimal 1.000 karakter."),
+})
+
 export type ModerationPayload = z.infer<typeof moderationPayloadSchema>

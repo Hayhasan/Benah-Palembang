@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db/prisma"
 import { recordActivityLog } from "@/modules/activity-log/data/record-activity-log"
 import { requireRole } from "@/modules/auth/data/session-dal"
 
-import { moderationPayloadSchema } from "../schemas/manage-content.schema"
+import { notifyContentDecision } from "../data/moderation-mailer"
+import { moderationNotePayloadSchema } from "../schemas/manage-content.schema"
 import type { ManageContentActionResult } from "../types/managed-content"
 import { revalidateManagedContentRoutes } from "./revalidate-managed-content"
 
@@ -13,7 +14,7 @@ export async function rejectContentAction(
 ): Promise<ManageContentActionResult> {
   const actor = await requireRole(["ADMIN", "SUPERADMIN"])
 
-  const parsed = moderationPayloadSchema.safeParse(input)
+  const parsed = moderationNotePayloadSchema.safeParse(input)
   if (!parsed.success) {
     return {
       success: false,
@@ -28,6 +29,9 @@ export async function rejectContentAction(
       const result = await prisma.$transaction(async (tx) => {
         const article = await tx.article.findFirst({
           where: { id, deletedAt: null },
+          include: {
+            author: { select: { name: true, email: true } },
+          },
         })
 
         if (!article) return { kind: "not-found" as const }
@@ -39,7 +43,7 @@ export async function rejectContentAction(
           where: { id: article.id },
           data: {
             status: "REJECTED",
-            moderationNote: note ?? null,
+            moderationNote: note,
           },
         })
 
@@ -52,12 +56,16 @@ export async function rejectContentAction(
             module: "CONTENT",
             description: `Menolak pengajuan artikel '${updated.title}'`,
             beforeState: { status: "Request", note: article.moderationNote },
-            afterState: { status: "Rejected", note: note ?? null },
+            afterState: { status: "Rejected", note },
           },
           tx,
         )
 
-        return { kind: "ok" as const, article: updated }
+        return {
+          kind: "ok" as const,
+          article: updated,
+          recipient: article.author,
+        }
       })
 
       if (result.kind === "not-found") {
@@ -73,6 +81,16 @@ export async function rejectContentAction(
 
       revalidateManagedContentRoutes("ARTICLE", result.article.slug)
 
+      await notifyContentDecision({
+        decision: "REJECTED",
+        contentType: "ARTICLE",
+        id: result.article.id,
+        slug: result.article.slug,
+        title: result.article.title,
+        note: note,
+        recipient: result.recipient,
+      })
+
       return {
         success: true,
         message: `Pengajuan artikel "${result.article.title}" berhasil ditolak.`,
@@ -81,6 +99,9 @@ export async function rejectContentAction(
       const result = await prisma.$transaction(async (tx) => {
         const event = await tx.event.findFirst({
           where: { id, deletedAt: null },
+          include: {
+            owner: { select: { name: true, email: true } },
+          },
         })
 
         if (!event) return { kind: "not-found" as const }
@@ -92,7 +113,7 @@ export async function rejectContentAction(
           where: { id: event.id },
           data: {
             status: "REJECTED",
-            moderationNote: note ?? null,
+            moderationNote: note,
           },
         })
 
@@ -105,12 +126,16 @@ export async function rejectContentAction(
             module: "CONTENT",
             description: `Menolak pengajuan event '${updated.title}'`,
             beforeState: { status: "Request", note: event.moderationNote },
-            afterState: { status: "Rejected", note: note ?? null },
+            afterState: { status: "Rejected", note },
           },
           tx,
         )
 
-        return { kind: "ok" as const, event: updated }
+        return {
+          kind: "ok" as const,
+          event: updated,
+          recipient: event.owner,
+        }
       })
 
       if (result.kind === "not-found") {
@@ -125,6 +150,16 @@ export async function rejectContentAction(
       }
 
       revalidateManagedContentRoutes("EVENT", result.event.id)
+
+      await notifyContentDecision({
+        decision: "REJECTED",
+        contentType: "EVENT",
+        id: result.event.id,
+        slug: result.event.slug,
+        title: result.event.title,
+        note: note,
+        recipient: result.recipient,
+      })
 
       return {
         success: true,

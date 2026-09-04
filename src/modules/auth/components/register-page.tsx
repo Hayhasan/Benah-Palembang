@@ -10,7 +10,12 @@ import { registerAction } from "../actions/register"
 import { INITIAL_AUTH_ACTION_STATE } from "../types/auth-action-state"
 import { AuthPageShell } from "./auth-page-shell"
 
-export function RegisterPage() {
+export function RegisterPage({
+  returnPath = null,
+}: {
+  /** Tujuan setelah pendaftaran berhasil, sudah divalidasi di server. */
+  returnPath?: string | null
+}) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [name, setName] = useState("")
@@ -29,6 +34,9 @@ export function RegisterPage() {
         Buat ruang personalmu di Benah Palembang.
       </p>
       <form action={formAction} className="mt-8 space-y-4" noValidate>
+        {returnPath ? (
+          <input type="hidden" name="from" value={returnPath} />
+        ) : null}
         <label className="block text-xs font-semibold text-white/80">
           Nama Lengkap
           <input
@@ -140,7 +148,10 @@ export function RegisterPage() {
           >
             {state.message}{" "}
             {state.accountCreated && (
-              <Link href="/login" className="font-bold underline">
+              <Link
+                href={returnPath ? `/login?from=${encodeURIComponent(returnPath)}` : "/login"}
+                className="font-bold underline"
+              >
                 Buka halaman login.
               </Link>
             )}
@@ -158,7 +169,7 @@ export function RegisterPage() {
       <p className="mt-8 text-center text-xs text-white/50">
         Sudah punya akun?{" "}
         <Link
-          href="/login"
+          href={returnPath ? `/login?from=${encodeURIComponent(returnPath)}` : "/login"}
           className="font-semibold text-palembang-gold hover:underline"
         >
           Masuk sekarang

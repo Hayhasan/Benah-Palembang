@@ -403,7 +403,9 @@ Aturan tambahan:
 
 ## 14. Error dan redirect
 
-- User tanpa session diarahkan ke Login oleh server guard.
+- User tanpa session diarahkan ke Login oleh server guard, lengkap dengan
+  `?from=<path asal>` supaya dapat dikembalikan ke halaman tujuan setelah
+  berhasil masuk. Lihat bagian Return path di bawah.
 - Session invalid, expired, revoked, banned, atau deleted diperlakukan sebagai
   unauthenticated.
 - User yang tidak mempunyai role diarahkan ke fallback dashboard yang sesuai
@@ -414,6 +416,33 @@ Aturan tambahan:
 - Error internal tidak boleh mengembalikan secret, Redis key, Prisma payload,
   password hash, atau raw exception kepada client.
 
+### Return path setelah login
+
+Guard `requireSession()`, `requireCurrentUser()`, dan `requireRole()` memakai
+`loginRedirectUrl()` pada `src/modules/auth/data/return-path.ts`, bukan string
+`/login?reason=...` yang ditulis manual. Helper tersebut membaca path yang
+sedang diakses dari header `x-pathname` yang dipasang `src/proxy.ts`, lalu
+menambahkannya sebagai `from`.
+
+Halaman Login dan Register meneruskan `from` sebagai hidden input, dan
+`loginAction` serta `registerAction` mengarahkan ke path tersebut setelah
+berhasil. Ketika pengguna yang sudah login membuka `/login?from=...`, halaman
+langsung mengarahkannya ke tujuan tersebut.
+
+Setiap nilai `from` wajib melewati `sanitizeReturnPath()` — baik saat dibaca
+dari query string maupun saat dibaca dari form. Aturannya:
+
+- Hanya menerima path internal yang diawali `/`.
+- Menolak absolute URL dan protocol-relative path (`//host`, `/\host`) supaya
+  `from` tidak dapat dipakai sebagai open redirect ke domain lain.
+- Menolak route auth (`/login`, `/register`, `/lupa-password`,
+  `/first-time-setup`) supaya pengguna tidak berputar kembali ke halaman login.
+- Mengembalikan `null` bila tidak valid, dan pemanggil jatuh ke `/dashboard`.
+
+Nilai `from` tidak pernah dipercaya sebagai penanda otorisasi. Setelah redirect,
+halaman tujuan tetap menjalankan guard-nya sendiri, sehingga pengguna tanpa role
+yang sesuai tetap dialihkan oleh `requireRole()`.
+
 ## 15. Proxy dan middleware
 
 Module baru tidak perlu menambahkan Proxy/middleware untuk memverifikasi opaque
@@ -423,6 +452,12 @@ memerlukan Redis dan pemeriksaan current User.
 Proxy hanya boleh ditambahkan nanti untuk optimistic redirect/UX dan tidak
 pernah menggantikan guard pada page, data function, Server Action, atau Route
 Handler.
+
+`src/proxy.ts` memasang header `x-pathname` berisi pathname beserta query pada
+setiap request. Header tersebut hanya dipakai untuk menyusun `from`, bukan untuk
+menentukan akses. Konstanta namanya berada pada
+`src/lib/constants/request-headers.ts` supaya proxy tidak ikut menarik
+`next/headers` maupun modul `server-only` ke dalam bundle-nya.
 
 ## 16. Checklist module baru
 

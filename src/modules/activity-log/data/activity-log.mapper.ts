@@ -54,6 +54,11 @@ const ACTION_MAP: Record<
     iconName: "rotate-ccw",
     colorClass: "text-amber-500 bg-amber-50",
   },
+  ARCHIVE: {
+    label: "Archive",
+    iconName: "archive",
+    colorClass: "text-slate-600 bg-slate-100",
+  },
   BAN: {
     label: "Ban",
     iconName: "shield-alert",

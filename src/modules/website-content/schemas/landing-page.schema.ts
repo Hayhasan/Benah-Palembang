@@ -82,14 +82,66 @@ const heroSlideSchema = z.object({
   isVisible: z.boolean(),
 })
 
-const exploreItemSchema = z.object({
-  ...editorRecordSchema,
-  label: requiredText("Label jelajahi", 160),
-  linkUrl: linkUrlSchema,
-  storyCount: z.number().int().min(0).nullable(),
-  position: z.number().int().positive(),
-  isVisible: z.boolean(),
-})
+const exploreItemSchema = z
+  .object({
+    ...editorRecordSchema,
+    label: requiredText("Label jelajahi", 160),
+    linkUrl: linkUrlSchema,
+    countSource: z.enum(["manual", "article-category", "event", "none"]),
+    countArticleSectionKey: z
+      .string()
+      .trim()
+      .max(160, "Section key kategori maksimal 160 karakter.")
+      .nullable(),
+    countLabel: z
+      .string()
+      .trim()
+      .max(60, "Satuan angka jelajahi maksimal 60 karakter.")
+      .nullable(),
+    storyCount: z.number().int().min(0).nullable(),
+    position: z.number().int().positive(),
+    isVisible: z.boolean(),
+  })
+  .superRefine((item, context) => {
+    if (item.countSource === "manual" && item.storyCount === null) {
+      context.addIssue({
+        code: "custom",
+        message: "Angka jelajahi wajib diisi saat sumbernya manual.",
+        path: ["storyCount"],
+      })
+    }
+
+    if (
+      item.countSource === "article-category" &&
+      !item.countArticleSectionKey
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Pilih kategori artikel yang dihitung untuk item ini.",
+        path: ["countArticleSectionKey"],
+      })
+    }
+
+    if (
+      item.countSource !== "article-category" &&
+      item.countArticleSectionKey !== null
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "Kategori artikel hanya boleh diisi saat sumber angka adalah kategori artikel.",
+        path: ["countArticleSectionKey"],
+      })
+    }
+
+    if (item.countSource !== "none" && !item.countLabel) {
+      context.addIssue({
+        code: "custom",
+        message: "Satuan angka wajib diisi.",
+        path: ["countLabel"],
+      })
+    }
+  })
 
 const articleSectionSchema = z.object({
   ...editorRecordSchema,
@@ -135,7 +187,9 @@ export const landingPageEditorSchema = z
     explore: z.object({
       eyebrow: requiredText("Eyebrow jelajahi", 160),
       title: requiredText("Judul jelajahi", 255),
-      items: z.array(exploreItemSchema).max(20),
+      items: z
+        .array(exploreItemSchema)
+        .max(6, "Section Jelajahi maksimal 6 item."),
     }),
     articleSections: z
       .array(articleSectionSchema)

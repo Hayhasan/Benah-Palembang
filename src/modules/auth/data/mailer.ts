@@ -1,90 +1,21 @@
 import "server-only"
 
-import nodemailer from "nodemailer"
-import type SMTPTransport from "nodemailer/lib/smtp-transport"
-
-let transporter: nodemailer.Transporter | undefined
-
-function requireEnvironment(name: string) {
-  const value = process.env[name]?.trim()
-  if (!value) throw new Error(`${name} is required for password reset email.`)
-  return value
-}
-
-function smtpConfig() {
-  const port = Number(requireEnvironment("SMTP_PORT"))
-  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
-    throw new Error("SMTP_PORT must be a valid port number.")
-  }
-
-  const secureValue = requireEnvironment("SMTP_SECURE").toLowerCase()
-  if (secureValue !== "true" && secureValue !== "false") {
-    throw new Error("SMTP_SECURE must be true or false.")
-  }
-
-  return {
-    host: requireEnvironment("SMTP_HOST"),
-    port,
-    secure: secureValue === "true",
-    user: requireEnvironment("SMTP_USER"),
-    password: requireEnvironment("SMTP_APP_PASSWORD"),
-  }
-}
-
-function getTransporter() {
-  if (transporter) return transporter
-
-  const config = smtpConfig()
-  const options: SMTPTransport.Options = {
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    auth: {
-      user: config.user,
-      pass: config.password,
-    },
-  }
-  transporter = nodemailer.createTransport(options)
-
-  return transporter
-}
-
-function applicationUrl() {
-  const url = new URL(requireEnvironment("APP_URL"))
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("APP_URL must use http or https.")
-  }
-  return url.toString().replace(/\/$/, "")
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "'": "&#39;",
-      '"': "&quot;",
-    }
-    return entities[character] ?? character
-  })
-}
+import {
+  applicationUrl,
+  escapeHtml,
+  sendMail,
+} from "@/lib/mail/mailer"
 
 export async function sendPasswordResetEmail(input: {
   email: string
   name: string
   token: string
 }) {
-  const fromEmail =
-    process.env.SMTP_FROM_EMAIL?.trim() || requireEnvironment("SMTP_USER")
-  const fromName =
-    process.env.SMTP_FROM_NAME?.trim() || "Benah Palembang"
   const resetUrl = `${applicationUrl()}/lupa-password/${encodeURIComponent(input.token)}`
   const safeName = escapeHtml(input.name)
   const safeResetUrl = escapeHtml(resetUrl)
 
-  await getTransporter().sendMail({
-    from: { name: fromName, address: fromEmail },
+  await sendMail({
     to: input.email,
     subject: "Reset password akun Benah Palembang",
     text: [

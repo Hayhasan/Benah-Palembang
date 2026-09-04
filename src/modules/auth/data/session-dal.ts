@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma"
 
 import type { AuthRole, AuthUser } from "../types/auth-session"
 import { scheduleActivityTouch } from "./activity"
+import { loginRedirectUrl } from "./return-path"
 import { readSessionFromCookie } from "./session"
 
 export const getSession = cache(readSessionFromCookie)
@@ -36,7 +37,7 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
 
 export async function requireSession() {
   const session = await getSession()
-  if (!session) redirect("/login?reason=session-required")
+  if (!session) redirect(await loginRedirectUrl("session-required"))
 
   await scheduleActivityTouch(session.userId)
   return session
@@ -44,7 +45,7 @@ export async function requireSession() {
 
 export async function requireCurrentUser() {
   const user = await getCurrentUser()
-  if (!user) redirect("/login?reason=session-invalid")
+  if (!user) redirect(await loginRedirectUrl("session-invalid"))
 
   await scheduleActivityTouch(user.id)
   return user
@@ -52,7 +53,7 @@ export async function requireCurrentUser() {
 
 export async function requireRole(roles: AuthRole[]) {
   const user = await getCurrentUser()
-  if (!user) redirect("/login?reason=session-invalid")
+  if (!user) redirect(await loginRedirectUrl("session-invalid"))
   if (!roles.includes(user.role)) {
     redirect("/dashboard")
   }

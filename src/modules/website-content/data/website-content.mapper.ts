@@ -1,8 +1,99 @@
 import "server-only"
 
-import type { Prisma } from "@prisma/client"
+import type { Prisma, WebsiteExploreCountSource } from "@prisma/client"
 
-import type { LandingPageData } from "../types/landing-page"
+import type {
+  ExploreCountSource,
+  LandingExploreItemData,
+  LandingPageData,
+} from "../types/landing-page"
+
+const exploreCountSourceMap: Record<
+  WebsiteExploreCountSource,
+  ExploreCountSource
+> = {
+  MANUAL: "manual",
+  ARTICLE_CATEGORY: "article-category",
+  EVENT: "event",
+  NONE: "none",
+}
+
+export const exploreCountSourceToDatabase: Record<
+  ExploreCountSource,
+  WebsiteExploreCountSource
+> = {
+  manual: "MANUAL",
+  "article-category": "ARTICLE_CATEGORY",
+  event: "EVENT",
+  none: "NONE",
+}
+
+export function exploreCountSourceFromDatabase(
+  countSource: WebsiteExploreCountSource,
+) {
+  return exploreCountSourceMap[countSource]
+}
+
+/**
+ * Menerjemahkan satu explore item DTO menjadi row Prisma. Referensi kategori
+ * dikirim sebagai sectionKey, sehingga FK-nya baru dapat diisi setelah article
+ * section pada aggregate yang sama tersedia.
+ */
+export function exploreItemPersistenceData(
+  item: LandingExploreItemData,
+  position: number,
+  sectionIdByKey: Map<string, number>,
+) {
+  const countArticleSectionId =
+    item.countSource === "article-category" && item.countArticleSectionKey
+      ? (sectionIdByKey.get(item.countArticleSectionKey) ?? null)
+      : null
+
+  if (item.countSource === "article-category" && countArticleSectionId === null) {
+    throw new Error(
+      `Kategori artikel untuk item jelajahi "${item.label}" tidak ditemukan.`,
+    )
+  }
+
+  return {
+    label: item.label,
+    linkUrl: item.linkUrl,
+    countSource: exploreCountSourceToDatabase[item.countSource],
+    countArticleSectionId,
+    countLabel: item.countSource === "none" ? null : item.countLabel,
+    storyCount: item.countSource === "manual" ? item.storyCount : null,
+    position,
+    isVisible: item.isVisible,
+  }
+}
+
+export const exploreItemSelect = {
+  label: true,
+  linkUrl: true,
+  countSource: true,
+  countLabel: true,
+  storyCount: true,
+  position: true,
+  isVisible: true,
+  countArticleSection: { select: { sectionKey: true, deletedAt: true } },
+} satisfies Prisma.WebsiteExploreItemSelect
+
+type ExploreItemRecord = Prisma.WebsiteExploreItemGetPayload<{
+  select: typeof exploreItemSelect
+}>
+
+export function mapExploreItem(item: ExploreItemRecord) {
+  const { countArticleSection, ...rest } = item
+
+  return {
+    ...rest,
+    countSource: exploreCountSourceFromDatabase(item.countSource),
+    countArticleSectionKey:
+      countArticleSection && countArticleSection.deletedAt === null
+        ? countArticleSection.sectionKey
+        : null,
+  }
+}
 
 export const landingPageSelect = {
   key: true,
@@ -42,13 +133,7 @@ export const landingPageSelect = {
   exploreItems: {
     where: { deletedAt: null, isVisible: true },
     orderBy: { position: "asc" },
-    select: {
-      label: true,
-      linkUrl: true,
-      storyCount: true,
-      position: true,
-      isVisible: true,
-    },
+    select: exploreItemSelect,
   },
   articleSections: {
     where: { deletedAt: null, isVisible: true },
@@ -99,7 +184,7 @@ export function mapWebsiteContentToLandingPage(
     explore: {
       eyebrow: content.exploreEyebrow,
       title: content.exploreTitle,
-      items: content.exploreItems,
+      items: content.exploreItems.map(mapExploreItem),
     },
     articleSections: content.articleSections,
     team: {

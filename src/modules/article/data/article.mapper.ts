@@ -1,13 +1,13 @@
 import type { Prisma } from "@prisma/client"
 
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
+
 import type {
   PublicArticleCardData,
   PublicArticleDetailData,
 } from "../types/public-article"
 
 const ARTICLE_TIME_ZONE = "Asia/Jakarta"
-const DEFAULT_AUTHOR_AVATAR =
-  "https://images.pexels.com/photos/14795560/pexels-photo-14795560.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
 
 const publishedAtFormatter = new Intl.DateTimeFormat("id-ID", {
   day: "numeric",
@@ -157,7 +157,7 @@ export function mapPublicArticleDetail(
     author: {
       name: article.author.name,
       username: article.author.username,
-      avatarUrl: article.author.avatarUrl || DEFAULT_AUTHOR_AVATAR,
+      avatarUrl: article.author.avatarUrl || DEFAULT_AVATAR,
       bio:
         article.author.bio ||
         "Penulis dan kontributor yang berbagi cerita tentang Palembang.",
@@ -167,7 +167,7 @@ export function mapPublicArticleDetail(
       id: comment.id,
       userId: comment.userId,
       userName: comment.user.name,
-      userAvatarUrl: comment.user.avatarUrl || DEFAULT_AUTHOR_AVATAR,
+      userAvatarUrl: comment.user.avatarUrl || DEFAULT_AVATAR,
       content: comment.content,
       createdAt: comment.createdAt.toISOString(),
       createdAtLabel: formatRelativeTime(comment.createdAt),

@@ -9,6 +9,7 @@ import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
 
 import { setAccountBanStatusAction } from "../actions/set-account-ban-status"
 import { softDeleteAccountAction } from "../actions/soft-delete-account"
@@ -197,7 +198,7 @@ export function AccountList({ routeRole, data }: AccountListProps) {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={account.avatarUrl || "https://i.pravatar.cc/150?img=0"}
+                          src={account.avatarUrl || DEFAULT_AVATAR}
                           alt={account.name}
                           className="size-8 rounded-full bg-muted object-cover"
                         />

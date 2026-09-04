@@ -19,6 +19,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
+  getImageUploadErrorMessage,
   type ImageUploadScope,
   uploadImageToCloudinary,
   validateImageUpload,
@@ -155,6 +156,13 @@ export function ImageUpload({
     [aspect],
   )
 
+  const handlePreviewError = useCallback(() => {
+    toast.error(
+      "Gambar tidak bisa dibuka. Kemungkinan file rusak atau formatnya tidak didukung browser.",
+    )
+    resetCropModal()
+  }, [resetCropModal])
+
   const uploadImage = async (file: Blob, filename: string) => {
     setIsUploading(true)
     onUploadingChange?.(true)
@@ -169,11 +177,7 @@ export function ImageUpload({
       resetCropModal()
     } catch (error) {
       console.error("Image upload failed:", error)
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Upload gambar ke Cloudinary gagal.",
-      )
+      toast.error(getImageUploadErrorMessage(error))
     } finally {
       setIsUploading(false)
       onUploadingChange?.(false)
@@ -191,9 +195,8 @@ export function ImageUpload({
       const basename = selectedFile.name.replace(/\.[^/.]+$/, "") || "image"
       await uploadImage(croppedImage, `${basename}-cropped.jpg`)
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Crop gambar gagal diproses.",
-      )
+      console.error("Image crop failed:", error)
+      toast.error(getImageUploadErrorMessage(error))
     }
   }
 
@@ -416,6 +419,7 @@ export function ImageUpload({
                   src={rawImageUrl}
                   alt="Crop Preview"
                   onLoad={onImageLoad}
+                  onError={handlePreviewError}
                   className="max-h-[60vh]"
                 />
               </ReactCrop>

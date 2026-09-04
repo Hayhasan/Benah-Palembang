@@ -5,6 +5,7 @@ import { useLocation } from "@/lib/navigation"
 import { Equal, X, ChevronDown, ArrowUpRight, LogOut, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/liquid-glass-button'
 import React, { useState, useRef, useCallback } from 'react'
+import { DEFAULT_AVATAR } from '@/lib/constants/placeholder'
 import { cn } from '@/lib/utils'
 import { useSession } from '@/modules/auth/hooks/use-session'
 import { useHeaderFooterContent } from '@/modules/website-content/components/header-footer-content-provider'
@@ -195,7 +196,7 @@ export const Header = () => {
                                             onClick={() => setProfileOpen(!profileOpen)}
                                             className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", isOverDarkHero ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
                                         >
-                                            <img src={user.avatarUrl || "https://i.pravatar.cc/150?img=0"} alt={user.name} className="size-7 rounded-full object-cover" />
+                                            <img src={user.avatarUrl || DEFAULT_AVATAR} alt={user.name} className="size-7 rounded-full object-cover" />
                                             <span className="text-sm font-semibold">{user.name}</span>
                                         </button>
                                         

@@ -36,6 +36,7 @@ enum ActivityAction {
   REJECT
   TAKEDOWN
   RESTORE
+  ARCHIVE
   BAN
   UNBAN
   CHANGE_ROLE
@@ -189,11 +190,15 @@ export async function recordActivityLog(
 | | `DELETE` | Soft-delete akun pengguna | `beforeState: { deletedAt: null }` vs `afterState: { deletedAt }` |
 | **Website Content** | `UPDATE` | Menyimpan perubahan konfigurasi konten web | `beforeState` vs `afterState` konfigurasi section terkait |
 | **Article** | `CREATE` | Membuat draft / mengajukan review artikel | `afterState: { title, status, category }` |
-| | `UPDATE` | Mengedit artikel milik sendiri | `beforeState` vs `afterState` data artikel |
-| | `DELETE` | Mengarsipkan artikel (*Archive*) | `beforeState: { status: "PUBLISHED" }` vs `afterState: { deletedAt }` |
+| | `UPDATE` | Mengedit artikel milik sendiri | Hanya field yang berubah: `afterState.changedFields` plus nilai lama/baru. Rich content dicatat sebagai penanda panjang, bukan isi HTML |
+| | `ARCHIVE` | Mengarsipkan artikel (*Archive*) | `beforeState: { status: "PUBLISHED" }` $\rightarrow$ `afterState: { status: "ARCHIVED" }` |
+| | `RESTORE` | Mempublikasikan ulang artikel arsip | `beforeState: { status: "ARCHIVED" }` $\rightarrow$ `afterState: { status: "PUBLISHED" }` |
+| | `DELETE` | Menghapus artikel milik sendiri (*Hapus*) | `beforeState: { status, deletedAt: null }` vs `afterState: { status, deletedAt }` |
 | **Event** | `CREATE` | Membuat draft / mengajukan review event | `afterState: { title, status, category, startsAt }` |
-| | `UPDATE` | Mengedit event milik sendiri | `beforeState` vs `afterState` data event |
-| | `DELETE` | Mengarsipkan event (*Archive*) | `beforeState: { status: "PUBLISHED" }` vs `afterState: { deletedAt }` |
+| | `UPDATE` | Mengedit event milik sendiri | Hanya field yang berubah: `afterState.changedFields` plus nilai lama/baru. Rich content dicatat sebagai penanda panjang, bukan isi HTML |
+| | `ARCHIVE` | Mengarsipkan event (*Archive*) | `beforeState: { status: "PUBLISHED" }` $\rightarrow$ `afterState: { status: "ARCHIVED" }` |
+| | `RESTORE` | Mempublikasikan ulang event arsip | `beforeState: { status: "ARCHIVED" }` $\rightarrow$ `afterState: { status: "PUBLISHED" }` |
+| | `DELETE` | Menghapus event milik sendiri (*Hapus*) | `beforeState: { status, deletedAt: null }` vs `afterState: { status, deletedAt }` |
 | **Manage Content** | `APPROVE` | Menyetujui posting artikel atau event | `beforeState: { status: "PENDING_REVIEW" }` $\rightarrow$ `afterState: { status: "PUBLISHED" }` |
 | | `REJECT` | Menolak pengajuan artikel atau event | `beforeState: { status: "PENDING_REVIEW" }` $\rightarrow$ `afterState: { status: "REJECTED", note }` |
 | | `TAKEDOWN` | Menurunkan konten yang sudah tayang | `beforeState: { status: "PUBLISHED" }` $\rightarrow$ `afterState: { status: "TAKEN_DOWN", note }` |

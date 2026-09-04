@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db/prisma"
 import { requireCurrentUser } from "@/modules/auth/data/session-dal"
 
+import { isResubmittableEventStatus } from "../constants/event-status"
 import { eventIdSchema } from "../schemas/event.schema"
 import type { EventActionResult } from "../types/owned-event"
 import { revalidateEventRoutes } from "./revalidate-event-routes"
@@ -27,13 +28,16 @@ export async function postEventAction(
       })
 
       if (!event) return "not-found" as const
-      if (event.status !== "DRAFT") return "invalid-status" as const
+      if (!isResubmittableEventStatus(event.status)) {
+        return "invalid-status" as const
+      }
 
       await transaction.event.update({
         where: { id },
         data: {
           status: "PENDING_REVIEW",
           submittedAt: new Date(),
+          moderationNote: null,
         },
       })
 
@@ -50,7 +54,8 @@ export async function postEventAction(
     if (result === "invalid-status") {
       return {
         success: false,
-        message: "Hanya Event berstatus Draf yang dapat diposting.",
+        message:
+          "Hanya Event berstatus Draf atau Rejected yang dapat diposting.",
       }
     }
 

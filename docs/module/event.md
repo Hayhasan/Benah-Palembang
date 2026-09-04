@@ -56,6 +56,7 @@ enum ContentStatus {
   PUBLISHED
   REJECTED
   TAKEN_DOWN
+  ARCHIVED
 }
 ```
 
@@ -68,6 +69,7 @@ Mapping UI:
 | `PUBLISHED` | Post atau Posted | Tampil pada halaman publik |
 | `REJECTED` | Rejected | Pengajuan ditolak |
 | `TAKEN_DOWN` | Takedown | Konten published diturunkan |
+| `ARCHIVED` | Arsip | Diturunkan sendiri oleh owner dari halaman publik |
 
 Transisi awal:
 
@@ -78,18 +80,43 @@ PENDING_REVIEW -> PUBLISHED
 PENDING_REVIEW -> REJECTED
 PUBLISHED -> TAKEN_DOWN
 TAKEN_DOWN -> PUBLISHED
+PUBLISHED -> ARCHIVED
+ARCHIVED -> PUBLISHED
 ```
+
+`ARCHIVED` hanya dapat dicapai dari `PUBLISHED`. `TAKEN_DOWN` sengaja tidak
+boleh diarsipkan supaya owner tidak dapat memakai archive lalu publikasi ulang
+sebagai jalan pintas keluar dari keputusan takedown.
 
 Owner tidak mempublikasikan langsung ke halaman publik. Tombol publikasi pada
 editor secara domain berarti mengajukan Event menjadi `PENDING_REVIEW`.
+
+Review berlaku pada publikasi pertama, bukan pada setiap penyuntingan. Event
+`PUBLISHED` boleh disunting owner dan perubahannya langsung tayang tanpa
+kembali ke `PENDING_REVIEW`, sama seperti publikasi ulang dari `ARCHIVED`.
+Kontrol atas perubahan tersebut berada pada activity log — setiap penyimpanan
+mencatat field mana yang berubah — dan pada aksi Takedown milik admin.
+
+Setiap keputusan moderasi admin (Approve, Reject, Takedown, Restore) atas
+event mengirim email notifikasi ke pemilik konten. Detail template dan
+aturan pengirimannya berada pada `docs/module/manage-content.md`.
 
 Pada halaman owner, aksi status yang tersedia sengaja lebih sempit:
 
 - Event `DRAFT` mempunyai tombol **Post** untuk berpindah ke
   `PENDING_REVIEW`.
-- Event `PUBLISHED` mempunyai tombol **Archive** untuk menjalankan soft delete.
-- Event `PENDING_REVIEW`, `REJECTED`, dan `TAKEN_DOWN` tidak mempunyai tombol
-  perubahan status.
+- Event `PUBLISHED` mempunyai tombol **Archive** untuk berpindah ke `ARCHIVED`.
+- Event `ARCHIVED` mempunyai tombol **Publikasikan** untuk kembali ke
+  `PUBLISHED` tanpa review ulang, karena Event tersebut sudah pernah disetujui
+  admin.
+- Event `REJECTED` mempunyai tombol **Post** untuk diperbaiki lalu diajukan
+  ulang ke `PENDING_REVIEW`. Alasan penolakan dari admin (`moderationNote`)
+  ditampilkan pada daftar dan editor owner supaya perbaikannya terarah.
+- Event `DRAFT`, `REJECTED`, dan `ARCHIVED` mempunyai tombol **Hapus** yang
+  menjalankan soft delete.
+- Event `PENDING_REVIEW` dan `TAKEN_DOWN` tidak mempunyai tombol perubahan
+  status maupun tombol Hapus karena sedang berada pada flow moderasi. Alasan
+  takedown tetap ditampilkan kepada owner.
 - Tombol **Takedown** dan **Restore** tidak tersedia pada POV owner. Kedua aksi
   tersebut merupakan bagian flow moderasi Manage Content yang dikerjakan
   terpisah.
@@ -172,10 +199,30 @@ menghubungkan Event dengan account pembuatnya.
 - Event tetap menyimpan current status, optional `moderationNote`, serta
   `publishedAt` sebagai state aggregate yang dibutuhkan query aplikasi.
 
-## 5. Soft delete
+## 5. Archive dan soft delete
 
-Archive dari halaman owner selalu menggunakan soft delete dan hanya dapat
-dijalankan untuk Event `PUBLISHED`.
+Archive dan delete adalah dua aksi berbeda. Archive **tidak** menyentuh
+`deletedAt`.
+
+### Archive
+
+Hanya dapat dijalankan untuk Event `PUBLISHED` dan hanya mengubah `status`
+menjadi `ARCHIVED`. Slug canonical, `originalSlug`, EventTag, views, dan likes
+sengaja dipertahankan apa adanya supaya publikasi ulang mengembalikan Event ke
+URL publik yang sama tanpa kehilangan tag maupun statistik.
+
+Event `ARCHIVED` tetap tampil pada daftar owner, hilang dari halaman publik,
+dan tidak masuk antrian moderasi Manage Content.
+
+### Publikasi ulang
+
+Event `ARCHIVED` dapat dikembalikan ke `PUBLISHED` oleh owner tanpa melewati
+`PENDING_REVIEW`. `publishedAt` yang lama dipertahankan bila sudah terisi.
+
+### Soft delete
+
+Soft delete dijalankan oleh tombol **Hapus** dan hanya tersedia untuk Event
+`DRAFT`, `REJECTED`, atau `ARCHIVED`.
 
 Dalam satu transaction:
 
@@ -348,10 +395,11 @@ database.
 
 | Status | Aksi status | Hasil |
 | --- | --- | --- |
-| `DRAFT` | Post | Status menjadi `PENDING_REVIEW` |
-| `PUBLISHED` | Archive | Event dan EventTag di-soft-delete |
+| `DRAFT` | Post, Hapus | Post menjadi `PENDING_REVIEW`; Hapus melakukan soft delete |
+| `REJECTED` | Post, Hapus | Post mengajukan ulang ke `PENDING_REVIEW` dan mengosongkan `moderationNote` |
+| `PUBLISHED` | Archive | Status menjadi `ARCHIVED`, record tetap aktif |
+| `ARCHIVED` | Publikasikan, Hapus | Publikasikan kembali ke `PUBLISHED` tanpa review; Hapus melakukan soft delete |
 | `PENDING_REVIEW` | Tidak ada | Menunggu flow moderasi |
-| `REJECTED` | Tidak ada | Tidak ada transisi owner pada tahap awal |
 | `TAKEN_DOWN` | Tidak ada | Ditangani flow moderasi terpisah |
 
 Tombol Save, Preview, View, dan Edit merupakan aksi pengelolaan konten, bukan
@@ -413,6 +461,8 @@ tetap tipis dan tidak mengakses Prisma langsung.
 - [x] Implementasikan list Event milik current user.
 - [x] Implementasikan create, edit, preview, dan Server Action ownership.
 - [x] Implementasikan aksi owner `Post` dan `Archive` sesuai status.
+- [x] Pisahkan `Archive` (status `ARCHIVED`) dari `Hapus` (soft delete) dan
+  tambahkan aksi `Publikasikan` untuk Event arsip.
 - [x] Pindahkan komponen Event yang sudah terhubung backend dari `src/features`
   ke `src/modules/event`.
 - [x] Hapus dependency Event terhadap mock lama yang sudah digantikan.
@@ -467,8 +517,11 @@ tetap tipis dan tidak mengakses Prisma langsung.
 - Update Event dan replacement EventTag dijalankan dalam transaction. Rich HTML
   disanitasi pada server sebelum disimpan.
 - Event `DRAFT` menampilkan aksi Post, Event `PUBLISHED` menampilkan aksi
-  Archive, dan status lain tidak menampilkan aksi status.
-- Archive melepaskan slug canonical, menyimpan `originalSlug`, serta melakukan
+  Archive, Event `ARCHIVED` menampilkan aksi Publikasikan, dan Event `DRAFT`,
+  `REJECTED`, maupun `ARCHIVED` menampilkan aksi Hapus.
+- Archive hanya memindahkan status ke `ARCHIVED` tanpa menyentuh `deletedAt`,
+  slug, maupun EventTag sehingga publikasi ulang mengembalikan URL yang sama.
+- Hapus melepaskan slug canonical, menyimpan `originalSlug`, serta melakukan
   soft delete pada Event dan seluruh EventTag aktif dalam satu transaction.
 - Tidak ada tombol Takedown atau Restore pada POV owner.
 - Upload banner Event menggunakan signed upload Cloudinary ke folder

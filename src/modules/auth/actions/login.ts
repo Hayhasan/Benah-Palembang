@@ -11,6 +11,7 @@ import {
   checkLoginRateLimit,
   clearEmailRateLimit,
 } from "../data/rate-limit"
+import { sanitizeReturnPath } from "../data/return-path"
 import { createSession } from "../data/session"
 import { loginSchema } from "../schemas/auth.schema"
 import type { AuthActionState } from "../types/auth-action-state"
@@ -41,6 +42,11 @@ export async function loginAction(
   }
 
   const { email, password } = parsed.data
+  const returnPath = sanitizeReturnPath(
+    typeof formData.get("from") === "string"
+      ? String(formData.get("from"))
+      : null,
+  )
 
   try {
     const rateLimit = await checkLoginRateLimit(email)
@@ -115,5 +121,5 @@ export async function loginAction(
     }
   }
 
-  redirect("/dashboard")
+  redirect(returnPath ?? "/dashboard")
 }

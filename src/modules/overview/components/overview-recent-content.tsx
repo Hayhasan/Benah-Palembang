@@ -80,7 +80,9 @@ export function OverviewRecentContent({ items }: OverviewRecentContentProps) {
                           ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
                           : c.status === "Request"
                             ? "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-                            : "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400"
+                            : c.status === "Arsip"
+                              ? "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
+                              : "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400"
                       }`}
                     >
                       {c.status}

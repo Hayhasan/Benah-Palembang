@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  Archive,
   Search,
   Trash2,
   Edit,
@@ -42,6 +43,8 @@ function renderActionIcon(iconName: ActivityLogItem["iconName"]) {
       return <CheckCircle2 className="size-3.5" />
     case "rotate-ccw":
       return <RotateCcw className="size-3.5" />
+    case "archive":
+      return <Archive className="size-3.5" />
     default:
       return <Activity className="size-3.5" />
   }

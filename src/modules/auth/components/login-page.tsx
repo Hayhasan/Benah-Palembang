@@ -10,7 +10,14 @@ import { loginAction } from "../actions/login"
 import { INITIAL_AUTH_ACTION_STATE } from "../types/auth-action-state"
 import { AuthPageShell } from "./auth-page-shell"
 
-export function LoginPage({ passwordResetSuccess = false }: { passwordResetSuccess?: boolean }) {
+export function LoginPage({
+  passwordResetSuccess = false,
+  returnPath = null,
+}: {
+  passwordResetSuccess?: boolean
+  /** Tujuan setelah login berhasil, sudah divalidasi di server. */
+  returnPath?: string | null
+}) {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [state, formAction, isPending] = useActionState(
@@ -27,6 +34,9 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
         Masuk ke ruang personalmu di Benah Palembang.
       </p>
       <form action={formAction} className="mt-8 space-y-4" noValidate>
+        {returnPath ? (
+          <input type="hidden" name="from" value={returnPath} />
+        ) : null}
         {passwordResetSuccess && (
           <p
             role="status"
@@ -113,7 +123,11 @@ export function LoginPage({ passwordResetSuccess = false }: { passwordResetSucce
       <p className="mt-8 text-center text-xs text-white/50">
         Belum punya akun?{" "}
         <Link
-          href="/register"
+          href={
+            returnPath
+              ? `/register?from=${encodeURIComponent(returnPath)}`
+              : "/register"
+          }
           className="font-semibold text-palembang-gold hover:underline"
         >
           Daftar sekarang

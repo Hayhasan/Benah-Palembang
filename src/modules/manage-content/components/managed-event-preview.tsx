@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
+import { ModerationConfirmDialog } from "./moderation-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { EventOrganizerCard } from "@/modules/event/components/event-organizer-card"
 import { EventShareButton } from "@/modules/event/components/event-share-button"
@@ -58,32 +58,21 @@ export function ManagedEventPreview({
     })
   }
 
-  function handleConfirmAction() {
+  function handleConfirmAction(note: string) {
     const { action } = confirmModal
 
     startTransition(async () => {
       let result = { success: false, message: "" }
+      const payload = { type: "EVENT" as const, id: event.id, note }
 
       if (action === "approve") {
-        result = await approveContentAction({
-          type: "EVENT",
-          id: event.id,
-        })
+        result = await approveContentAction(payload)
       } else if (action === "reject") {
-        result = await rejectContentAction({
-          type: "EVENT",
-          id: event.id,
-        })
+        result = await rejectContentAction(payload)
       } else if (action === "takedown") {
-        result = await takedownContentAction({
-          type: "EVENT",
-          id: event.id,
-        })
+        result = await takedownContentAction(payload)
       } else if (action === "restore") {
-        result = await restoreContentAction({
-          type: "EVENT",
-          id: event.id,
-        })
+        result = await restoreContentAction(payload)
       }
 
       if (result.success) {
@@ -339,47 +328,17 @@ export function ManagedEventPreview({
       </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmActionDialog
+      <ModerationConfirmDialog
         open={confirmModal.open}
         onOpenChange={(open) => {
           if (!open) {
             setConfirmModal((prev) => ({ ...prev, open: false }))
           }
         }}
-        title={
-          confirmModal.action === "approve"
-            ? "Konfirmasi Persetujuan Event"
-            : confirmModal.action === "reject"
-              ? "Konfirmasi Penolakan Event"
-              : confirmModal.action === "takedown"
-                ? "Konfirmasi Takedown Event"
-                : "Konfirmasi Pemulihan Event"
-        }
-        description={
-          confirmModal.action === "approve"
-            ? `Apakah Anda yakin ingin menyetujui dan mempublikasikan event "${event.title}"?`
-            : confirmModal.action === "reject"
-              ? `Apakah Anda yakin ingin menolak pengajuan event "${event.title}"?`
-              : confirmModal.action === "takedown"
-                ? `Apakah Anda yakin ingin men-takedown event "${event.title}" dari penayangan publik?`
-                : `Apakah Anda yakin ingin memulihkan event "${event.title}" ke status Posted?`
-        }
-        confirmText={
-          confirmModal.action === "approve"
-            ? "Ya, Setujui"
-            : confirmModal.action === "reject"
-              ? "Ya, Tolak"
-              : confirmModal.action === "takedown"
-                ? "Ya, Takedown"
-                : "Ya, Pulihkan"
-        }
-        cancelText="Batal"
-        variant={
-          confirmModal.action === "takedown" ||
-          confirmModal.action === "reject"
-            ? "destructive"
-            : "default"
-        }
+        action={confirmModal.action}
+        contentLabel="Event"
+        contentTitle={event.title}
+        isPending={isPending}
         onConfirm={handleConfirmAction}
       />
     </div>

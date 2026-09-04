@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  RotateCcw,
   Building,
   Calendar,
   Clock,
@@ -25,6 +26,8 @@ import { Input } from "@/components/ui/input"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 
 import { archiveEventAction } from "../actions/archive-event"
+import { isResubmittableEventStatus } from "../constants/event-status"
+import { republishEventAction } from "../actions/republish-event"
 import { saveEventAction } from "../actions/save-event"
 import type {
   EventActionResult,
@@ -78,6 +81,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
   )
   const [tags, setTags] = useState(initialEvent?.tags ?? ["Palembang", "Event"])
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
+  const [republishDialogOpen, setRepublishDialogOpen] = useState(false)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
   const [isUploadingContentImage, setIsUploadingContentImage] = useState(false)
 
@@ -200,8 +204,26 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
     })
   }
 
-  const canPost = status === undefined || status === "DRAFT"
+  function handleRepublish() {
+    if (!eventId) return
+
+    startTransition(async () => {
+      const result = await republishEventAction({ id: eventId })
+      if (!result.success) {
+        toast.error(result.message)
+        return
+      }
+
+      setIsDirty(false)
+      toast.success(result.message)
+      router.push("/dashboard/create-event")
+      router.refresh()
+    })
+  }
+
+  const canPost = status === undefined || isResubmittableEventStatus(status)
   const canArchive = status === "PUBLISHED" && eventId !== undefined
+  const canRepublish = status === "ARCHIVED" && eventId !== undefined
   const isBusy = isPending || isUploadingBanner || isUploadingContentImage
 
   return (
@@ -261,14 +283,44 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
               variant="outline"
               disabled={isBusy}
               onClick={() => setArchiveDialogOpen(true)}
-              className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
             >
               <Archive className="size-4" />
               Archive
             </Button>
           ) : null}
+          {canRepublish ? (
+            <Button
+              type="button"
+              disabled={isBusy}
+              onClick={() => setRepublishDialogOpen(true)}
+              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              <RotateCcw className="size-4" />
+              Publikasikan
+            </Button>
+          ) : null}
         </div>
       </div>
+
+      {status === "REJECTED" || status === "TAKEN_DOWN" ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm dark:border-red-500/30 dark:bg-red-500/10">
+          <p className="font-semibold text-red-700 dark:text-red-300">
+            {status === "REJECTED"
+              ? "Event ini ditolak admin"
+              : "Event ini diturunkan admin"}
+          </p>
+          <p className="mt-1 text-red-700/90 dark:text-red-200/90">
+            {initialEvent?.moderationNote ||
+              "Admin tidak mencantumkan alasan. Silakan hubungi admin sebelum mengajukan ulang."}
+          </p>
+          {status === "REJECTED" ? (
+            <p className="mt-2 text-xs text-red-700/80 dark:text-red-200/80">
+              Perbaiki Event ini lalu tekan Post untuk mengajukannya kembali.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-4">
         <div className="space-y-6 lg:col-span-3">
@@ -455,10 +507,20 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
         title="Konfirmasi Archive Event"
-        description={`Event "${title || "ini"}" akan diarsipkan dan tidak lagi tampil pada halaman publik maupun daftar Event aktif.`}
+        description={`Event "${title || "ini"}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Event tetap tampil pada daftar Kelola Event dan dapat dipublikasikan ulang tanpa review.`}
         confirmText="Ya, Archive Event"
-        variant="destructive"
+        variant="default"
         onConfirm={handleArchive}
+      />
+
+      <ConfirmActionDialog
+        open={republishDialogOpen}
+        onOpenChange={setRepublishDialogOpen}
+        title="Konfirmasi Publikasi Ulang"
+        description={`Event "${title || "ini"}" akan kembali tampil pada halaman publik. Event ini sudah pernah disetujui sehingga tidak perlu review ulang.`}
+        confirmText="Ya, Publikasikan"
+        variant="default"
+        onConfirm={handleRepublish}
       />
     </div>
   )

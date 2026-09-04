@@ -88,6 +88,7 @@ PENDING_REVIEW
 PUBLISHED
 REJECTED
 TAKEN_DOWN
+ARCHIVED
 ```
 
 Mapping UI:
@@ -99,6 +100,7 @@ Mapping UI:
 | `PUBLISHED` | Post atau Posted | Tampil pada halaman publik |
 | `REJECTED` | Rejected | Pengajuan ditolak |
 | `TAKEN_DOWN` | Takedown | Artikel published diturunkan |
+| `ARCHIVED` | Arsip | Diturunkan sendiri oleh author dari halaman publik |
 
 Transisi awal:
 
@@ -109,19 +111,44 @@ PENDING_REVIEW -> PUBLISHED
 PENDING_REVIEW -> REJECTED
 PUBLISHED -> TAKEN_DOWN
 TAKEN_DOWN -> PUBLISHED
+PUBLISHED -> ARCHIVED
+ARCHIVED -> PUBLISHED
 ```
+
+`ARCHIVED` hanya dapat dicapai dari `PUBLISHED`. `TAKEN_DOWN` sengaja tidak
+boleh diarsipkan supaya author tidak dapat memakai archive lalu publikasi ulang
+sebagai jalan pintas keluar dari keputusan takedown.
 
 Tombol publish pada halaman author berarti submit review, bukan langsung
 menampilkan Article pada halaman publik.
+
+Review berlaku pada publikasi pertama, bukan pada setiap penyuntingan. Article
+`PUBLISHED` boleh disunting author dan perubahannya langsung tayang tanpa
+kembali ke `PENDING_REVIEW`, sama seperti publikasi ulang dari `ARCHIVED`.
+Kontrol atas perubahan tersebut berada pada activity log — setiap penyimpanan
+mencatat field mana yang berubah — dan pada aksi Takedown milik admin.
+
+Setiap keputusan moderasi admin (Approve, Reject, Takedown, Restore) atas
+artikel mengirim email notifikasi ke pemilik konten. Detail template dan
+aturan pengirimannya berada pada `docs/module/manage-content.md`.
 
 POV author mengikuti aturan status owner pada Event:
 
 - Article `DRAFT` mempunyai tombol **Post** untuk berpindah ke
   `PENDING_REVIEW`.
-- Article `PUBLISHED` mempunyai tombol **Archive** untuk menjalankan soft
-  delete.
-- Article `PENDING_REVIEW`, `REJECTED`, dan `TAKEN_DOWN` tidak mempunyai tombol
-  perubahan status.
+- Article `PUBLISHED` mempunyai tombol **Archive** untuk berpindah ke
+  `ARCHIVED`.
+- Article `ARCHIVED` mempunyai tombol **Publikasikan** untuk kembali ke
+  `PUBLISHED` tanpa review ulang, karena Article tersebut sudah pernah
+  disetujui admin.
+- Article `REJECTED` mempunyai tombol **Post** untuk diperbaiki lalu diajukan
+  ulang ke `PENDING_REVIEW`. Alasan penolakan dari admin (`moderationNote`)
+  ditampilkan pada daftar dan editor author supaya perbaikannya terarah.
+- Article `DRAFT`, `REJECTED`, dan `ARCHIVED` mempunyai tombol **Hapus** yang
+  menjalankan soft delete.
+- Article `PENDING_REVIEW` dan `TAKEN_DOWN` tidak mempunyai tombol perubahan
+  status maupun tombol Hapus karena sedang berada pada flow moderasi. Alasan
+  takedown tetap ditampilkan kepada author.
 - Tombol **Takedown** dan **Restore** hanya menjadi bagian flow moderasi Manage
   Content dan tidak tersedia pada halaman author.
 
@@ -209,10 +236,30 @@ sesuai untuk author, kategori, dan komentar Article.
 - Actor dan waktu moderation tidak disimpan ulang pada Article. Informasi
   reviewer dan `reviewedAt` nantinya berasal dari central activity log.
 
-## 6. Soft delete
+## 6. Archive dan soft delete
 
-Archive dari dashboard author selalu menggunakan soft delete dan hanya tersedia
-untuk Article `PUBLISHED`.
+Archive dan delete adalah dua aksi berbeda. Archive **tidak** menyentuh
+`deletedAt`.
+
+### Archive
+
+Hanya tersedia untuk Article `PUBLISHED` dan hanya mengubah `status` menjadi
+`ARCHIVED`. Slug canonical, `originalSlug`, ArticleTag, views, likes, dan
+comments sengaja dipertahankan apa adanya supaya publikasi ulang mengembalikan
+Article ke URL publik yang sama tanpa kehilangan tag maupun statistik.
+
+Article `ARCHIVED` tetap tampil pada daftar author, hilang dari halaman publik
+termasuk pin landing section, dan tidak masuk antrian moderasi Manage Content.
+
+### Publikasi ulang
+
+Article `ARCHIVED` dapat dikembalikan ke `PUBLISHED` oleh author tanpa melewati
+`PENDING_REVIEW`. `publishedAt` yang lama dipertahankan bila sudah terisi.
+
+### Soft delete
+
+Soft delete dijalankan oleh tombol **Hapus** dan hanya tersedia untuk Article
+`DRAFT`, `REJECTED`, atau `ARCHIVED`.
 
 Dalam satu transaction:
 
@@ -376,6 +423,8 @@ Server Action yang direncanakan:
 createArticleDraftAction
 updateArticleAction
 submitArticleForReviewAction
+archiveArticleAction
+republishArticleAction
 softDeleteArticleAction
 ```
 
@@ -394,7 +443,9 @@ Semua action:
 ```text
 src/modules/article/
   actions/
+    archive-article.ts
     create-article-draft.ts
+    republish-article.ts
     soft-delete-article.ts
     submit-article-for-review.ts
     update-article.ts
@@ -499,8 +550,11 @@ Query category option dapat menggunakan query publik yang diekspos module
   disanitasi pada server sebelum disimpan, dan `readingTime` dihitung otomatis
   berdasarkan kata konten.
 - Article `DRAFT` menampilkan aksi Post, Article `PUBLISHED` menampilkan aksi
-  Archive, dan status lain tidak menampilkan aksi status.
-- Archive melepaskan slug canonical (`<originalSlug>-deleted-<YYYYMMDDHHmmss>-<id>`),
+  Archive, Article `ARCHIVED` menampilkan aksi Publikasikan, dan Article
+  `DRAFT`, `REJECTED`, maupun `ARCHIVED` menampilkan aksi Hapus.
+- Archive hanya memindahkan status ke `ARCHIVED` tanpa menyentuh `deletedAt`,
+  slug, maupun ArticleTag sehingga publikasi ulang mengembalikan URL yang sama.
+- Hapus melepaskan slug canonical (`<originalSlug>-deleted-<YYYYMMDDHHmmss>-<id>`),
   menyimpan `originalSlug`, serta melakukan soft delete pada Article dan seluruh
   ArticleTag aktif dalam satu transaction.
 - Tidak ada tombol Takedown atau Restore pada POV author.

@@ -21,7 +21,7 @@ export interface ActivityLogItem {
   description: string
   time: string
   createdAt: string
-  iconName: "plus" | "edit" | "trash" | "login" | "shield-alert" | "check-circle" | "rotate-ccw" | "activity"
+  iconName: "plus" | "edit" | "trash" | "login" | "shield-alert" | "check-circle" | "rotate-ccw" | "archive" | "activity"
   colorClass: string
   ipAddress: string | null
   userAgent: string | null

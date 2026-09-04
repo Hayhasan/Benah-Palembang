@@ -838,3 +838,306 @@ Verifikasi:
   `/penulis/rahmat_hidayat_2`.
 - QA visual Browser tidak dapat dijalankan karena tidak ada instance browser
   aktif; UI diverifikasi dari source referensi, render HTML production, dan build.
+
+### Pemisahan Archive dari Soft Delete pada Konten Owner
+
+Status: selesai pada 4 September 2026.
+
+Laporan QA: pada `/dashboard/create-article` dan `/dashboard/create-event`,
+menekan tombol **Archive** membuat data hilang tanpa jejak. Activity Log
+mencatatnya sebagai aksi `DELETE` dengan `afterState` berisi `deletedAt`.
+
+Akar masalah: Archive memang diimplementasikan sebagai soft delete. Satu
+transaction mengisi `deletedAt`, melepaskan slug canonical menjadi
+`<slug>-deleted-<timestamp>-<id>`, dan men-soft-delete seluruh tag. Karena
+seluruh query memfilter `deletedAt: null`, record hilang dari daftar owner,
+halaman publik, dan Manage Content sekaligus, sementara tidak ada satu pun aksi
+unarchive atau restore untuk mengembalikannya. `softDeleteArticleAction` bahkan
+hanya alias dari `archiveArticleAction`.
+
+Perubahan:
+
+- Menambahkan `ARCHIVED` pada enum `ContentStatus` dan `ARCHIVE` pada enum
+  `ActivityAction`.
+- Archive sekarang hanya memindahkan status `PUBLISHED -> ARCHIVED`. `deletedAt`
+  tidak disentuh, slug canonical dipertahankan, dan tag tidak ikut dihapus
+  sehingga publikasi ulang mengembalikan URL publik yang sama beserta tag,
+  views, dan likes.
+- Menambahkan aksi **Publikasikan** (`ARCHIVED -> PUBLISHED`) yang melewati
+  `PENDING_REVIEW`, karena konten tersebut sudah pernah disetujui admin.
+- Memisahkan aksi **Hapus** sebagai soft delete sebenarnya, tersedia hanya untuk
+  status `DRAFT`, `REJECTED`, dan `ARCHIVED`. `PENDING_REVIEW` dan `TAKEN_DOWN`
+  tidak dapat dihapus owner karena sedang berada pada flow moderasi.
+- `TAKEN_DOWN` sengaja tidak dapat diarsipkan agar owner tidak memakai
+  archive lalu publikasi ulang sebagai jalan pintas keluar dari takedown.
+- Activity Log: Archive memakai action `ARCHIVE`, publikasi ulang memakai
+  `RESTORE`, dan `DELETE` kembali berarti penghapusan. Snapshot log memakai
+  pasangan `status` pada `beforeState`/`afterState`, menggantikan field sintetis
+  `active` yang sebelumnya membingungkan pembaca log.
+- Konten `ARCHIVED` dikeluarkan dari antrian moderasi Manage Content dan dari
+  metrik Total Request serta feed konten terbaru pada Overview.
+- Label status "Arsip" ditambahkan pada daftar owner, galeri artikel, editor,
+  dan Overview. Fungsi label status diubah menjadi `switch` exhaustive agar
+  penambahan enum berikutnya gagal saat compile, bukan diam-diam jatuh ke label
+  "Takedown".
+
+File utama yang berubah:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260904055723_add_archived_content_status/migration.sql`
+- `src/modules/event/actions/archive-event.ts`
+- `src/modules/event/actions/republish-event.ts`
+- `src/modules/event/actions/soft-delete-event.ts`
+- `src/modules/event/constants/event-status.ts`
+- `src/modules/article/actions/archive-article.ts`
+- `src/modules/article/actions/republish-article.ts`
+- `src/modules/article/actions/soft-delete-article.ts`
+- `src/modules/article/constants/article-status.ts`
+- `src/modules/event/components/owned-event-list.tsx`
+- `src/modules/event/components/event-editor.tsx`
+- `src/modules/article/components/owned-article-list.tsx`
+- `src/modules/article/components/article-editor.tsx`
+- `src/modules/article/components/article-gallery.tsx`
+- `src/modules/event/data/owned-event.mapper.ts`
+- `src/modules/article/data/owned-article.mapper.ts`
+- `src/modules/manage-content/data/get-managed-content.ts`
+- `src/modules/overview/data/get-overview-data.ts`
+- `src/modules/overview/data/overview.mapper.ts`
+- `src/modules/overview/types/overview.ts`
+- `src/modules/overview/components/overview-recent-content.tsx`
+- `src/modules/activity-log/data/activity-log.mapper.ts`
+- `src/modules/activity-log/components/activity-log-list.tsx`
+- `src/modules/activity-log/types/activity-log.ts`
+
+Verifikasi:
+
+- Migration `20260904055723_add_archived_content_status` berhasil diterapkan ke
+  database Supabase; isinya hanya dua `ALTER TYPE ... ADD VALUE` yang additive.
+- `npx tsc --noEmit` dan ESLint pada module terdampak: lulus tanpa error.
+- `npm run build`: lulus, seluruh route dashboard tetap terdaftar.
+- Uji perilaku terhadap database di dalam transaction yang di-rollback
+  (Event `test7`): setelah Archive, `status = ARCHIVED`, slug tetap utuh,
+  `deletedAt` tetap `null`, dan jumlah tag aktif tidak berubah (2 -> 2).
+  Visibilitas terverifikasi: daftar owner 1 row, halaman publik 0 row, antrian
+  moderasi 0 row. Setelah publikasi ulang, status kembali `PUBLISHED` dengan
+  slug yang sama. Data dikembalikan ke kondisi semula oleh rollback.
+- Data lama hasil archive versi sebelumnya tidak dimigrasikan sesuai keputusan,
+  karena isinya hanya data testing.
+
+### Jalur Perbaikan Konten Rejected dan Audit Suntingan Konten Tayang
+
+Status: selesai pada 4 September 2026.
+
+Lanjutan dari pemisahan Archive di atas, menutup tiga celah yang muncul saat
+menelusuri laporan QA yang sama.
+
+**1. Konten `REJECTED` sebelumnya buntu.** Penulis tidak punya aksi apa pun
+selain membiarkannya, padahal transisi `REJECTED -> PENDING_REVIEW` sudah
+tertulis di dokumen module sejak awal namun belum diimplementasikan.
+`postArticleAction` dan `postEventAction` hanya menerima `DRAFT`. Sekarang
+keduanya menerima `DRAFT` dan `REJECTED`, begitu pula `saveArticleAction` dan
+`saveEventAction` untuk intent `POST`, sehingga konten yang ditolak dapat
+diperbaiki lalu diajukan ulang tanpa menulis dari nol. Moderasi tetap utuh
+karena hasil perbaikan wajib melewati `PENDING_REVIEW` lagi.
+
+**2. Alasan penolakan tidak pernah terlihat penulis.** Field `moderationNote`
+diisi admin pada aksi Reject dan Takedown, tetapi tidak pernah dibaca di mana
+pun dalam aplikasi. Field tersebut kini masuk ke select dan mapper milik owner,
+lalu ditampilkan pada daftar konten (di bawah badge status) dan sebagai callout
+di editor untuk status `REJECTED` serta `TAKEN_DOWN`. Ketika konten diajukan
+ulang, `moderationNote` dikosongkan supaya admin tidak membaca alasan versi
+sebelumnya.
+
+**3. Suntingan pada konten tayang tidak terekam isinya.** Konten `PUBLISHED`
+memang boleh disunting tanpa review ulang — ini keputusan produk, bukan bug,
+karena memaksa review pada setiap perbaikan typo akan menurunkan konten dari
+publik setiap kali penulis membetulkan satu kata. Konsekuensinya activity log
+menjadi satu-satunya kontrol, dan sebelumnya log itu hanya mencatat
+`status: PUBLISHED -> PUBLISHED`, yang tidak memberi tahu admin apa pun. Aksi
+`UPDATE` sekarang mencatat field mana saja yang berubah beserta nilai lama dan
+barunya. Nilai teks panjang dipotong pada 200 karakter, dan rich content tidak
+disimpan utuh ke JsonB melainkan dicatat sebagai penanda panjang
+(`HTML 1.234 karakter`) agar kolom log tidak membengkak. Deskripsi log juga
+dibedakan menjadi `Menyunting event tayang '...'` supaya admin mengenali
+suntingan pada konten publik langsung dari daftar log.
+
+File utama yang berubah:
+
+- `src/modules/event/actions/post-event.ts`
+- `src/modules/event/actions/save-event.ts`
+- `src/modules/event/constants/event-status.ts`
+- `src/modules/event/data/event-change-summary.ts`
+- `src/modules/event/data/owned-event.mapper.ts`
+- `src/modules/event/types/owned-event.ts`
+- `src/modules/event/components/owned-event-list.tsx`
+- `src/modules/event/components/event-editor.tsx`
+- `src/modules/article/actions/post-article.ts`
+- `src/modules/article/actions/save-article.ts`
+- `src/modules/article/constants/article-status.ts`
+- `src/modules/article/data/article-change-summary.ts`
+- `src/modules/article/data/owned-article.mapper.ts`
+- `src/modules/article/types/article.ts`
+- `src/modules/article/components/owned-article-list.tsx`
+- `src/modules/article/components/article-editor.tsx`
+
+Verifikasi:
+
+- `npx tsc --noEmit`: lulus. ESLint pada `src/modules`: 0 error, menyisakan 3
+  warning `no-img-element` lama pada module Account Manage yang tidak disentuh.
+- `npm run build`: lulus.
+- Uji fungsi ringkasan perubahan: mengubah judul, isi, dan tag menghasilkan
+  `changedFields: ["title","content","tags"]` dengan `content` tercatat sebagai
+  `HTML 15 karakter` -> `HTML 39 karakter`. Field yang tidak berubah
+  (deskripsi, banner, kategori, jadwal, lokasi) tidak ikut tercatat.
+- Uji guard status untuk `[DRAFT, REJECTED, PUBLISHED, ARCHIVED]`: boleh Post
+  ulang `[true, true, false, false]`, boleh Hapus `[true, true, false, true]`.
+- Uji terhadap database di dalam transaction yang di-rollback: Event `REJECTED`
+  dengan catatan "Banner tidak sesuai." terbaca melalui select milik owner;
+  setelah Post ulang status menjadi `PENDING_REVIEW` dan `moderationNote`
+  kembali `null`. Data dikembalikan ke kondisi semula oleh rollback.
+
+### Form Alasan Moderasi dan Notifikasi Email Keputusan Admin
+
+Status: selesai pada 4 September 2026.
+
+Dua kekurangan yang dilaporkan setelah alasan moderasi mulai ditampilkan kepada
+pemilik konten: admin tidak punya tempat untuk menuliskannya, dan pemilik konten
+tidak mengetahui adanya keputusan sampai membuka dashboard.
+
+**1. Form alasan moderasi.** Payload moderasi sebenarnya sudah menerima `note`
+sejak awal, tetapi tidak ada satu pun UI yang mengirimkannya, sehingga
+`moderationNote` selalu tersimpan `null`. Komponen bersama
+`ModerationConfirmDialog` menggantikan `ConfirmActionDialog` pada daftar
+`/dashboard/content/[type]` maupun halaman detail `/dashboard/content/[type]/[id]`
+untuk Article dan Event. Dialog tersebut menampilkan textarea alasan pada aksi
+Reject dan Takedown, membatasi 1.000 karakter, dan menonaktifkan tombol
+konfirmasi selama alasan kosong. Guard UI tidak dijadikan satu-satunya
+pengaman: `rejectContentAction` dan `takedownContentAction` memvalidasi dengan
+`moderationNotePayloadSchema` yang mewajibkan `note` minimal satu karakter
+setelah trim. Approve dan Restore tidak memakai form alasan.
+
+Seluruh copy dialog moderasi kini berada pada satu komponen, menggantikan tiga
+salinan rantai ternary yang sebelumnya diduplikasi di daftar dan dua halaman
+preview.
+
+**2. Notifikasi email.** Transport SMTP dipindahkan dari
+`src/modules/auth/data/mailer.ts` ke `src/lib/mail/mailer.ts` supaya dapat
+dipakai lintas module; auth mailer sekarang hanya memuat template reset
+password, dan Health Check membaca `verifySmtpConnection` dari lokasi baru.
+Tidak ada environment variable baru — konfigurasi memakai `SMTP_*` dan
+`APP_URL` yang sudah ada.
+
+Keempat aksi moderasi mengirim email ke pemilik konten setelah transaction
+commit: Approve dan Restore mengarahkan ke halaman publik konten, sedangkan
+Reject dan Takedown memuat alasan admin dan mengarahkan ke editor dashboard
+milik owner agar dapat langsung diperbaiki. `notifyContentDecision` sengaja
+tidak pernah melempar error; kegagalan SMTP hanya dicatat pada server log dan
+keputusan moderasi tetap dilaporkan berhasil karena perubahan status sudah
+tersimpan lebih dahulu.
+
+File utama yang berubah:
+
+- `src/lib/mail/mailer.ts`
+- `src/modules/auth/data/mailer.ts`
+- `src/modules/health/data/check-smtp.ts`
+- `src/modules/manage-content/data/moderation-mailer.ts`
+- `src/modules/manage-content/components/moderation-confirm-dialog.tsx`
+- `src/modules/manage-content/components/manage-content-list.tsx`
+- `src/modules/manage-content/components/managed-article-preview.tsx`
+- `src/modules/manage-content/components/managed-event-preview.tsx`
+- `src/modules/manage-content/schemas/manage-content.schema.ts`
+- `src/modules/manage-content/actions/approve-content.ts`
+- `src/modules/manage-content/actions/reject-content.ts`
+- `src/modules/manage-content/actions/takedown-content.ts`
+- `src/modules/manage-content/actions/restore-content.ts`
+
+Verifikasi:
+
+- `npx tsc --noEmit`: lulus. ESLint pada `src/modules` dan `src/lib`: 0 error,
+  menyisakan 3 warning `no-img-element` lama pada module Account Manage.
+- `npm run build`: lulus.
+- Uji `buildContentModerationEmail` untuk 4 keputusan x 2 tipe konten: subjek
+  sesuai keputusan, dan tautan CTA tepat — Approve/Restore menuju
+  `/artikel/<slug>` atau `/agenda/<id>`, sedangkan Reject/Takedown menuju
+  `/dashboard/create-article/edit?id=<id>` atau `/dashboard/create-event/edit?id=<id>`.
+- Catatan admin muncul pada versi teks maupun HTML, dan input berbahaya
+  (`<script>`, `<b>`) ter-escape pada body HTML.
+- Validasi payload: reject/takedown tanpa alasan ditolak dengan pesan
+  "Alasan wajib diisi.", dengan alasan diterima, dan approve tanpa alasan tetap
+  diterima.
+- `verifySmtpConnection()` berhasil terhubung dan terautentikasi ke
+  `smtp.gmail.com:465`. Pengiriman email sungguhan belum dijalankan karena
+  akan mengirim pesan nyata ke alamat pengguna; jalur pengiriman dapat dicoba
+  dengan memoderasi satu konten uji.
+
+### Return Path pada Redirect Auth
+
+Status: selesai pada 4 September 2026.
+
+Tautan CTA pada email notifikasi moderasi mengarah ke editor dashboard. Ketika
+penerima membukanya tanpa sesi aktif, guard auth mengarahkannya ke
+`/login?reason=session-invalid` tanpa membawa tujuan asal, sehingga setelah
+login pengguna selalu mendarat di `/dashboard` dan harus mencari sendiri konten
+yang dimaksud email.
+
+Perubahan:
+
+- `src/proxy.ts` memasang header `x-pathname` berisi pathname beserta query pada
+  setiap request. Sebelumnya proxy melakukan early return ketika cookie device
+  sudah ada sehingga tidak pernah menyentuh request header; alur tersebut
+  disusun ulang agar header selalu terpasang, sementara cookie device tetap
+  hanya dibuat saat belum ada.
+- Helper baru `src/modules/auth/data/return-path.ts` menyediakan
+  `sanitizeReturnPath()` dan `loginRedirectUrl()`. Seluruh guard
+  (`requireSession`, `requireCurrentUser`, `requireRole`, dan
+  `getCurrentProfile`) memakai helper tersebut, menggantikan string
+  `/login?reason=...` yang sebelumnya ditulis manual di empat tempat.
+- Halaman Login dan Register membaca `from`, meneruskannya sebagai hidden input,
+  dan `loginAction` serta `registerAction` mengarahkan ke path tersebut setelah
+  berhasil. Pengguna yang sudah login dan membuka `/login?from=...` langsung
+  diarahkan ke tujuan. Tautan antar halaman auth ikut membawa `from` supaya
+  tujuan tidak hilang saat pengguna berpindah dari Login ke Register.
+- Konstanta nama header berada pada `src/lib/constants/request-headers.ts` agar
+  proxy tidak ikut menarik `next/headers` maupun modul `server-only`.
+
+Keamanan `from`: nilainya selalu melewati `sanitizeReturnPath()` baik dari query
+string maupun dari form. Hanya path internal yang diterima; absolute URL dan
+protocol-relative path ditolak supaya tidak menjadi open redirect, dan route
+auth ditolak supaya pengguna tidak berputar kembali ke halaman login. Nilai
+`from` tidak pernah diperlakukan sebagai penanda otorisasi — halaman tujuan
+tetap menjalankan guard-nya sendiri.
+
+File utama yang berubah:
+
+- `src/proxy.ts`
+- `src/lib/constants/request-headers.ts`
+- `src/modules/auth/data/return-path.ts`
+- `src/modules/auth/data/session-dal.ts`
+- `src/modules/auth/actions/login.ts`
+- `src/modules/auth/actions/register.ts`
+- `src/modules/auth/components/login-page.tsx`
+- `src/modules/auth/components/register-page.tsx`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/(auth)/register/page.tsx`
+- `src/modules/profile/data/get-current-profile.ts`
+
+Verifikasi:
+
+- `npx tsc --noEmit`: lulus. ESLint pada `src`: 0 error; 19 warning yang tersisa
+  seluruhnya berasal dari file lama yang tidak disentuh.
+- `npm run build`: lulus.
+- Uji `sanitizeReturnPath()` dengan 18 kasus: seluruhnya sesuai. Path dashboard
+  beserta query diterima utuh, sedangkan `https://evil.example.com`,
+  `//evil.example.com`, `/\evil.example.com`, `http://localhost:3000/dashboard`,
+  `dashboard`, `/login`, `/login?reason=session-invalid`, `/register`,
+  `/lupa-password/abc`, `/first-time-setup`, dan string kosong ditolak. Path
+  yang hanya berawalan mirip route auth seperti `/loginhelp` tetap diterima.
+- Uji end-to-end pada dev server melalui browser tanpa sesi: membuka
+  `/dashboard/create-event/edit?id=10` menghasilkan
+  `/login?reason=session-invalid&from=%2Fdashboard%2Fcreate-event%2Fedit%3Fid%3D10`,
+  dan form login memuat hidden input `from` bernilai
+  `/dashboard/create-event/edit?id=10`. Membuka `/login?from=//evil.example.com`
+  maupun `/login?from=/login` tidak menghasilkan hidden input sama sekali.
+- Redirect terakhir setelah login berhasil belum diuji end-to-end karena
+  memerlukan kredensial pengguna; jalur tersebut dapat dicoba dengan login
+  manual dari tautan email.

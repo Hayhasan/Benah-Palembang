@@ -274,10 +274,10 @@ export async function getOverviewData(input?: {
       },
     }),
     prisma.article.count({
-      where: { deletedAt: null, status: { not: "DRAFT" } },
+      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
     }),
     prisma.event.count({
-      where: { deletedAt: null, status: { not: "DRAFT" } },
+      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
     }),
     prisma.article.count({
       where: { deletedAt: null, status: "PENDING_REVIEW" },
@@ -297,7 +297,7 @@ export async function getOverviewData(input?: {
     prisma.eventLike.count(),
     prisma.articleComment.count({ where: { deletedAt: null } }),
     prisma.article.findMany({
-      where: { deletedAt: null, status: { not: "DRAFT" } },
+      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
       orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
       take: 5,
       select: {
@@ -310,7 +310,7 @@ export async function getOverviewData(input?: {
       },
     }),
     prisma.event.findMany({
-      where: { deletedAt: null, status: { not: "DRAFT" } },
+      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
       orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
       take: 5,
       select: {

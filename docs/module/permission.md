@@ -140,10 +140,14 @@ Semua Server Action dianggap sebagai public endpoint dan wajib memvalidasi otori
 | **Article (Owner)** | `createArticleDraftAction` | `requireCurrentUser()` | Mengikat artikel baru ke `authorId = actor.id` |
 | | `updateArticleAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `authorId === actor.id` |
 | | `submitArticleForReviewAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `authorId === actor.id` |
+| | `archiveArticleAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `authorId === actor.id` |
+| | `republishArticleAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `authorId === actor.id` |
 | | `softDeleteArticleAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `authorId === actor.id` |
 | **Event (Owner)** | `saveEventAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `ownerId === actor.id` |
 | | `postEventAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `ownerId === actor.id` |
 | | `archiveEventAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `ownerId === actor.id` |
+| | `republishEventAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `ownerId === actor.id` |
+| | `softDeleteEventAction` | `requireCurrentUser()` | Memvalidasi kepemilikan `ownerId === actor.id` |
 | **Profile** | `updateProfileAction` | `requireCurrentUser()` | Hanya memutasi record `id = actor.id` |
 | | `requestProfilePasswordResetAction`| `requireCurrentUser()` | Mengirim email reset ke `actor.email` terverifikasi |
 | **Interaksi Publik** | `toggleArticleLikeAction` | `requireCurrentUser()` | Toggle like berbasis pasangan `(articleId, actor.id)` |

@@ -9,6 +9,7 @@ import { requireRole } from "@/modules/auth/data/session-dal"
 
 import { getDefaultArticleCategoryPage } from "../constants/default-article-category-pages"
 import { readLandingPageEditor } from "../data/get-landing-page-editor"
+import { exploreItemPersistenceData } from "../data/website-content.mapper"
 import { landingPageEditorSchema } from "../schemas/landing-page.schema"
 import type {
   LandingPageEditorData,
@@ -55,16 +56,57 @@ function heroSlideData(
   }
 }
 
-function exploreItemData(
-  item: LandingPageEditorData["explore"]["items"][number],
-  position: number,
+/**
+ * Explore item disimpan setelah article section, karena item bertipe kategori
+ * merujuk section lewat sectionKey dan section barunya baru punya ID di sini.
+ */
+async function syncExploreItems(
+  tx: Prisma.TransactionClient,
+  websiteContentId: number,
+  items: LandingPageEditorData["explore"]["items"],
 ) {
-  return {
-    label: item.label,
-    linkUrl: item.linkUrl,
-    storyCount: item.storyCount,
-    position,
-    isVisible: item.isVisible,
+  const [storedItems, storedSections] = await Promise.all([
+    tx.websiteExploreItem.findMany({
+      where: { websiteContentId, deletedAt: null },
+      select: { id: true },
+    }),
+    tx.websiteArticleSection.findMany({
+      where: { websiteContentId, deletedAt: null },
+      select: { id: true, sectionKey: true },
+    }),
+  ])
+
+  assertIdsBelongToRoot(
+    "Item jelajahi",
+    items.map((item) => item.id),
+    storedItems.map((item) => item.id),
+  )
+
+  const sectionIdByKey = new Map(
+    storedSections.map((section) => [section.sectionKey, section.id]),
+  )
+  const submittedIds = items.flatMap((item) =>
+    item.id === null ? [] : [item.id],
+  )
+
+  await tx.websiteExploreItem.updateMany({
+    where: {
+      websiteContentId,
+      deletedAt: null,
+      id: { notIn: submittedIds },
+    },
+    data: { deletedAt: new Date() },
+  })
+
+  for (const [index, item] of items.entries()) {
+    const values = exploreItemPersistenceData(item, index + 1, sectionIdByKey)
+    if (item.id === null) {
+      await tx.websiteExploreItem.create({
+        data: { websiteContentId, ...values },
+      })
+    } else {
+      await tx.websiteExploreItem.update({ where: { id: item.id }, data: values })
+    }
   }
 }
 
@@ -219,11 +261,6 @@ async function createLandingPage(
           heroSlideData(slide, index + 1),
         ),
       },
-      exploreItems: {
-        create: data.explore.items.map((item, index) =>
-          exploreItemData(item, index + 1),
-        ),
-      },
       articleSections: {
         create: data.articleSections.map((section, index) => ({
           ...articleSectionData(section, index + 1),
@@ -245,7 +282,6 @@ async function updateLandingPage(
   existing: {
     id: number
     heroSlides: { id: number }[]
-    exploreItems: { id: number }[]
     articleSections: {
       id: number
       sectionKey: string
@@ -258,11 +294,6 @@ async function updateLandingPage(
     "Hero slide",
     data.heroSlides.map((slide) => slide.id),
     existing.heroSlides.map((slide) => slide.id),
-  )
-  assertIdsBelongToRoot(
-    "Item jelajahi",
-    data.explore.items.map((item) => item.id),
-    existing.exploreItems.map((item) => item.id),
   )
   assertIdsBelongToRoot(
     "Section artikel",
@@ -291,9 +322,6 @@ async function updateLandingPage(
   const heroIds = data.heroSlides.flatMap((slide) =>
     slide.id === null ? [] : [slide.id],
   )
-  const exploreIds = data.explore.items.flatMap((item) =>
-    item.id === null ? [] : [item.id],
-  )
   const articleSectionIds = data.articleSections.flatMap((section) =>
     section.id === null ? [] : [section.id],
   )
@@ -311,14 +339,6 @@ async function updateLandingPage(
       websiteContentId: existing.id,
       deletedAt: null,
       id: { notIn: heroIds },
-    },
-    data: { deletedAt: now },
-  })
-  await tx.websiteExploreItem.updateMany({
-    where: {
-      websiteContentId: existing.id,
-      deletedAt: null,
-      id: { notIn: exploreIds },
     },
     data: { deletedAt: now },
   })
@@ -387,16 +407,6 @@ async function updateLandingPage(
     }
   }
 
-  for (const [index, item] of data.explore.items.entries()) {
-    const values = exploreItemData(item, index + 1)
-    if (item.id === null) {
-      await tx.websiteExploreItem.create({
-        data: { websiteContentId: existing.id, ...values },
-      })
-    } else {
-      await tx.websiteExploreItem.update({ where: { id: item.id }, data: values })
-    }
-  }
 
   for (const [index, section] of data.articleSections.entries()) {
     const values = articleSectionData(section, index + 1)
@@ -453,7 +463,6 @@ export async function updateLandingPageAction(
         select: {
           id: true,
           heroSlides: { where: { deletedAt: null }, select: { id: true } },
-          exploreItems: { where: { deletedAt: null }, select: { id: true } },
           articleSections: {
             where: { deletedAt: null },
             select: {
@@ -476,6 +485,7 @@ export async function updateLandingPageAction(
         where: { key: "home", deletedAt: null },
         select: { id: true },
       })
+      await syncExploreItems(tx, websiteContent.id, parsed.data.explore.items)
       await syncLandingArticlePins(
         tx,
         websiteContent.id,

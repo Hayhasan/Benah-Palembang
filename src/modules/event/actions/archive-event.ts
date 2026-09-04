@@ -8,19 +8,6 @@ import { eventIdSchema } from "../schemas/event.schema"
 import type { EventActionResult } from "../types/owned-event"
 import { revalidateEventRoutes } from "./revalidate-event-routes"
 
-function deletionTimestamp(date: Date) {
-  return date
-    .toISOString()
-    .replace(/[-:T]/g, "")
-    .slice(0, 14)
-}
-
-function deletedSlug(slug: string, id: number, date: Date) {
-  const suffix = `-deleted-${deletionTimestamp(date)}-${id}`
-  const base = slug.slice(0, 180 - suffix.length).replace(/-+$/g, "")
-  return `${base || "event"}${suffix}`
-}
-
 export async function archiveEventAction(
   input: unknown,
 ): Promise<EventActionResult> {
@@ -37,24 +24,15 @@ export async function archiveEventAction(
     const result = await prisma.$transaction(async (transaction) => {
       const event = await transaction.event.findFirst({
         where: { id, ownerId: actor.id, deletedAt: null },
-        select: { id: true, slug: true, originalSlug: true, status: true },
+        select: { id: true, title: true, status: true },
       })
 
       if (!event) return "not-found" as const
       if (event.status !== "PUBLISHED") return "invalid-status" as const
 
-      const now = new Date()
-      await transaction.eventTag.updateMany({
-        where: { eventId: event.id, deletedAt: null },
-        data: { deletedAt: now },
-      })
       await transaction.event.update({
         where: { id: event.id },
-        data: {
-          originalSlug: event.originalSlug ?? event.slug,
-          slug: deletedSlug(event.originalSlug ?? event.slug, event.id, now),
-          deletedAt: now,
-        },
+        data: { status: "ARCHIVED" },
       })
 
       await recordActivityLog(
@@ -62,11 +40,11 @@ export async function archiveEventAction(
           userId: actor.id,
           userName: actor.name,
           userRole: actor.role,
-          action: "DELETE",
+          action: "ARCHIVE",
           module: "EVENT",
-          description: `Mengarsipkan event '${event.slug}'`,
-          beforeState: { id: event.id, status: event.status, active: true },
-          afterState: { active: false, deletedAt: now.toISOString() },
+          description: `Mengarsipkan event '${event.title}'`,
+          beforeState: { id: event.id, status: event.status },
+          afterState: { id: event.id, status: "ARCHIVED" },
         },
         transaction,
       )
@@ -91,9 +69,10 @@ export async function archiveEventAction(
     revalidateEventRoutes(id)
     return {
       success: true,
-      message: "Event berhasil diarsipkan.",
+      message:
+        "Event berhasil diarsipkan dan tidak lagi tampil pada halaman publik.",
       id,
-      status: "PUBLISHED",
+      status: "ARCHIVED",
     }
   } catch (error) {
     console.error("Failed to archive Event:", error)

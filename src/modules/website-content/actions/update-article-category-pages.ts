@@ -10,6 +10,7 @@ import { requireRole } from "@/modules/auth/data/session-dal"
 import { getDefaultArticleCategoryPage } from "../constants/default-article-category-pages"
 import { DEFAULT_LANDING_PAGE } from "../constants/default-landing-page"
 import { readArticleCategoryPageEditor } from "../data/get-article-category-page-editor"
+import { exploreItemPersistenceData } from "../data/website-content.mapper"
 import { articleCategoryPagesEditorSchema } from "../schemas/article-category-page.schema"
 import type {
   ArticleCategoryPageEditorItem,
@@ -53,7 +54,7 @@ async function createDefaultWebsiteContent(
     data.categories.map((category) => [category.sectionKey, category]),
   )
 
-  await tx.websiteContent.create({
+  const content = await tx.websiteContent.create({
     data: {
       key: DEFAULT_LANDING_PAGE.key,
       aboutEyebrow: DEFAULT_LANDING_PAGE.about.eyebrow,
@@ -72,7 +73,6 @@ async function createDefaultWebsiteContent(
       ctaButtonLabel: DEFAULT_LANDING_PAGE.cta.buttonLabel,
       ctaButtonUrl: DEFAULT_LANDING_PAGE.cta.buttonUrl,
       heroSlides: { create: DEFAULT_LANDING_PAGE.heroSlides },
-      exploreItems: { create: DEFAULT_LANDING_PAGE.explore.items },
       articleSections: {
         create: DEFAULT_LANDING_PAGE.articleSections.map((section) => {
           const submitted = submittedByKey.get(section.sectionKey)
@@ -84,6 +84,22 @@ async function createDefaultWebsiteContent(
       },
       teamMembers: { create: DEFAULT_LANDING_PAGE.team.members },
     },
+    select: {
+      id: true,
+      articleSections: { select: { id: true, sectionKey: true } },
+    },
+  })
+
+  // Explore item default merujuk article section, sehingga baru dapat dibuat
+  // setelah section pada aggregate yang sama memiliki ID.
+  const sectionIdByKey = new Map(
+    content.articleSections.map((section) => [section.sectionKey, section.id]),
+  )
+  await tx.websiteExploreItem.createMany({
+    data: DEFAULT_LANDING_PAGE.explore.items.map((item, index) => ({
+      websiteContentId: content.id,
+      ...exploreItemPersistenceData(item, index + 1, sectionIdByKey),
+    })),
   })
 }
 

@@ -70,7 +70,7 @@ export function formatRelativeTime(date: Date): string {
 
 export function mapContentStatusToOverviewStatus(
   status: ContentStatus,
-): "Request" | "Posted" | "Rejected" | "Takedown" {
+): "Request" | "Posted" | "Rejected" | "Takedown" | "Arsip" {
   switch (status) {
     case "PENDING_REVIEW":
       return "Request"
@@ -80,6 +80,8 @@ export function mapContentStatusToOverviewStatus(
       return "Rejected"
     case "TAKEN_DOWN":
       return "Takedown"
+    case "ARCHIVED":
+      return "Arsip"
     default:
       return "Request"
   }

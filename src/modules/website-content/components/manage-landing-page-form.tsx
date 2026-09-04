@@ -32,10 +32,16 @@ import { updateArticleCategoryPagesAction } from "../actions/update-article-cate
 import { updateCollaborationPageAction } from "../actions/update-collaboration-page"
 import { updateHeaderFooterContentAction } from "../actions/update-header-footer-content"
 import { updateLandingPageAction } from "../actions/update-landing-page"
+import {
+  DEFAULT_EXPLORE_COUNT_LABEL,
+  EXPLORE_COUNT_SOURCE_OPTIONS,
+  MAX_EXPLORE_ITEMS,
+} from "../constants/explore-items"
 import type { AgendaPageEditorData } from "../types/agenda-page-editor"
 import type { ArticleCategoryPagesEditorData } from "../types/article-category-page-editor"
 import type { CollaborationPageEditorData } from "../types/collaboration-page-editor"
 import type { HeaderFooterContentEditorData } from "../types/header-footer-content-editor"
+import type { ExploreCountSource } from "../types/landing-page"
 import type {
   LandingArticlePinOption,
   LandingArticleSectionEditorData,
@@ -849,15 +855,20 @@ export function ManageLandingPageForm({
                 </Field>
               </div>
               <div className="mt-4 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Card Jelajahi
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Card Jelajahi
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {data.explore.items.length}/{MAX_EXPLORE_ITEMS} item
+                  </p>
+                </div>
                 {data.explore.items.map((item, index) => (
                   <div
                     key={item.clientKey}
-                    className="flex items-center gap-3 rounded-lg border bg-muted/10 p-3"
+                    className="flex gap-3 rounded-lg border bg-muted/10 p-3"
                   >
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-0.5 pt-1">
                       <Button
                         type="button"
                         variant="ghost"
@@ -903,49 +914,133 @@ export function ManageLandingPageForm({
                         <ChevronDown className="size-3" />
                       </Button>
                     </div>
-                    <Input
-                      className="flex-1"
-                      value={item.label}
-                      onChange={(event) =>
-                        updateExploreItem(item.clientKey, {
-                          label: event.target.value,
-                        })
-                      }
-                      placeholder="Judul"
-                    />
-                    <Input
-                      className="w-28"
-                      value={
-                        item.storyCount === null
-                          ? ""
-                          : `${item.storyCount} stories`
-                      }
-                      onChange={(event) => {
-                        const count = Number.parseInt(
-                          event.target.value.replace(/\D/g, ""),
-                          10,
-                        )
-                        updateExploreItem(item.clientKey, {
-                          storyCount: Number.isNaN(count) ? null : count,
-                        })
-                      }}
-                      placeholder="CTA"
-                    />
-                    <Input
-                      className="w-32"
-                      value={item.linkUrl}
-                      onChange={(event) =>
-                        updateExploreItem(item.clientKey, {
-                          linkUrl: event.target.value,
-                        })
-                      }
-                      placeholder="Link URL"
-                    />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                          className="flex-1"
+                          value={item.label}
+                          onChange={(event) =>
+                            updateExploreItem(item.clientKey, {
+                              label: event.target.value,
+                            })
+                          }
+                          placeholder="Judul"
+                        />
+                        <Input
+                          className="sm:w-48"
+                          value={item.linkUrl}
+                          onChange={(event) =>
+                            updateExploreItem(item.clientKey, {
+                              linkUrl: event.target.value,
+                            })
+                          }
+                          placeholder="Link URL"
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={item.countSource}
+                          onChange={(event) => {
+                            const countSource = event.target
+                              .value as ExploreCountSource
+                            updateExploreItem(item.clientKey, {
+                              countSource,
+                              countArticleSectionKey:
+                                countSource === "article-category"
+                                  ? (item.countArticleSectionKey ??
+                                    data.articleSections[0]?.sectionKey ??
+                                    null)
+                                  : null,
+                              storyCount:
+                                countSource === "manual"
+                                  ? (item.storyCount ?? 0)
+                                  : null,
+                              countLabel:
+                                countSource === "none"
+                                  ? null
+                                  : item.countLabel ||
+                                    DEFAULT_EXPLORE_COUNT_LABEL[countSource],
+                            })
+                          }}
+                          className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring sm:w-44"
+                          aria-label="Sumber angka"
+                        >
+                          {EXPLORE_COUNT_SOURCE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        {item.countSource === "article-category" ? (
+                          <select
+                            value={item.countArticleSectionKey ?? ""}
+                            onChange={(event) =>
+                              updateExploreItem(item.clientKey, {
+                                countArticleSectionKey:
+                                  event.target.value || null,
+                              })
+                            }
+                            className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring sm:w-44"
+                            aria-label="Kategori artikel yang dihitung"
+                          >
+                            <option value="">Pilih kategori…</option>
+                            {data.articleSections.map(
+                              (section, sectionIndex) => (
+                                <option
+                                  key={section.sectionKey}
+                                  value={section.sectionKey}
+                                >
+                                  {articleSectionNames[sectionIndex] ??
+                                    section.sectionKey}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        ) : null}
+                        {item.countSource === "manual" ? (
+                          <Input
+                            className="w-24"
+                            inputMode="numeric"
+                            value={item.storyCount ?? ""}
+                            onChange={(event) => {
+                              const digits = event.target.value.replace(
+                                /\D/g,
+                                "",
+                              )
+                              updateExploreItem(item.clientKey, {
+                                storyCount:
+                                  digits === "" ? null : Number(digits),
+                              })
+                            }}
+                            placeholder="Angka"
+                          />
+                        ) : null}
+                        {item.countSource !== "none" ? (
+                          <Input
+                            className="w-32"
+                            value={item.countLabel ?? ""}
+                            onChange={(event) =>
+                              updateExploreItem(item.clientKey, {
+                                countLabel: event.target.value,
+                              })
+                            }
+                            placeholder="Satuan"
+                          />
+                        ) : null}
+                        <p className="text-xs text-muted-foreground">
+                          {
+                            EXPLORE_COUNT_SOURCE_OPTIONS.find(
+                              (option) => option.value === item.countSource,
+                            )?.description
+                          }
+                        </p>
+                      </div>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                      className="size-8 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-600"
                       onClick={() =>
                         changeData((current) => ({
                           ...current,
@@ -968,6 +1063,7 @@ export function ManageLandingPageForm({
                   type="button"
                   variant="outline"
                   className="w-full border-dashed"
+                  disabled={data.explore.items.length >= MAX_EXPLORE_ITEMS}
                   onClick={() =>
                     changeData((current) => ({
                       ...current,
@@ -979,8 +1075,11 @@ export function ManageLandingPageForm({
                             id: null,
                             clientKey: clientKey("explore"),
                             label: "",
-                            storyCount: null,
                             linkUrl: "/",
+                            countSource: "manual",
+                            countArticleSectionKey: null,
+                            countLabel: DEFAULT_EXPLORE_COUNT_LABEL.manual,
+                            storyCount: 0,
                             position: current.explore.items.length + 1,
                             isVisible: true,
                           },
@@ -991,6 +1090,12 @@ export function ManageLandingPageForm({
                 >
                   <Plus className="mr-2 size-4" /> Tambah Card Jelajahi
                 </Button>
+                {data.explore.items.length >= MAX_EXPLORE_ITEMS ? (
+                  <p className="text-xs text-muted-foreground">
+                    Grid Jelajahi dirancang untuk {MAX_EXPLORE_ITEMS} card.
+                    Hapus salah satu card sebelum menambah yang baru.
+                  </p>
+                ) : null}
               </div>
             </SectionCard>
 

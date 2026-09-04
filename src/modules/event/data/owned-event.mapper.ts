@@ -48,6 +48,7 @@ export const ownedEventListSelect = {
   startsAt: true,
   views: true,
   status: true,
+  moderationNote: true,
   _count: {
     select: {
       likes: true,
@@ -70,6 +71,7 @@ export const ownedEventEditorSelect = {
   whatsappUrl: true,
   views: true,
   status: true,
+  moderationNote: true,
   tags: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -91,11 +93,20 @@ type OwnedEventEditorRecord = Prisma.EventGetPayload<{
 }>
 
 export function ownedEventStatusLabel(status: ContentStatus) {
-  if (status === "DRAFT") return "Draf"
-  if (status === "PENDING_REVIEW") return "Request"
-  if (status === "PUBLISHED") return "Post"
-  if (status === "REJECTED") return "Rejected"
-  return "Takedown"
+  switch (status) {
+    case "DRAFT":
+      return "Draf"
+    case "PENDING_REVIEW":
+      return "Request"
+    case "PUBLISHED":
+      return "Post"
+    case "REJECTED":
+      return "Rejected"
+    case "TAKEN_DOWN":
+      return "Takedown"
+    case "ARCHIVED":
+      return "Arsip"
+  }
 }
 
 function inputDate(date: Date) {
@@ -118,6 +129,7 @@ export function mapOwnedEventListItem(
     startsAtLabel: `${listDateFormatter.format(event.startsAt)} WIB`,
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
+    moderationNote: event.moderationNote,
     views: event.views,
     likes: event._count.likes,
   }
@@ -144,6 +156,7 @@ export function mapOwnedEventEditor(
     whatsappUrl: event.whatsappUrl,
     status: event.status,
     statusLabel: ownedEventStatusLabel(event.status),
+    moderationNote: event.moderationNote,
     tags: event.tags.map((tag) => tag.label),
     views: event.views,
     likesCount: event._count.likes,

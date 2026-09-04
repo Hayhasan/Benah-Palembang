@@ -16,14 +16,12 @@ import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
 import { useSession } from "@/modules/auth/hooks/use-session"
 
 import { createArticleCommentAction } from "../actions/create-article-comment"
 import { deleteArticleCommentAction } from "../actions/delete-article-comment"
 import type { PublicArticleCommentItem } from "../types/public-article"
-
-const DEFAULT_AVATAR =
-  "https://images.pexels.com/photos/14795560/pexels-photo-14795560.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
 
 const INITIAL_VISIBLE_COUNT = 4
 

@@ -13,6 +13,9 @@ function statusClass(status: ArticleGalleryData["items"][number]["status"]) {
   if (status === "REJECTED" || status === "TAKEN_DOWN") {
     return "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300"
   }
+  if (status === "ARCHIVED") {
+    return "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/15 dark:text-slate-300"
+  }
   return "border-border bg-background/90 text-muted-foreground"
 }
 

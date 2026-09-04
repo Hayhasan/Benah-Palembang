@@ -2,14 +2,14 @@ import "server-only"
 
 import type { ContentStatus, Prisma } from "@prisma/client"
 
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
+
 import type {
   OwnedArticleEditorData,
   OwnedArticleListItem,
 } from "../types/article"
 
 const ARTICLE_TIME_ZONE = "Asia/Jakarta"
-const DEFAULT_AUTHOR_AVATAR =
-  "https://images.pexels.com/photos/14795560/pexels-photo-14795560.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
 
 const listDateFormatter = new Intl.DateTimeFormat("id-ID", {
   day: "2-digit",
@@ -34,6 +34,7 @@ export const ownedArticleListSelect = {
   excerpt: true,
   coverImageUrl: true,
   status: true,
+  moderationNote: true,
   views: true,
   updatedAt: true,
   websiteArticleSection: {
@@ -62,6 +63,7 @@ export const ownedArticleEditorSelect = {
   readingTime: true,
   views: true,
   status: true,
+  moderationNote: true,
   publishedAt: true,
   updatedAt: true,
   websiteArticleSection: {
@@ -101,11 +103,20 @@ type OwnedArticleEditorRecord = Prisma.ArticleGetPayload<{
 }>
 
 export function ownedArticleStatusLabel(status: ContentStatus) {
-  if (status === "DRAFT") return "Draf"
-  if (status === "PENDING_REVIEW") return "Request"
-  if (status === "PUBLISHED") return "Post"
-  if (status === "REJECTED") return "Rejected"
-  return "Takedown"
+  switch (status) {
+    case "DRAFT":
+      return "Draf"
+    case "PENDING_REVIEW":
+      return "Request"
+    case "PUBLISHED":
+      return "Post"
+    case "REJECTED":
+      return "Rejected"
+    case "TAKEN_DOWN":
+      return "Takedown"
+    case "ARCHIVED":
+      return "Arsip"
+  }
 }
 
 export function mapOwnedArticleListItem(
@@ -122,6 +133,7 @@ export function mapOwnedArticleListItem(
     updatedAtLabel: `${listDateFormatter.format(article.updatedAt)} WIB`,
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
+    moderationNote: article.moderationNote,
     views: article.views,
     likes: article._count.likes,
     comments: article._count.comments,
@@ -142,11 +154,12 @@ export function mapOwnedArticleEditor(
     categorySlug: article.websiteArticleSection.articleCategorySlug,
     status: article.status,
     statusLabel: ownedArticleStatusLabel(article.status),
+    moderationNote: article.moderationNote,
     tags: article.tags.map((tag) => tag.label),
     readingTime: article.readingTime,
     author: {
       name: article.author.name,
-      avatarUrl: article.author.avatarUrl || DEFAULT_AUTHOR_AVATAR,
+      avatarUrl: article.author.avatarUrl || DEFAULT_AVATAR,
       bio:
         article.author.bio ||
         "Penulis dan kontributor yang berbagi cerita tentang Palembang.",

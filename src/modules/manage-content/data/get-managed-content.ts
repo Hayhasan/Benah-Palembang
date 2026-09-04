@@ -1,5 +1,6 @@
 import "server-only"
 
+import type { ContentStatus } from "@prisma/client"
 import { connection } from "next/server"
 
 import { prisma } from "@/lib/db/prisma"
@@ -16,6 +17,13 @@ import {
 } from "./managed-content.mapper"
 
 const PAGE_SIZE = 25
+
+/**
+ * Status yang tidak pernah tampil pada antrian moderasi. `DRAFT` belum
+ * diajukan owner, dan `ARCHIVED` sudah diturunkan sendiri oleh owner sehingga
+ * tidak menunggu keputusan admin.
+ */
+const HIDDEN_MODERATION_STATUSES: ContentStatus[] = ["DRAFT", "ARCHIVED"]
 
 export async function getManagedContent(
   contentType: ManagedContentType,
@@ -37,7 +45,7 @@ export async function getManagedContent(
 
   const articleWhere = {
     deletedAt: null,
-    status: { not: "DRAFT" as const },
+    status: { notIn: HIDDEN_MODERATION_STATUSES },
     ...(searchQuery
       ? {
           OR: [
@@ -54,7 +62,7 @@ export async function getManagedContent(
   }
   const eventWhere = {
     deletedAt: null,
-    status: { not: "DRAFT" as const },
+    status: { notIn: HIDDEN_MODERATION_STATUSES },
     ...(searchQuery
       ? {
           OR: [

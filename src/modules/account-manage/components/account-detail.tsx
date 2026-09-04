@@ -15,6 +15,7 @@ import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { Button } from "@/components/ui/button"
+import { DEFAULT_AVATAR, DEFAULT_BANNER } from "@/lib/constants/placeholder"
 import { ArticleGallery } from "@/modules/article/components/article-gallery"
 
 import { changeAccountRoleAction } from "../actions/change-account-role"
@@ -23,9 +24,6 @@ import type {
   ManagedAccountDetail,
 } from "../types/managed-account"
 
-const DEFAULT_BANNER =
-  "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop"
-const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=0"
 const activityDateFormatter = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "medium",
   timeStyle: "short",

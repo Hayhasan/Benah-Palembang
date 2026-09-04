@@ -6,8 +6,10 @@ import {
   Eye,
   Heart,
   Plus,
+  RotateCcw,
   Search,
   Send,
+  Trash2,
 } from "lucide-react"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
@@ -21,13 +23,21 @@ import { Input } from "@/components/ui/input"
 
 import { archiveEventAction } from "../actions/archive-event"
 import { postEventAction } from "../actions/post-event"
+import { republishEventAction } from "../actions/republish-event"
+import { softDeleteEventAction } from "../actions/soft-delete-event"
+import {
+  isDeletableEventStatus,
+  isResubmittableEventStatus,
+} from "../constants/event-status"
 import type {
   OwnedEventList,
   OwnedEventListItem,
 } from "../types/owned-event"
 
+type OwnedEventAction = "post" | "archive" | "republish" | "delete"
+
 type ConfirmationState =
-  | { action: "archive" | "post"; event: OwnedEventListItem }
+  | { action: OwnedEventAction; event: OwnedEventListItem }
   | null
 
 function statusClassName(status: OwnedEventListItem["status"]) {
@@ -35,7 +45,31 @@ function statusClassName(status: OwnedEventListItem["status"]) {
   if (status === "TAKEN_DOWN") return "bg-red-50 text-red-700"
   if (status === "REJECTED") return "bg-rose-50 text-rose-700"
   if (status === "PENDING_REVIEW") return "bg-blue-50 text-blue-700"
+  if (status === "ARCHIVED") return "bg-slate-100 text-slate-700"
   return "bg-amber-50 text-amber-700"
+}
+
+/**
+ * Alasan moderasi ditampilkan kepada owner supaya Event `REJECTED` dapat
+ * diperbaiki lalu diajukan ulang, dan Event `TAKEN_DOWN` jelas sebabnya.
+ */
+function ModerationNote({
+  status,
+  note,
+}: {
+  status: OwnedEventListItem["status"]
+  note: string | null
+}) {
+  if (status !== "REJECTED" && status !== "TAKEN_DOWN") return null
+
+  const label = status === "REJECTED" ? "Alasan ditolak" : "Alasan takedown"
+
+  return (
+    <p className="mt-1.5 max-w-[220px] whitespace-normal text-xs text-muted-foreground">
+      <span className="font-semibold text-foreground">{label}:</span>{" "}
+      {note || "tidak dicantumkan admin."}
+    </p>
+  )
 }
 
 export function OwnedEventList({ data }: { data: OwnedEventList }) {
@@ -61,14 +95,21 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
     router.push(buildHref(1, String(formData.get("q") ?? "")))
   }
 
+  function runAction(action: OwnedEventAction, id: number) {
+    if (action === "post") return postEventAction({ id })
+    if (action === "archive") return archiveEventAction({ id })
+    if (action === "republish") return republishEventAction({ id })
+    return softDeleteEventAction({ id })
+  }
+
   function handleConfirm() {
     if (!confirmation) return
 
     startTransition(async () => {
-      const result =
-        confirmation.action === "post"
-          ? await postEventAction({ id: confirmation.event.id })
-          : await archiveEventAction({ id: confirmation.event.id })
+      const result = await runAction(
+        confirmation.action,
+        confirmation.event.id,
+      )
 
       if (!result.success) {
         toast.error(result.message)
@@ -82,19 +123,32 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
   }
 
   const confirmationCopy = confirmation
-    ? confirmation.action === "post"
-      ? {
+    ? {
+        post: {
           title: "Konfirmasi Post Event",
           description: `Event "${confirmation.event.title}" akan diajukan untuk review sebelum tampil pada halaman publik.`,
           confirmText: "Ya, Post Event",
           variant: "default" as const,
-        }
-      : {
+        },
+        archive: {
           title: "Konfirmasi Archive Event",
-          description: `Event "${confirmation.event.title}" akan diarsipkan dan tidak lagi tampil pada halaman publik maupun daftar Event aktif.`,
+          description: `Event "${confirmation.event.title}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Event tetap tampil pada daftar ini dan dapat dipublikasikan ulang kapan saja tanpa review.`,
           confirmText: "Ya, Archive Event",
+          variant: "default" as const,
+        },
+        republish: {
+          title: "Konfirmasi Publikasi Ulang",
+          description: `Event "${confirmation.event.title}" akan kembali tampil pada halaman publik. Event ini sudah pernah disetujui sehingga tidak perlu review ulang.`,
+          confirmText: "Ya, Publikasikan",
+          variant: "default" as const,
+        },
+        delete: {
+          title: "Konfirmasi Hapus Event",
+          description: `Event "${confirmation.event.title}" akan dihapus dan tidak dapat dikembalikan dari dashboard.`,
+          confirmText: "Ya, Hapus Event",
           variant: "destructive" as const,
-        }
+        },
+      }[confirmation.action]
     : null
 
   return (
@@ -192,12 +246,16 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4">
+                    <td className="px-6 py-4 align-top">
                       <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClassName(event.status)}`}
+                        className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${statusClassName(event.status)}`}
                       >
                         {event.statusLabel}
                       </span>
+                      <ModerationNote
+                        status={event.status}
+                        note={event.moderationNote}
+                      />
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -215,7 +273,7 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
                           View
                         </Button>
 
-                        {event.status === "DRAFT" ? (
+                        {isResubmittableEventStatus(event.status) ? (
                           <Button
                             size="sm"
                             disabled={isPending}
@@ -237,10 +295,24 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
                             onClick={() =>
                               setConfirmation({ action: "archive", event })
                             }
-                            className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                            className="gap-1.5 border-slate-200 text-xs text-slate-600 hover:bg-slate-50"
                           >
                             <Archive className="size-3.5" />
                             Archive
+                          </Button>
+                        ) : null}
+
+                        {event.status === "ARCHIVED" ? (
+                          <Button
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() =>
+                              setConfirmation({ action: "republish", event })
+                            }
+                            className="gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                          >
+                            <RotateCcw className="size-3.5" />
+                            Publikasikan
                           </Button>
                         ) : null}
 
@@ -257,6 +329,21 @@ export function OwnedEventList({ data }: { data: OwnedEventList }) {
                           <Edit2 className="size-3.5" />
                           Edit
                         </Button>
+
+                        {isDeletableEventStatus(event.status) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() =>
+                              setConfirmation({ action: "delete", event })
+                            }
+                            className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="size-3.5" />
+                            Hapus
+                          </Button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

@@ -1,8 +1,28 @@
-import { getDefaultArticleCategoryPage } from "./default-article-category-pages"
-import type { LandingPageData } from "../types/landing-page"
+import {
+  DEFAULT_ARTICLE_CATEGORY_PAGES,
+  getDefaultArticleCategoryPage,
+} from "./default-article-category-pages"
+import type {
+  LandingExploreItemData,
+  LandingPageData,
+} from "../types/landing-page"
 
 const heroDescription =
   "Ruang untuk cerita, budaya, kreativitas, dan kehidupan Palembang."
+
+// Shortcut kategori selalu mengikuti lima section artikel fixed, sehingga label,
+// link, dan section yang dihitung tidak pernah lepas sinkron.
+const exploreCategoryItems: LandingExploreItemData[] =
+  DEFAULT_ARTICLE_CATEGORY_PAGES.map((category, index) => ({
+    label: category.category,
+    linkUrl: `/${category.slug}`,
+    countSource: "article-category",
+    countArticleSectionKey: category.sectionKey,
+    countLabel: "Stories",
+    storyCount: null,
+    position: index + 1,
+    isVisible: true,
+  }))
 
 export const DEFAULT_LANDING_PAGE = {
   key: "home",
@@ -56,42 +76,18 @@ export const DEFAULT_LANDING_PAGE = {
     eyebrow: "Jelajahi perspektif",
     title: "Satu kota, banyak cerita.",
     items: [
+      ...exploreCategoryItems,
       {
-        label: "Cerita Warga",
-        linkUrl: "/cerita-warga",
-        storyCount: 10,
-        position: 1,
+        label: "Agenda Kota",
+        linkUrl: "/agenda",
+        countSource: "event",
+        countArticleSectionKey: null,
+        countLabel: "Agenda",
+        storyCount: null,
+        position: exploreCategoryItems.length + 1,
         isVisible: true,
       },
-      {
-        label: "Gaya Hidup",
-        linkUrl: "/gaya-hidup",
-        storyCount: 10,
-        position: 2,
-        isVisible: true,
-      },
-      {
-        label: "Ruang Kota",
-        linkUrl: "/ruang-kota",
-        storyCount: 10,
-        position: 3,
-        isVisible: true,
-      },
-      {
-        label: "Industri Kreatif",
-        linkUrl: "/industri-kreatif",
-        storyCount: 10,
-        position: 4,
-        isVisible: true,
-      },
-      {
-        label: "Kebudayaan",
-        linkUrl: "/kebudayaan",
-        storyCount: 10,
-        position: 5,
-        isVisible: true,
-      },
-    ],
+    ] as LandingExploreItemData[],
   },
   articleSections: [
     {

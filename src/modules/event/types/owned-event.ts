@@ -9,6 +9,7 @@ export interface OwnedEventListItem {
   startsAtLabel: string
   status: ContentStatus
   statusLabel: string
+  moderationNote: string | null
   views: number
   likes: number
 }
@@ -40,6 +41,7 @@ export interface OwnedEventEditorData {
   whatsappUrl: string
   status: ContentStatus
   statusLabel: string
+  moderationNote: string | null
   tags: string[]
   views: number
   likesCount: number

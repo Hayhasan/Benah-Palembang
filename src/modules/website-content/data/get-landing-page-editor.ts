@@ -11,6 +11,7 @@ import type {
   LandingArticlePinOption,
   LandingPageEditorData,
 } from "../types/landing-page-editor"
+import { exploreItemSelect, mapExploreItem } from "./website-content.mapper"
 
 const publishedAtFormatter = new Intl.DateTimeFormat("id-ID", {
   day: "numeric",
@@ -60,11 +61,7 @@ export const landingPageEditorSelect = {
     orderBy: { position: "asc" },
     select: {
       id: true,
-      label: true,
-      linkUrl: true,
-      storyCount: true,
-      position: true,
-      isVisible: true,
+      ...exploreItemSelect,
     },
   },
   articleSections: {
@@ -140,7 +137,8 @@ export function mapWebsiteContentToEditor(
       eyebrow: content.exploreEyebrow,
       title: content.exploreTitle,
       items: content.exploreItems.map((item) => ({
-        ...item,
+        ...mapExploreItem(item),
+        id: item.id,
         clientKey: `explore-${item.id}`,
       })),
     },
