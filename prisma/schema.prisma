@@ -68,6 +68,13 @@ enum WebsiteArticleSectionLayout {
   FEATURED_FIRST
 }
 
+enum WebsiteExploreCountSource {
+  MANUAL
+  ARTICLE_CATEGORY
+  EVENT
+  NONE
+}
+
 enum WebsiteCollaborationPlatform {
   YOUTUBE
   INSTAGRAM
@@ -144,19 +151,24 @@ model WebsiteHeroSlide {
 }
 
 model WebsiteExploreItem {
-  id               Int            @id @default(autoincrement())
-  websiteContentId Int
-  label            String         @db.VarChar(160)
-  linkUrl          String         @db.Text
-  storyCount       Int?
-  position         Int
-  isVisible        Boolean        @default(true)
-  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime       @updatedAt @db.Timestamptz(6)
-  deletedAt        DateTime?      @db.Timestamptz(6)
-  websiteContent   WebsiteContent @relation(fields: [websiteContentId], references: [id])
+  id                    Int                       @id @default(autoincrement())
+  websiteContentId      Int
+  label                 String                    @db.VarChar(160)
+  linkUrl               String                    @db.Text
+  countSource           WebsiteExploreCountSource @default(MANUAL)
+  countArticleSectionId Int?
+  countLabel            String?                   @db.VarChar(60)
+  storyCount            Int?
+  position              Int
+  isVisible             Boolean                   @default(true)
+  createdAt             DateTime                  @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime                  @updatedAt @db.Timestamptz(6)
+  deletedAt             DateTime?                 @db.Timestamptz(6)
+  websiteContent        WebsiteContent            @relation(fields: [websiteContentId], references: [id])
+  countArticleSection   WebsiteArticleSection?    @relation("WebsiteExploreItemArticleSection", fields: [countArticleSectionId], references: [id])
 
   @@index([websiteContentId, deletedAt, position])
+  @@index([countArticleSectionId])
   @@map("website_explore_items")
 }
 
@@ -186,6 +198,7 @@ model WebsiteArticleSection {
   deletedAt                   DateTime?                   @db.Timestamptz(6)
   articles                    Article[]
   pins                        WebsiteArticleSectionPin[]
+  exploreItems                WebsiteExploreItem[]        @relation("WebsiteExploreItemArticleSection")
   websiteContent              WebsiteContent              @relation(fields: [websiteContentId], references: [id])
 
   @@unique([websiteContentId, sectionKey])

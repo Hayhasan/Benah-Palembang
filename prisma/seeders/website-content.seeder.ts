@@ -1,6 +1,7 @@
 import type {
   PrismaClient,
   WebsiteCollaborationPlatform,
+  WebsiteExploreCountSource,
   WebsiteFooterConnectPlatform,
 } from "@prisma/client"
 
@@ -12,6 +13,7 @@ import { DEFAULT_LANDING_PAGE } from "../../src/modules/website-content/constant
 import type {
   CollaborationPlatform,
 } from "../../src/modules/website-content/types/collaboration-page"
+import type { ExploreCountSource } from "../../src/modules/website-content/types/landing-page"
 import type { FooterConnectPlatform } from "../../src/modules/website-content/types/header-footer-content"
 
 const collaborationPlatformToDatabase: Record<
@@ -38,6 +40,16 @@ const footerConnectPlatformToDatabase: Record<
   facebook: "FACEBOOK",
   mail: "MAIL",
   website: "WEBSITE",
+}
+
+const exploreCountSourceToDatabase: Record<
+  ExploreCountSource,
+  WebsiteExploreCountSource
+> = {
+  manual: "MANUAL",
+  "article-category": "ARTICLE_CATEGORY",
+  event: "EVENT",
+  none: "NONE",
 }
 
 function defaultArticleCategoryHeroData(sectionKey: string) {
@@ -74,7 +86,7 @@ async function seedLandingPage(prisma: PrismaClient) {
   console.log("[website-content:home] creating default content")
 
   await prisma.$transaction(async (transaction) => {
-    await transaction.websiteContent.create({
+    const content = await transaction.websiteContent.create({
       data: {
         key: DEFAULT_LANDING_PAGE.key,
         aboutEyebrow: DEFAULT_LANDING_PAGE.about.eyebrow,
@@ -98,9 +110,6 @@ async function seedLandingPage(prisma: PrismaClient) {
         heroSlides: {
           create: DEFAULT_LANDING_PAGE.heroSlides,
         },
-        exploreItems: {
-          create: DEFAULT_LANDING_PAGE.explore.items,
-        },
         articleSections: {
           create: DEFAULT_LANDING_PAGE.articleSections.map((section) => ({
             ...section,
@@ -111,6 +120,44 @@ async function seedLandingPage(prisma: PrismaClient) {
           create: DEFAULT_LANDING_PAGE.team.members,
         },
       },
+      select: {
+        id: true,
+        articleSections: { select: { id: true, sectionKey: true } },
+      },
+    })
+
+    const sectionIdByKey = new Map(
+      content.articleSections.map((section) => [section.sectionKey, section.id]),
+    )
+
+    await transaction.websiteExploreItem.createMany({
+      data: DEFAULT_LANDING_PAGE.explore.items.map((item) => {
+        const countArticleSectionId =
+          item.countSource === "article-category" && item.countArticleSectionKey
+            ? (sectionIdByKey.get(item.countArticleSectionKey) ?? null)
+            : null
+
+        if (
+          item.countSource === "article-category" &&
+          countArticleSectionId === null
+        ) {
+          throw new Error(
+            `[website-content:home] explore item "${item.label}" references an unknown article section`,
+          )
+        }
+
+        return {
+          websiteContentId: content.id,
+          label: item.label,
+          linkUrl: item.linkUrl,
+          countSource: exploreCountSourceToDatabase[item.countSource],
+          countArticleSectionId,
+          countLabel: item.countLabel,
+          storyCount: item.storyCount,
+          position: item.position,
+          isVisible: item.isVisible,
+        }
+      }),
     })
   })
 

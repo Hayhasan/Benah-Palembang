@@ -7,16 +7,16 @@ import { SectionHeading } from "@/features/public/components/SectionHeading"
 import { PublicArticleCard } from "@/modules/article/components/public-article-card"
 import type { LandingArticlesBySection } from "@/modules/article/types/public-article"
 
+import { MAX_EXPLORE_ITEMS } from "../constants/explore-items"
 import type {
   LandingArticleSectionData,
-  LandingPageData,
+  LandingPageView,
 } from "../types/landing-page"
 import { LandingHero } from "./landing-hero"
 
 interface LandingPageProps {
-  data: LandingPageData
+  data: LandingPageView
   articlesBySection: LandingArticlesBySection
-  agendaCount: number
 }
 
 const articleSectionStyle = {
@@ -210,7 +210,7 @@ function LandingArticleSection({
   )
 }
 
-function LandingCta({ data }: { data: LandingPageData["cta"] }) {
+function LandingCta({ data }: { data: LandingPageView["cta"] }) {
   const titleLines = data.title
     .split("\n")
     .map((line) => line.trim())
@@ -275,26 +275,11 @@ function LandingCta({ data }: { data: LandingPageData["cta"] }) {
   )
 }
 
-export function LandingPage({
-  data,
-  articlesBySection,
-  agendaCount,
-}: LandingPageProps) {
+export function LandingPage({ data, articlesBySection }: LandingPageProps) {
   const heroSlides = data.heroSlides.filter((slide) => slide.isVisible)
-  const exploreItems = data.explore.items.filter((item) => item.isVisible)
-  const categoryShortcuts = exploreItems
-    .filter((item) => item.linkUrl !== "/agenda")
-    .slice(0, 5)
-  const agendaShortcut = {
-    ...(exploreItems.find((item) => item.linkUrl === "/agenda") ?? {
-      label: "Agenda Kota",
-      linkUrl: "/agenda",
-      position: categoryShortcuts.length + 1,
-      isVisible: true,
-    }),
-    storyCount: agendaCount,
-  }
-  const perspectives = [...categoryShortcuts, agendaShortcut]
+  const perspectives = data.explore.items
+    .filter((item) => item.isVisible)
+    .slice(0, MAX_EXPLORE_ITEMS)
   const articleSections = data.articleSections.filter(
     (section) => section.isVisible,
   )
@@ -357,11 +342,11 @@ export function LandingPage({
                       </div>
                       <span className="mt-4 flex flex-col justify-between text-[10px] uppercase tracking-[0.13em] text-muted-foreground group-hover:text-foreground sm:mt-0 sm:flex-row sm:items-center sm:text-xs">
                         <span>
-                          {item.linkUrl === "/agenda"
-                            ? `${item.storyCount ?? 0} Agenda`
-                            : item.storyCount === null
-                              ? "Stories"
-                            : `${item.storyCount} stories`}
+                          {[item.count, item.countLabel]
+                            .filter(
+                              (part) => part !== null && part !== undefined,
+                            )
+                            .join(" ")}
                         </span>
                         <ArrowUpRight className="mt-1 size-4 text-palembang-red transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 sm:mt-0 sm:size-5" />
                       </span>

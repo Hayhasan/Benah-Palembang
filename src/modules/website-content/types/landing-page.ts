@@ -10,12 +10,29 @@ export interface LandingHeroSlideData {
   isVisible: boolean
 }
 
+export type ExploreCountSource =
+  | "manual"
+  | "article-category"
+  | "event"
+  | "none"
+
 export interface LandingExploreItemData {
   label: string
   linkUrl: string
+  countSource: ExploreCountSource
+  /** Section artikel yang dihitung saat countSource "article-category". */
+  countArticleSectionKey: string | null
+  /** Satuan yang ditampilkan setelah angka, misalnya "Stories" atau "Agenda". */
+  countLabel: string | null
+  /** Angka manual yang hanya dipakai saat countSource "manual". */
   storyCount: number | null
   position: number
   isVisible: boolean
+}
+
+/** Explore item setelah angkanya diselesaikan di server. */
+export interface LandingExploreItemView extends LandingExploreItemData {
+  count: number | null
 }
 
 export interface LandingArticleSectionData {
@@ -70,5 +87,12 @@ export interface LandingPageData {
     backgroundImageUrl: string
     contactLabel: string
     contactEmail: string
+  }
+}
+
+/** Landing page setelah angka explore diselesaikan di server. */
+export interface LandingPageView extends Omit<LandingPageData, "explore"> {
+  explore: Omit<LandingPageData["explore"], "items"> & {
+    items: LandingExploreItemView[]
   }
 }

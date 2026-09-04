@@ -5,13 +5,14 @@ import { connection } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 
 import { DEFAULT_LANDING_PAGE } from "../constants/default-landing-page"
-import type { LandingPageData } from "../types/landing-page"
+import type { LandingPageView } from "../types/landing-page"
+import { resolveExploreCounts } from "./resolve-explore-counts"
 import {
   landingPageSelect,
   mapWebsiteContentToLandingPage,
 } from "./website-content.mapper"
 
-export async function getLandingPage(): Promise<LandingPageData> {
+export async function getLandingPage(): Promise<LandingPageView> {
   // Website content must reflect the current database row on every request.
   await connection()
 
@@ -23,9 +24,15 @@ export async function getLandingPage(): Promise<LandingPageData> {
     select: landingPageSelect,
   })
 
-  if (!content) {
-    return DEFAULT_LANDING_PAGE
-  }
+  const data = content
+    ? mapWebsiteContentToLandingPage(content)
+    : DEFAULT_LANDING_PAGE
 
-  return mapWebsiteContentToLandingPage(content)
+  return {
+    ...data,
+    explore: {
+      ...data.explore,
+      items: await resolveExploreCounts(data.explore.items),
+    },
+  }
 }

@@ -31,7 +31,11 @@ homepage, bukan salinan data Article.
   `home`. Field scalar mencakup content About, Explore, Team, serta CTA termasuk
   background khusus, label kontak, dan email kontak.
 - `website_hero_slides`: ordered hero carousel items.
-- `website_explore_items`: ordered explore/category links.
+- `website_explore_items`: ordered explore/category links, maksimal enam item
+  aktif. Setiap item menyimpan `countSource` (`MANUAL`, `ARTICLE_CATEGORY`,
+  `EVENT`, `NONE`), `countLabel` sebagai satuan angka, `countArticleSectionId`
+  sebagai relasi opsional ke `website_article_sections`, dan `storyCount` yang
+  hanya dipakai saat `countSource` bernilai `MANUAL`.
 - `website_article_sections`: lima row fixed yang menyimpan presentasi section
   Home, slug kategori, dan hero halaman kategori terkait.
 - `website_article_section_pins`: maksimal tiga relasi Article ordered untuk
@@ -71,6 +75,12 @@ tersedia. CTA landing page memiliki default background, label `Hubungi Kami`,
 dan email kontak yang sama pada konstanta fallback, Prisma schema, dan seeder.
 Migration data footer hanya menyelaraskan nilai legacy yang masih sama persis
 dengan seed lama; content admin yang sudah dikustom tidak ditimpa.
+Seeder landing page membuat enam explore item: lima shortcut kategori yang
+terhubung ke article section masing-masing dan satu shortcut `Agenda Kota` yang
+menghitung Event. Migration `add_explore_count_source` hanya mengalihkan explore
+item legacy yang masih memakai `storyCount` seed lama, sehingga angka yang sudah
+dikustom admin tetap tersimpan sebagai `MANUAL`, lalu menambahkan row `Agenda
+Kota` pada database yang belum memilikinya.
 Article seeder mengisi maksimal tiga pin awal hanya saat suatu section belum
 memiliki pin, sehingga eksekusi ulang tidak menimpa pilihan admin.
 
@@ -86,11 +96,16 @@ memiliki pin, sehingga eksekusi ulang tidak menimpa pilihan admin.
   sebagai fallback.
 - Hero carousel menjadi Client Component tersendiri. Section landing lain tetap
   berupa Server Component agar JavaScript client tidak membesar tanpa kebutuhan.
-- Lima shortcut kategori tetap berasal dari ordered Explore content. UI root
-  menambahkan shortcut presentasional keenam `Agenda Kota` ke `/agenda`; shortcut
-  tersebut bukan kategori artikel dan tidak disimpan sebagai article section.
-  Label bawahnya memakai count Event `PUBLISHED` aktif dari module Event dengan
-  format `<count> Agenda`.
+- Seluruh shortcut, termasuk `Agenda Kota`, berasal dari ordered Explore
+  content. UI root tidak lagi menyuntikkan item presentasional dan tidak
+  menebak tipe item dari `linkUrl`; komponen hanya merender `<count>
+  <countLabel>` maksimal enam item.
+- Angka setiap shortcut ditentukan `countSource`. `ARTICLE_CATEGORY` menghitung
+  Article `PUBLISHED` aktif pada section terkait, `EVENT` memakai count Event
+  `PUBLISHED` aktif dari module Event, `MANUAL` memakai `storyCount`, dan `NONE`
+  menyembunyikan angka.
+- Resolver count berjalan dengan jumlah query tetap: satu lookup section, satu
+  `groupBy` Article, dan satu count Event. Menambah item tidak menambah query.
 - Section artikel tidak memakai sticky stacking. Seluruh section berada pada
   document flow biasa dan menggunakan background/foreground semantic agar
   mengikuti light atau dark mode.
@@ -231,6 +246,13 @@ memiliki pin, sehingga eksekusi ulang tidak menimpa pilihan admin.
   copyright text.
 - Setiap Connect link dipilih melalui dropdown platform berikon, kemudian admin
   hanya mengisi URL. Label platform tidak menjadi input bebas.
+- Editor Jelajahi dibatasi enam item. Tombol tambah dinonaktifkan pada batas
+  tersebut dan Server Action menolak payload yang melebihinya.
+- Setiap item Jelajahi memilih sumber angka melalui dropdown. Pilihan kategori
+  artikel memakai `sectionKey`, bukan ID, sehingga admin tetap dapat memilih
+  kategori sebelum root `home` pertama kali tersimpan. Server Action menerjemahkan
+  `sectionKey` menjadi relasi setelah article section pada transaction yang sama
+  tersedia, lalu menolak `sectionKey` yang tidak dikenal.
 - Perubahan disimpan melalui Server Action dengan validasi Zod dan transaction
   Prisma. Root scalar dan seluruh child collection disimpan sebagai satu
   aggregate.
