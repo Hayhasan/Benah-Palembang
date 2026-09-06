@@ -19,7 +19,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <UnsavedChangesProvider>
             <div className="min-h-screen bg-muted/20">
                 <Sidebar />
-                <main className={`transition-all duration-300 ${isMobile ? "pt-16" : "pl-64"}`}>
+                <main className="transition-all duration-300 pt-16 lg:pt-0 lg:pl-64">
                     <div className="p-6 md:p-10 max-w-7xl mx-auto">
                         {children}
                     </div>

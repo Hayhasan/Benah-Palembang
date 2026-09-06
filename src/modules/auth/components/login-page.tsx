@@ -56,7 +56,7 @@ export function LoginPage({
             value={email}
             onChange={(event) => setEmail(event.target.value.toLowerCase())}
             aria-invalid={Boolean(state.fieldErrors?.email)}
-            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
           />
           {state.fieldErrors?.email?.[0] && (
             <span className="mt-1.5 block text-[11px] font-medium text-red-300">
@@ -74,7 +74,7 @@ export function LoginPage({
               autoComplete="current-password"
               placeholder="••••••••"
               aria-invalid={Boolean(state.fieldErrors?.password)}
-              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
             />
             <button
               type="button"
@@ -98,7 +98,7 @@ export function LoginPage({
         <div className="flex justify-end">
           <Link
             href="/lupa-password"
-            className="text-[11px] font-medium text-palembang-gold/80 transition-colors hover:text-palembang-gold hover:underline"
+            className="text-[11px] font-medium text-palembang-red/80 transition-colors hover:text-palembang-red hover:underline"
           >
             Lupa password?
           </Link>
@@ -114,7 +114,7 @@ export function LoginPage({
         <Button
           type="submit"
           disabled={isPending}
-          className="mt-1 h-11 w-full bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
+          className="mt-1 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
         >
           {isPending ? "Memproses..." : "Masuk"}{" "}
           {!isPending && <ArrowRight className="size-4" />}
@@ -128,7 +128,7 @@ export function LoginPage({
               ? `/register?from=${encodeURIComponent(returnPath)}`
               : "/register"
           }
-          className="font-semibold text-palembang-gold hover:underline"
+          className="font-semibold text-palembang-red hover:underline"
         >
           Daftar sekarang
         </Link>

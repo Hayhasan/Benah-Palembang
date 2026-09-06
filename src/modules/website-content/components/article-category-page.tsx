@@ -42,7 +42,7 @@ export function ArticleCategoryPage({
           <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
         </div>
         <div className="relative z-10 mx-auto max-w-[1240px]">
-          <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
+          <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
             Category / {data.category}
           </p>
           <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">

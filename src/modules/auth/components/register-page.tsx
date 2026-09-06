@@ -48,7 +48,7 @@ export function RegisterPage({
             value={name}
             onChange={(event) => setName(event.target.value)}
             aria-invalid={Boolean(state.fieldErrors?.name)}
-            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
           />
           {state.fieldErrors?.name?.[0] && (
             <span className="mt-1.5 block text-[11px] font-medium text-red-300">
@@ -67,7 +67,7 @@ export function RegisterPage({
             value={email}
             onChange={(event) => setEmail(event.target.value.toLowerCase())}
             aria-invalid={Boolean(state.fieldErrors?.email)}
-            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+            className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
           />
           {state.fieldErrors?.email?.[0] && (
             <span className="mt-1.5 block text-[11px] font-medium text-red-300">
@@ -85,7 +85,7 @@ export function RegisterPage({
               autoComplete="new-password"
               placeholder="••••••••"
               aria-invalid={Boolean(state.fieldErrors?.password)}
-              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
             />
             <button
               type="button"
@@ -116,7 +116,7 @@ export function RegisterPage({
               autoComplete="new-password"
               placeholder="••••••••"
               aria-invalid={Boolean(state.fieldErrors?.confirmPassword)}
-              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+              className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
             />
             <button
               type="button"
@@ -160,7 +160,7 @@ export function RegisterPage({
         <Button
           type="submit"
           disabled={isPending || state.accountCreated}
-          className="mt-3 h-11 w-full bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
+          className="mt-3 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
         >
           {isPending ? "Memproses..." : "Daftar"}{" "}
           {!isPending && <ArrowRight className="size-4" />}
@@ -170,7 +170,7 @@ export function RegisterPage({
         Sudah punya akun?{" "}
         <Link
           href={returnPath ? `/login?from=${encodeURIComponent(returnPath)}` : "/login"}
-          className="font-semibold text-palembang-gold hover:underline"
+          className="font-semibold text-palembang-red hover:underline"
         >
           Masuk sekarang
         </Link>

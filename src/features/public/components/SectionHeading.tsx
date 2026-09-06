@@ -11,8 +11,8 @@ export function SectionHeading({
   description,
   dark = false,
 }: SectionHeadingProps) {
-  const eyebrowColor = dark ? "text-palembang-gold" : "text-palembang-red"
-  const lineBg = dark ? "bg-palembang-gold" : "bg-palembang-red"
+  const eyebrowColor = "text-palembang-red"
+  const lineBg = "bg-palembang-red"
 
   return (
     <div

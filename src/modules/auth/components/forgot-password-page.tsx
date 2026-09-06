@@ -40,8 +40,8 @@ export function ForgotPasswordPage() {
       </p>
 
       {state.status === "sent" ? (
-        <div className="mt-8 rounded-xl border border-palembang-gold/30 bg-palembang-gold/10 p-6">
-          <div className="flex items-center gap-3 text-palembang-gold">
+        <div className="mt-8 rounded-xl border border-palembang-red/30 bg-palembang-red/10 p-6">
+          <div className="flex items-center gap-3 text-palembang-red">
             <Check className="size-5" />
             <p className="text-sm font-semibold">Periksa email Anda</p>
           </div>
@@ -73,7 +73,7 @@ export function ForgotPasswordPage() {
 
           <Link
             href="/login"
-            className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-palembang-gold hover:underline"
+            className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-palembang-red hover:underline"
           >
             <ArrowRight className="size-3 rotate-180" /> Kembali ke login
           </Link>
@@ -91,7 +91,7 @@ export function ForgotPasswordPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value.toLowerCase())}
               aria-invalid={Boolean(state.fieldErrors?.email)}
-              className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-gold/30"
+              className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
             />
             {state.fieldErrors?.email?.[0] && (
               <span className="mt-1.5 block text-[11px] font-medium text-red-300">
@@ -112,7 +112,7 @@ export function ForgotPasswordPage() {
           <Button
             type="submit"
             disabled={isPending}
-            className="mt-3 h-11 w-full bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
+            className="mt-3 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
           >
             <Mail className="size-4" />
             {isPending ? "Memproses..." : "Kirim tautan reset"}
@@ -125,7 +125,7 @@ export function ForgotPasswordPage() {
           Sudah ingat?{" "}
           <Link
             href="/login"
-            className="font-semibold text-palembang-gold hover:underline"
+            className="font-semibold text-palembang-red hover:underline"
           >
             Masuk sekarang
           </Link>

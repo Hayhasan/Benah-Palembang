@@ -100,7 +100,7 @@ export function OwnedArticlePreview({
           </div>
 
           <div className="relative z-10 mx-auto max-w-[1040px]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-gold">
+            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
               {article.categoryLabel}
             </span>
             <h1 className="mt-4 max-w-4xl font-display text-3xl font-black leading-[1.05] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
@@ -130,7 +130,7 @@ export function OwnedArticlePreview({
 
               <div className="flex items-center gap-5 text-xs text-white/70">
                 <span className="flex items-center gap-1.5">
-                  <Clock3 className="size-4 text-palembang-gold" />
+                  <Clock3 className="size-4 text-palembang-red" />
                   {article.readingTime} min read
                 </span>
                 <span className="flex items-center gap-1.5">

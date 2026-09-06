@@ -55,7 +55,7 @@ export function ResetPasswordPage({
           </p>
           <Button
             asChild
-            className="mt-5 bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
+            className="mt-5 bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
           >
             <Link href="/lupa-password">Minta tautan baru</Link>
           </Button>
@@ -78,7 +78,7 @@ export function ResetPasswordPage({
                   autoComplete="new-password"
                   placeholder="••••••••"
                   aria-invalid={Boolean(state.fieldErrors?.password)}
-                  className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:ring-[3px] focus:ring-palembang-gold/30"
+                  className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:ring-[3px] focus:ring-palembang-red/30"
                 />
                 <button
                   type="button"
@@ -107,7 +107,7 @@ export function ResetPasswordPage({
                   autoComplete="new-password"
                   placeholder="••••••••"
                   aria-invalid={Boolean(state.fieldErrors?.confirmPassword)}
-                  className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-gold focus:ring-[3px] focus:ring-palembang-gold/30"
+                  className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:ring-[3px] focus:ring-palembang-red/30"
                 />
                 <button
                   type="button"
@@ -138,7 +138,7 @@ export function ResetPasswordPage({
             <Button
               type="submit"
               disabled={isPending}
-              className="h-11 w-full bg-palembang-gold font-bold text-palembang-charcoal hover:bg-palembang-gold/90"
+              className="h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
             >
               <KeyRound className="size-4" />
               {isPending ? "Memperbarui..." : "Simpan password baru"}
@@ -149,7 +149,7 @@ export function ResetPasswordPage({
 
       <Link
         href="/login"
-        className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-palembang-gold hover:underline"
+        className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-palembang-red hover:underline"
       >
         <ArrowRight className="size-3 rotate-180" /> Kembali ke login
       </Link>

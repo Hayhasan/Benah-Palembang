@@ -61,7 +61,7 @@ export function PublicArticleCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent opacity-0 backdrop-blur-[2px] transition-opacity duration-500 group-hover:opacity-100" />
         <div className="absolute inset-0 flex translate-y-4 flex-col justify-end p-4 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 sm:p-7">
           <div className="mb-2 flex flex-wrap items-center gap-2 text-[8px] font-bold uppercase tracking-[0.16em] sm:gap-3 sm:text-[10px]">
-            <span className="text-palembang-gold">{article.category}</span>
+            <span className="text-palembang-red">{article.category}</span>
             <span className="text-white/60">
               {article.publishedAtLabel}
             </span>
@@ -74,7 +74,7 @@ export function PublicArticleCard({
           <p className="mt-2 line-clamp-2 text-[10px] leading-4 text-white/80 sm:text-sm sm:leading-5">
             {article.excerpt}
           </p>
-          <div className="mt-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-palembang-gold sm:mt-4 sm:text-xs">
+          <div className="mt-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-palembang-red sm:mt-4 sm:text-xs">
             Baca <ArrowRight className="size-3 sm:size-4" />
           </div>
         </div>

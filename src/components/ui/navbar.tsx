@@ -183,7 +183,7 @@ export const Header = () => {
                                     </li>
                                 </ul>
                             </div>
-                            <div className="flex w-full flex-col items-center space-y-3 text-foreground sm:flex-row sm:gap-2 sm:space-y-0 md:w-fit lg:mt-0">
+                            <div className="flex w-full flex-col gap-3 text-foreground sm:flex-row sm:items-center sm:gap-2 md:w-fit lg:mt-0">
                                 <ModeToggle
                                     className={cn(
                                         "hidden size-9 lg:inline-flex",
@@ -191,28 +191,31 @@ export const Header = () => {
                                     )}
                                 />
                                 {user ? (
-                                    <div className="relative">
+                                    <div className="relative w-full sm:w-auto">
                                         <button 
                                             onClick={() => setProfileOpen(!profileOpen)}
-                                            className={cn("flex items-center gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", isOverDarkHero ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
+                                            className={cn("flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 rounded-full border p-1.5 pr-4 transition-colors hover:bg-muted/50", isOverDarkHero ? "border-white/20 text-white hover:bg-white/10" : "border-border")}
                                         >
-                                            <img src={user.avatarUrl || DEFAULT_AVATAR} alt={user.name} className="size-7 rounded-full object-cover" />
-                                            <span className="text-sm font-semibold">{user.name}</span>
+                                            <div className="flex items-center gap-3">
+                                                <img src={user.avatarUrl || DEFAULT_AVATAR} alt={user.name} className="size-7 rounded-full object-cover" />
+                                                <span className="text-sm font-semibold">{user.name}</span>
+                                            </div>
+                                            <ChevronDown className="size-4 text-muted-foreground sm:hidden" />
                                         </button>
                                         
                                         {profileOpen && (
-                                            <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-background p-2 text-foreground shadow-xl">
+                                            <div className="absolute right-0 top-full mt-2 w-full sm:w-48 rounded-xl border border-border bg-background p-2 text-foreground shadow-xl z-50">
                                                 <Link 
                                                     href="/dashboard" 
                                                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                                                    onClick={() => setProfileOpen(false)}
+                                                    onClick={() => { setProfileOpen(false); setMenuState(false); }}
                                                 >
                                                     <LayoutDashboard className="size-4" />
                                                     Dashboard
                                                 </Link>
                                                 <button 
                                                     disabled={isLoggingOut}
-                                                    onClick={() => { setProfileOpen(false); logout(); }}
+                                                    onClick={() => { setProfileOpen(false); setMenuState(false); logout(); }}
                                                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                                                 >
                                                     <LogOut className="size-4" />
@@ -222,33 +225,33 @@ export const Header = () => {
                                         )}
                                     </div>
                                 ) : (
-                                    <>
+                                    <div className="flex w-full flex-row items-center gap-3 pt-2 sm:pt-0 sm:w-auto sm:gap-2">
                                         <Button
                                             asChild
                                             variant="outline"
                                             size="sm"
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link href="/login">
+                                            className={cn("flex-1 justify-center sm:flex-initial", isScrolled && 'lg:hidden')}>
+                                            <Link href="/login" onClick={() => setMenuState(false)}>
                                                 <span>Login</span>
                                             </Link>
                                         </Button>
                                         <Button
                                             asChild
                                             size="sm"
-                                            className={cn(isScrolled && 'lg:hidden')}>
-                                            <Link href="/register">
+                                            className={cn("flex-1 justify-center sm:flex-initial", isScrolled && 'lg:hidden')}>
+                                            <Link href="/register" onClick={() => setMenuState(false)}>
                                                 <span>Sign Up</span>
                                             </Link>
                                         </Button>
                                         <Button
                                             asChild
                                             size="sm"
-                                            className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                            <Link href="/login">
+                                            className={cn("hidden", isScrolled && 'lg:inline-flex')}>
+                                            <Link href="/login" onClick={() => setMenuState(false)}>
                                                 <span>Get Started</span>
                                             </Link>
                                         </Button>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         </div>

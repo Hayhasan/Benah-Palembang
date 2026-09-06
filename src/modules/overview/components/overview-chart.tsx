@@ -56,7 +56,7 @@ export function OverviewChart({ chartData, periodLabel }: OverviewChartProps) {
                 >
                   {/* Hover Tooltip */}
                   <div className="absolute -top-12 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-palembang-charcoal text-white text-[11px] py-1.5 px-2.5 rounded-lg shadow-lg pointer-events-none whitespace-nowrap border border-white/10">
-                    <p className="font-bold text-palembang-gold">{item.name}</p>
+                    <p className="font-bold text-palembang-red">{item.name}</p>
                     <p className="text-white/90 font-medium">
                       {item.views.toLocaleString("id-ID")} Views
                     </p>
