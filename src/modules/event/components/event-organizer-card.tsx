@@ -2,8 +2,8 @@ import { Building2 } from "lucide-react"
 
 export function EventOrganizerCard({ organizer }: { organizer: string }) {
   return (
-    <div className="rounded-[1.5rem] border border-border bg-card p-5 shadow-sm">
-      <div className="flex items-center gap-3.5">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:rounded-[1.5rem] sm:p-5">
+      <div className="flex items-center gap-3 sm:gap-3.5">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-palembang-red ring-2 ring-palembang-red/20">
           <Building2 className="size-5" />
         </div>

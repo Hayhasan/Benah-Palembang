@@ -90,13 +90,14 @@ export function ArticleCategoryPage({
               ) : null}
             </div>
           ) : (
-            <div className="reveal-on-scroll py-20 text-center">
-              <p className="font-display text-3xl">Cerita tidak ditemukan.</p>
+            <div className="reveal-on-scroll min-h-[35vh] flex flex-col items-center justify-center py-16 text-center">
+              <p className="font-display text-2xl sm:text-3xl">Cerita tidak ditemukan.</p>
               <p className="mt-3 text-sm text-muted-foreground">
-                Coba kata kunci lain.
+                Coba kata kunci lain atau periksa kembali nanti.
               </p>
             </div>
           )}
+
         </div>
       </main>
       <Footer />

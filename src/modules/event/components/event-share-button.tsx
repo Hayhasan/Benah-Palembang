@@ -55,13 +55,13 @@ export function EventShareButton({
     >
       {copied ? (
         <>
-          <Check className="size-4 text-emerald-600" />
-          <span className="text-emerald-600">Tautan Disalin!</span>
+          <Check className="size-4 shrink-0 text-emerald-600" />
+          <span className="truncate text-emerald-600">Tersalin!</span>
         </>
       ) : (
         <>
-          <Share2 className="size-4" />
-          <span>{label}</span>
+          <Share2 className="size-4 shrink-0" />
+          <span className="truncate">{label}</span>
         </>
       )}
     </Button>

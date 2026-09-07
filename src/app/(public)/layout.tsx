@@ -19,7 +19,7 @@ export default async function PublicLayout({
     <>
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){document.documentElement.classList.add("motion-ready");window.setTimeout(function(){document.querySelectorAll(".reveal-on-scroll,.reveal-fade,.reveal-scale,.reveal-slide-left,.reveal-slide-right,.reveal-stagger,[data-reveal]").forEach(function(e){e.classList.add("is-revealed")})},2500)})();`,
+          __html: `(function(){document.documentElement.classList.add("motion-ready");window.setTimeout(function(){document.querySelectorAll(".reveal-on-scroll,.reveal-fade,.reveal-scale,.reveal-slide-left,.reveal-slide-right,.reveal-stagger,[data-reveal]").forEach(function(e){e.classList.add("is-revealed")})},400)})();`,
         }}
       />
       <AuthSessionProvider initialUser={user}>

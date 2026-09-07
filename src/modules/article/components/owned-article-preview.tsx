@@ -53,37 +53,41 @@ export function OwnedArticlePreview({
   return (
     <div className="space-y-6 pb-16">
       {/* ── Top Action & Control Header ── */}
-      <div className="sticky top-0 z-20 flex flex-col gap-4 border-b bg-background/90 px-4 py-3.5 shadow-sm backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/create-article">
-              <ArrowLeft className="size-4" />
-              Kembali
-            </Link>
-          </Button>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-            <Eye className="size-3.5" />
-            Preview Artikel - {article.statusLabel}
-          </span>
-        </div>
+      <div className="sticky top-16 z-20 -mx-4 border-b bg-background/95 px-4 py-3 shadow-xs backdrop-blur-md sm:-mx-6 sm:px-6 md:-mx-10 md:px-10 lg:top-0">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between gap-2 sm:justify-start">
+            <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 px-2.5 text-xs">
+              <Link href="/dashboard/create-article">
+                <ArrowLeft className="size-3.5" />
+                <span>Kembali</span>
+              </Link>
+            </Button>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/50 dark:text-blue-300">
+              <Eye className="size-3 shrink-0" />
+              <span className="truncate max-w-[160px] sm:max-w-none">
+                Preview · {article.statusLabel}
+              </span>
+            </span>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            asChild
-            className="h-8 gap-2 bg-palembang-red text-xs text-white hover:bg-palembang-red/90"
-          >
-            <Link href={`/dashboard/create-article/edit?id=${article.id}`}>
-              <Edit2 className="size-3.5" />
-              Edit Artikel Ini
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              asChild
+              className="h-8 w-full gap-1.5 bg-palembang-red text-xs text-white hover:bg-palembang-red/90 sm:w-auto"
+            >
+              <Link href={`/dashboard/create-article/edit?id=${article.id}`}>
+                <Edit2 className="size-3.5" />
+                <span>Edit Artikel Ini</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* ── Main Article Layout (Public Website Style) ── */}
-      <div className="overflow-hidden rounded-2xl border bg-background shadow-sm">
+      <div className="overflow-hidden rounded-xl border bg-background shadow-sm sm:rounded-2xl">
         {/* Article Hero Header */}
-        <header className="relative overflow-hidden bg-palembang-charcoal px-6 pb-16 pt-16 text-white sm:px-10 lg:px-16">
+        <header className="relative overflow-hidden bg-palembang-charcoal px-4 py-8 text-white sm:px-8 sm:py-12 lg:px-16 lg:py-16">
           <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-45">
             {article.coverImageUrl ? (
               <Image
@@ -100,26 +104,26 @@ export function OwnedArticlePreview({
           </div>
 
           <div className="relative z-10 mx-auto max-w-[1040px]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-red">
               {article.categoryLabel}
             </span>
-            <h1 className="mt-4 max-w-4xl font-display text-3xl font-black leading-[1.05] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+            <h1 className="mt-3 max-w-4xl font-display text-2xl font-black leading-tight tracking-[-0.03em] sm:mt-4 sm:text-4xl lg:text-5xl break-words">
               {article.title}
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80 sm:mt-6 sm:text-base sm:leading-7">
               {article.excerpt}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-6 border-y border-white/15 py-4">
+            <div className="mt-6 flex flex-col gap-4 border-y border-white/15 py-3.5 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-4">
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={article.author.avatarUrl}
                   alt={article.author.name}
-                  className="size-11 rounded-full border border-white/20 object-cover"
+                  className="size-10 sm:size-11 rounded-full border border-white/20 object-cover"
                 />
-                <div>
-                  <p className="text-sm font-semibold text-white">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">
                     {article.author.name}
                   </p>
                   <p className="text-xs text-white/60">
@@ -128,27 +132,30 @@ export function OwnedArticlePreview({
                 </div>
               </div>
 
-              <div className="flex items-center gap-5 text-xs text-white/70">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/75 sm:gap-5">
                 <span className="flex items-center gap-1.5">
-                  <Clock3 className="size-4 text-palembang-red" />
+                  <Clock3 className="size-3.5 text-palembang-red" />
                   {article.readingTime} min read
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Heart className="size-4 text-palembang-red" />
+                  <Heart className="size-3.5 text-palembang-red" />
                   {article.likesCount.toLocaleString("id-ID")} likes
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <MessageCircle className="size-4 text-emerald-400" />
+                  <MessageCircle className="size-3.5 text-emerald-400" />
                   {article.commentsCount.toLocaleString("id-ID")} comments
                 </span>
-                <span>{article.views.toLocaleString("id-ID")} views</span>
+                <span className="flex items-center gap-1.5">
+                  <Eye className="size-3.5 text-sky-400" />
+                  {article.views.toLocaleString("id-ID")} views
+                </span>
               </div>
             </div>
           </div>
         </header>
 
         {/* Article Body Content & Interaction Area */}
-        <div className="mx-auto grid max-w-[1040px] gap-10 px-6 py-12 sm:px-10 lg:grid-cols-[60px_1fr] lg:py-16">
+        <div className="mx-auto grid max-w-[1040px] gap-8 px-4 py-6 sm:px-8 sm:py-10 lg:grid-cols-[60px_1fr] lg:gap-10 lg:py-14">
           {/* Floating Aside Actions on Desktop */}
           <aside className="hidden lg:block">
             <div className="sticky top-28 flex flex-col items-center gap-3">
@@ -191,7 +198,7 @@ export function OwnedArticlePreview({
           </aside>
 
           {/* Main Article Content */}
-          <div>
+          <div className="min-w-0">
             <div
               className="article-body max-w-none leading-relaxed"
               dangerouslySetInnerHTML={{ __html: article.content }}
@@ -199,11 +206,11 @@ export function OwnedArticlePreview({
 
             {/* Tags */}
             {article.tags.length > 0 ? (
-              <div className="mt-10 flex flex-wrap gap-2 border-t border-border pt-6">
+              <div className="mt-8 flex flex-wrap gap-2 border-t border-border pt-5 sm:mt-10 sm:pt-6">
                 {article.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground"
+                    className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground sm:px-3 sm:py-1.5"
                   >
                     #{tag}
                   </span>
@@ -212,15 +219,20 @@ export function OwnedArticlePreview({
             ) : null}
 
             {/* Mobile Interaction Bar */}
-            <div className="mt-8 flex gap-3 lg:hidden">
+            <div className="mt-8 grid grid-cols-3 gap-2 lg:hidden">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setLiked((v) => !v)}
+                className={`h-10 text-xs font-semibold ${
+                  liked
+                    ? "border-palembang-red bg-palembang-red/10 text-palembang-red"
+                    : ""
+                }`}
               >
                 <Heart
-                  className={`mr-1.5 size-4 ${
-                    liked ? "fill-palembang-red text-palembang-red" : ""
+                  className={`mr-1.5 size-3.5 ${
+                    liked ? "fill-current text-palembang-red" : ""
                   }`}
                 />
                 {liked ? "Disukai" : "Suka"}
@@ -228,36 +240,46 @@ export function OwnedArticlePreview({
               <Button
                 variant="outline"
                 size="sm"
+                onClick={shareArticle}
+                className="h-10 text-xs font-semibold"
+              >
+                <Share2 className="mr-1.5 size-3.5" />
+                Bagikan
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => void copyLink()}
+                className="h-10 text-xs font-semibold"
               >
                 {copied ? (
-                  <Check className="mr-1.5 size-4 text-emerald-600" />
+                  <Check className="mr-1.5 size-3.5 text-emerald-600" />
                 ) : (
-                  <Copy className="mr-1.5 size-4" />
+                  <Copy className="mr-1.5 size-3.5" />
                 )}
-                Salin Tautan
+                {copied ? "Tersalin" : "Salin"}
               </Button>
             </div>
 
             {/* Author Info Box */}
-            <div className="mt-16 rounded-[1.5rem] bg-muted/50 p-6 sm:p-8">
-              <div className="flex items-center gap-4">
+            <div className="mt-10 rounded-2xl bg-muted/40 p-4 sm:mt-16 sm:rounded-[1.5rem] sm:p-8">
+              <div className="flex items-center gap-3.5 sm:gap-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={article.author.avatarUrl}
                   alt={article.author.name}
-                  className="size-16 rounded-full object-cover"
+                  className="size-12 sm:size-16 rounded-full object-cover"
                 />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-palembang-red">
                     Tentang Penulis
                   </p>
-                  <h2 className="mt-1 font-display text-xl font-bold">
+                  <h2 className="mt-0.5 truncate font-display text-lg font-bold sm:mt-1 sm:text-xl">
                     {article.author.name}
                   </h2>
                 </div>
               </div>
-              <p className="mt-5 text-sm leading-6 text-muted-foreground">
+              <p className="mt-3.5 text-xs leading-relaxed text-muted-foreground sm:mt-5 sm:text-sm sm:leading-6">
                 {article.author.bio}
               </p>
             </div>

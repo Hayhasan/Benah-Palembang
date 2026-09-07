@@ -40,18 +40,23 @@ export function PublicScrollReveal() {
         })
       },
       {
-        rootMargin: "0px 0px 60px 0px",
+        rootMargin: "250px 0px 250px 0px",
         threshold: 0,
       },
     )
 
     const attachObservers = () => {
+      const windowHeight =
+        window.innerHeight || document.documentElement.clientHeight || 800
+
       document
         .querySelectorAll(UNREVEALED_SELECTOR)
         .forEach((element) => {
           const bounds = element.getBoundingClientRect()
 
-          if (bounds.top < window.innerHeight + 60) {
+          // Konten di dalam atau dekat dengan viewport awal (hingga 1.4x tinggi layar)
+          // langsung di-reveal agar halaman tidak kosong/terkunci saat awal dibuka/refresh
+          if (bounds.top < windowHeight * 1.4) {
             element.classList.add("is-revealed")
           } else {
             observer.observe(element)
@@ -59,7 +64,10 @@ export function PublicScrollReveal() {
         })
     }
 
-    const timer = window.setTimeout(attachObservers, 50)
+    // Jalankan segera pada frame pertama
+    const frameId = window.requestAnimationFrame(attachObservers)
+    const backupTimer = window.setTimeout(attachObservers, 150)
+
     let mutationFrame: number | null = null
     const mutationObserver = new MutationObserver(() => {
       if (mutationFrame !== null) return
@@ -75,7 +83,8 @@ export function PublicScrollReveal() {
     })
 
     return () => {
-      window.clearTimeout(timer)
+      window.cancelAnimationFrame(frameId)
+      window.clearTimeout(backupTimer)
       if (mutationFrame !== null) window.cancelAnimationFrame(mutationFrame)
       observer.disconnect()
       mutationObserver.disconnect()
@@ -84,3 +93,4 @@ export function PublicScrollReveal() {
 
   return null
 }
+
