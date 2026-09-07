@@ -4,15 +4,17 @@ import {
   CheckCircle,
   Eye,
   Heart,
+  Loader2,
   MessageCircle,
   RotateCcw,
   Search,
   Trash2,
+  X,
   XCircle,
 } from "lucide-react"
 import Image from "next/image"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { ModerationConfirmDialog } from "./moderation-confirm-dialog"
@@ -45,6 +47,9 @@ export function ManageContentList({
   const [isPending, startTransition] = useTransition()
   const isArticlePage = contentType === "ARTICLE"
   const contentLabel = isArticlePage ? "Article" : "Event"
+  const lastSearchedQueryRef = useRef(data.query)
+  const isInputFocusedRef = useRef(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean
@@ -56,32 +61,71 @@ export function ManageContentList({
     action: "takedown",
   })
 
-  function updateQuery(nextPage: number, nextQuery?: string) {
-    const params = new URLSearchParams(searchParams.toString())
+  const updateQuery = useCallback(
+    (nextPage: number, nextQuery?: string) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+      const params = new URLSearchParams(searchParams.toString())
 
-    if (nextPage > 1) {
-      params.set("page", String(nextPage))
-    } else {
-      params.delete("page")
+      if (nextPage > 1) {
+        params.set("page", String(nextPage))
+      } else {
+        params.delete("page")
+      }
+
+      const trimmedQuery =
+        nextQuery !== undefined ? nextQuery.trim() : searchTerm.trim()
+      if (trimmedQuery) {
+        params.set("q", trimmedQuery)
+      } else {
+        params.delete("q")
+      }
+
+      lastSearchedQueryRef.current = trimmedQuery
+      const queryString = params.toString()
+      startTransition(() => {
+        router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+          scroll: false,
+        })
+      })
+    },
+    [pathname, router, searchParams, searchTerm],
+  )
+
+  // Sync state with server query only if not focused and coming from external navigation
+  useEffect(() => {
+    if (data.query === lastSearchedQueryRef.current) {
+      return
+    }
+    if (isInputFocusedRef.current) {
+      return
+    }
+    lastSearchedQueryRef.current = data.query
+    setSearchTerm(data.query)
+  }, [data.query])
+
+  // Debounce search when user types (wait 600ms after user stops typing)
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
     }
 
-    const trimmedQuery = nextQuery !== undefined ? nextQuery.trim() : searchTerm.trim()
-    if (trimmedQuery) {
-      params.set("q", trimmedQuery)
-    } else {
-      params.delete("q")
+    if (searchTerm.trim() === (data.query ?? "").trim()) {
+      return
     }
 
-    const queryString = params.toString()
-    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
-      scroll: false,
-    })
-  }
+    timerRef.current = setTimeout(() => {
+      updateQuery(1, searchTerm)
+    }, 600)
 
-  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    updateQuery(1, searchTerm)
-  }
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [searchTerm, updateQuery, data.query])
 
   function openConfirm(
     content: ManagedContentListItem,
@@ -140,48 +184,63 @@ export function ManageContentList({
       <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
         {/* Search Header */}
         <div className="border-b p-4">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex items-center gap-3"
-          >
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={`Cari ${contentLabel.toLowerCase()} atau ${
-                  isArticlePage ? "author" : "owner"
-                }...`}
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-            >
-              Cari
-            </Button>
-            {data.query ? (
-              <Button
+          <div className="relative max-w-md">
+            {isPending ? (
+              <Loader2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-palembang-red animate-spin" />
+            ) : (
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            )}
+            <Input
+              placeholder={`Cari ${contentLabel.toLowerCase()} atau ${
+                isArticlePage ? "author" : "owner"
+              }...`}
+              className="pl-9 pr-9 min-h-[42px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => {
+                isInputFocusedRef.current = true
+              }}
+              onBlur={() => {
+                isInputFocusedRef.current = false
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  updateQuery(1, searchTerm)
+                }
+              }}
+            />
+            {searchTerm ? (
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground"
                 onClick={() => {
+                  if (timerRef.current) {
+                    clearTimeout(timerRef.current)
+                    timerRef.current = null
+                  }
                   setSearchTerm("")
+                  lastSearchedQueryRef.current = ""
                   updateQuery(1, "")
                 }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Hapus pencarian"
               >
-                Reset
-              </Button>
+                <X className="size-4" />
+              </button>
             ) : null}
-          </form>
+          </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative">
+          {isPending && (
+            <div className="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none animate-in fade-in duration-100">
+              <div className="flex items-center gap-2 bg-background/90 border shadow-md px-3.5 py-1.5 rounded-full text-xs font-medium text-foreground">
+                <Loader2 className="size-3.5 animate-spin text-palembang-red" />
+                <span>Memuat data...</span>
+              </div>
+            </div>
+          )}
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
@@ -294,7 +353,7 @@ export function ManageContentList({
                                 }/${content.id}`,
                               )
                             }}
-                            className="gap-1.5 text-xs text-foreground hover:bg-muted"
+                            className="gap-1.5 text-xs text-foreground hover:bg-muted min-h-[36px] px-2.5 active:scale-95"
                           >
                             <Eye className="size-3.5" /> View
                           </Button>
@@ -305,18 +364,32 @@ export function ManageContentList({
                                 size="sm"
                                 disabled={isPending}
                                 onClick={() => openConfirm(content, "approve")}
-                                className="gap-1 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                                className="gap-1 bg-emerald-600 text-xs text-white hover:bg-emerald-700 min-h-[36px] px-2.5 active:scale-95"
                               >
-                                <CheckCircle className="size-3.5" /> Setujui
+                                {isPending && confirmModal.content?.id === content.id && confirmModal.action === "approve" ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="size-3.5" />
+                                )}
+                                {isPending && confirmModal.content?.id === content.id && confirmModal.action === "approve"
+                                  ? "Memproses..."
+                                  : "Setujui"}
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 disabled={isPending}
                                 onClick={() => openConfirm(content, "reject")}
-                                className="gap-1 border-zinc-300 text-xs text-zinc-700 hover:bg-zinc-100"
+                                className="gap-1 border-zinc-300 text-xs text-zinc-700 hover:bg-zinc-100 min-h-[36px] px-2.5 active:scale-95"
                               >
-                                <XCircle className="size-3.5" /> Tolak
+                                {isPending && confirmModal.content?.id === content.id && confirmModal.action === "reject" ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <XCircle className="size-3.5" />
+                                )}
+                                {isPending && confirmModal.content?.id === content.id && confirmModal.action === "reject"
+                                  ? "Memproses..."
+                                  : "Tolak"}
                               </Button>
                             </>
                           )}
@@ -327,9 +400,16 @@ export function ManageContentList({
                               size="sm"
                               disabled={isPending}
                               onClick={() => openConfirm(content, "takedown")}
-                              className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                              className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50 min-h-[36px] px-2.5 active:scale-95"
                             >
-                              <Trash2 className="size-3.5" /> Takedown
+                              {isPending && confirmModal.content?.id === content.id && confirmModal.action === "takedown" ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-3.5" />
+                              )}
+                              {isPending && confirmModal.content?.id === content.id && confirmModal.action === "takedown"
+                                ? "Memproses..."
+                                : "Takedown"}
                             </Button>
                           )}
 
@@ -338,9 +418,16 @@ export function ManageContentList({
                               size="sm"
                               disabled={isPending}
                               onClick={() => openConfirm(content, "restore")}
-                              className="gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                              className="gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700 min-h-[36px] px-2.5 active:scale-95"
                             >
-                              <RotateCcw className="size-3.5" /> Pulihkan
+                              {isPending && confirmModal.content?.id === content.id && confirmModal.action === "restore" ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="size-3.5" />
+                              )}
+                              {isPending && confirmModal.content?.id === content.id && confirmModal.action === "restore"
+                                ? "Memproses..."
+                                : "Pulihkan"}
                             </Button>
                           )}
 
@@ -349,9 +436,16 @@ export function ManageContentList({
                               size="sm"
                               disabled={isPending}
                               onClick={() => openConfirm(content, "restore")}
-                              className="gap-1.5 bg-red-600 text-xs text-white hover:bg-red-700"
+                              className="gap-1.5 bg-red-600 text-xs text-white hover:bg-red-700 min-h-[36px] px-2.5 active:scale-95"
                             >
-                              <RotateCcw className="size-3.5" /> Restore
+                              {isPending && confirmModal.content?.id === content.id && confirmModal.action === "restore" ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="size-3.5" />
+                              )}
+                              {isPending && confirmModal.content?.id === content.id && confirmModal.action === "restore"
+                                ? "Memproses..."
+                                : "Restore"}
                             </Button>
                           )}
                         </div>

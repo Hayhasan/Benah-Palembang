@@ -15,17 +15,17 @@ export function OverviewRecentContent({ items }: OverviewRecentContentProps) {
     <Card className="flex w-full flex-col overflow-hidden border-border shadow-sm">
       <CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between py-3.5 px-6">
         <CardTitle className="text-base font-bold">Manage Content (Menunggu Persetujuan)</CardTitle>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
             href="/dashboard/content/article"
-            className="inline-flex items-center gap-0.5 text-xs font-semibold text-palembang-red hover:underline"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-palembang-red hover:underline min-h-[36px] px-2.5 py-1 rounded-md hover:bg-palembang-red/10 transition-colors"
           >
             Article
             <ArrowUpRight className="size-3.5" />
           </Link>
           <Link
             href="/dashboard/content/event"
-            className="inline-flex items-center gap-0.5 text-xs font-semibold text-palembang-red hover:underline"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-palembang-red hover:underline min-h-[36px] px-2.5 py-1 rounded-md hover:bg-palembang-red/10 transition-colors"
           >
             Event
             <ArrowUpRight className="size-3.5" />

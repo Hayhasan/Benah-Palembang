@@ -5,8 +5,6 @@ import type { Editor } from '@tiptap/core'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
@@ -195,11 +193,11 @@ export const TiptapEditor = ({ content, onChange, editable = true, imageUploadSc
     editable,
     immediatelyRender: false,
     extensions: [
-      StarterKit,
-      Underline,
+      StarterKit.configure({
+        link: { openOnClick: !editable },
+      }),
       ResizableMedia,
       Indent,
-      Link.configure({ openOnClick: !editable }),
       TextAlign.configure({ types: ['heading', 'paragraph', 'resizableMedia'] }),
       Table.configure({ resizable: editable }),
       TableRow,
@@ -212,7 +210,7 @@ export const TiptapEditor = ({ content, onChange, editable = true, imageUploadSc
     },
     editorProps: {
         attributes: {
-            class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-4 min-h-[300px] max-w-none dark:prose-invert prose-td:border prose-th:border prose-table:border-collapse prose-img:m-0 prose-video:m-0 ${!editable ? 'bg-muted/10 cursor-default select-text' : ''}`,
+            class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-3.5 sm:p-4 min-h-[300px] w-full max-w-full break-words [overflow-wrap:anywhere] [word-break:break-word] whitespace-pre-wrap dark:prose-invert prose-td:border prose-th:border prose-table:border-collapse prose-img:m-0 prose-video:m-0 ${!editable ? 'bg-muted/10 cursor-default select-text' : ''}`,
         },
     },
   })
@@ -232,25 +230,46 @@ export const TiptapEditor = ({ content, onChange, editable = true, imageUploadSc
   }, [editable, editor])
 
   return (
-    <div className={`border rounded-md overflow-hidden bg-background ${!editable ? 'bg-muted/5' : ''}`}>
+    <div className={`w-full min-w-0 max-w-full border rounded-md overflow-hidden bg-background ${!editable ? 'bg-muted/5' : ''}`}>
       {editable && editor && <MenuBar editor={editor} imageUploadScope={imageUploadScope} onUploadingChange={onUploadingChange} />}
       {editable && editor && (
         <BubbleMenu editor={editor} shouldShow={({ editor }) => editor.isActive('table')}>
-            <div className="flex flex-wrap items-center gap-1 p-1 bg-white dark:bg-zinc-900 border shadow-lg rounded-md text-xs">
-                <span className="font-semibold px-2 text-muted-foreground hidden sm:inline">Tabel:</span>
-                <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addColumnBefore().run()} className="h-7"><Plus className="size-3 mr-1" /> Kol Kiri</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addColumnAfter().run()} className="h-7"><Plus className="size-3 mr-1" /> Kol Kanan</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().deleteColumn().run()} className="h-7 text-red-500 hover:text-red-600"><Minus className="size-3" /></Button>
-                <div className="h-4 w-[1px] bg-border mx-1" />
-                <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addRowBefore().run()} className="h-7"><Plus className="size-3 mr-1" /> Bar Atas</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addRowAfter().run()} className="h-7"><Plus className="size-3 mr-1" /> Bar Bawah</Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().deleteRow().run()} className="h-7 text-red-500 hover:text-red-600"><Minus className="size-3" /></Button>
-                <div className="h-4 w-[1px] bg-border mx-1" />
-                <Button type="button" variant="destructive" size="sm" onClick={() => editor.chain().focus().deleteTable().run()} className="h-7"><Trash2 className="size-3" /></Button>
+            <div className="flex flex-col gap-1.5 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border shadow-xl rounded-lg text-xs max-w-[95vw] animate-in fade-in zoom-in-95 duration-150">
+                {/* Baris 1 (Atas): Operasi Kolom */}
+                <div className="flex items-center gap-1">
+                    <span className="text-[11px] font-semibold text-muted-foreground w-12 shrink-0">Kolom:</span>
+                    <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addColumnBefore().run()} className="h-7 px-2 text-xs">
+                        <Plus className="size-3 mr-1" /> Kol Kiri
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addColumnAfter().run()} className="h-7 px-2 text-xs">
+                        <Plus className="size-3 mr-1" /> Kol Kanan
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().deleteColumn().run()} title="Hapus Kolom" className="h-7 px-2 text-xs text-red-500 hover:text-red-600">
+                        <Minus className="size-3 mr-1" /> Hapus
+                    </Button>
+                </div>
+
+                {/* Baris 2 (Bawah): Operasi Baris & Hapus Tabel */}
+                <div className="flex items-center gap-1">
+                    <span className="text-[11px] font-semibold text-muted-foreground w-12 shrink-0">Baris:</span>
+                    <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addRowBefore().run()} className="h-7 px-2 text-xs">
+                        <Plus className="size-3 mr-1" /> Bar Atas
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().addRowAfter().run()} className="h-7 px-2 text-xs">
+                        <Plus className="size-3 mr-1" /> Bar Bawah
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => editor.chain().focus().deleteRow().run()} title="Hapus Baris" className="h-7 px-2 text-xs text-red-500 hover:text-red-600">
+                        <Minus className="size-3 mr-1" /> Hapus
+                    </Button>
+                    <div className="h-4 w-[1px] bg-border mx-1" />
+                    <Button type="button" variant="destructive" size="sm" onClick={() => editor.chain().focus().deleteTable().run()} title="Hapus Tabel" className="h-7 px-2 text-xs">
+                        <Trash2 className="size-3" />
+                    </Button>
+                </div>
             </div>
         </BubbleMenu>
       )}
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className="w-full min-w-0 max-w-full overflow-x-auto" />
     </div>
   )
 }

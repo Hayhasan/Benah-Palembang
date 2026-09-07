@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
-import { Eye, EyeOff, Plus } from "lucide-react"
+import { Eye, EyeOff, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -86,7 +86,7 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-fit bg-palembang-red text-white hover:bg-palembang-red/90">
+        <Button className="w-full sm:w-fit min-h-[44px] bg-palembang-red text-white hover:bg-palembang-red/90 font-medium active:scale-[0.98]">
           <Plus className="mr-2 size-4" /> {config.createLabel}
         </Button>
       </DialogTrigger>
@@ -111,6 +111,7 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Masukkan nama"
                 disabled={isPending}
+                className="min-h-[42px]"
               />
             </div>
 
@@ -128,6 +129,7 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
                 placeholder="email@example.com"
                 autoComplete="email"
                 disabled={isPending}
+                className="min-h-[42px]"
               />
             </div>
 
@@ -144,7 +146,7 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
                     setRole(event.target.value as ManagedAccountRole)
                   }
                   disabled={isPending}
-                  className="flex h-10 w-full rounded-md border border-input bg-palembang-charcoal px-3 py-2 text-sm text-white ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="flex h-11 w-full rounded-md border border-input bg-palembang-charcoal px-3 py-2 text-sm text-white ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="SUPERADMIN">SuperAdmin</option>
@@ -167,12 +169,12 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="new-password"
                   disabled={isPending}
-                  className="pr-10"
+                  className="pr-12 min-h-[42px]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
                   aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                 >
                   {showPassword ? (
@@ -200,12 +202,12 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   autoComplete="new-password"
                   disabled={isPending}
-                  className="pr-10"
+                  className="pr-12 min-h-[42px]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((value) => !value)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
                   aria-label={
                     showConfirmPassword
                       ? "Sembunyikan konfirmasi password"
@@ -222,20 +224,22 @@ export function CreateAccountDialog({ routeRole }: CreateAccountDialogProps) {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
               disabled={isPending}
+              className="w-full sm:w-auto min-h-[44px] active:scale-[0.98]"
             >
               Batal
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="bg-palembang-red text-white hover:bg-palembang-red/90"
+              className="w-full sm:w-auto min-h-[44px] bg-palembang-red text-white hover:bg-palembang-red/90 font-semibold active:scale-[0.98]"
             >
+              {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {isPending ? "Menyimpan..." : `Simpan ${routeRole === "user" ? "User" : "Admin"}`}
             </Button>
           </DialogFooter>

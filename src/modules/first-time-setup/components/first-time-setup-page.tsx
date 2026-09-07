@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
-import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react"
+import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { AuthPageShell } from "@/modules/auth/components/auth-page-shell"
@@ -151,8 +151,16 @@ export function FirstTimeSetupPage() {
           disabled={isPending}
           className="mt-3 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
         >
-          {isPending ? "Menginisialisasi Sistem..." : "Buat Akun SuperAdmin & Mulai"}
-          {!isPending && <ArrowRight className="size-4" />}
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Menginisialisasi Sistem...
+            </>
+          ) : (
+            <>
+              Buat Akun SuperAdmin & Mulai <ArrowRight className="ml-2 size-4" />
+            </>
+          )}
         </Button>
       </form>
     </AuthPageShell>

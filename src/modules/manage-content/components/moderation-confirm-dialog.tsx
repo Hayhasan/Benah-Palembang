@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Loader2 } from "lucide-react"
 
 import {
   AlertDialog,
@@ -147,22 +148,28 @@ export function ModerationConfirmDialog({
           </div>
         ) : null}
 
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => handleOpenChange(false)}>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
+          <AlertDialogCancel
+            onClick={() => handleOpenChange(false)}
+            disabled={isPending}
+            className="w-full sm:w-auto min-h-[44px] active:scale-[0.98]"
+          >
             Batal
           </AlertDialogCancel>
           <AlertDialogAction
             variant={copy.variant}
             disabled={!canConfirm || isPending}
+            className="w-full sm:w-auto min-h-[44px] active:scale-[0.98]"
             onClick={(event) => {
-              if (!canConfirm) {
-                event.preventDefault()
+              event.preventDefault()
+              if (!canConfirm || isPending) {
                 return
               }
               onConfirm(trimmedNote)
             }}
           >
-            {copy.confirmText}
+            {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            {isPending ? "Memproses..." : copy.confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

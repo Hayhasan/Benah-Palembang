@@ -204,20 +204,21 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
             Kelola informasi publik dan data personal Anda.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {isEditing ? (
             <>
               <Button
                 variant="outline"
                 onClick={cancelEdit}
                 disabled={isSaving || isUploading}
+                className="w-full sm:w-auto min-h-[44px] active:scale-[0.98]"
               >
                 <X className="mr-2 size-4" /> Batal Edit
               </Button>
               <Button
                 onClick={() => void saveProfile()}
                 disabled={isSaving || isUploading}
-                className="bg-palembang-red text-white hover:bg-palembang-red/90"
+                className="w-full sm:w-auto min-h-[44px] bg-palembang-red text-white hover:bg-palembang-red/90 active:scale-[0.98]"
               >
                 {isSaving ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
@@ -230,7 +231,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
           ) : (
             <Button
               onClick={() => setIsEditing(true)}
-              className="bg-palembang-charcoal text-white hover:bg-palembang-charcoal/90"
+              className="w-full sm:w-fit min-h-[44px] bg-palembang-charcoal text-white hover:bg-palembang-charcoal/90 active:scale-[0.98]"
             >
               <Edit2 className="mr-2 size-4" /> Edit Profil
             </Button>
@@ -270,7 +271,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="hidden h-10 items-center justify-center rounded-md bg-palembang-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-palembang-red/90 sm:inline-flex"
+                className="flex h-10 items-center justify-center rounded-md bg-palembang-red px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-palembang-red/90 min-h-[40px] active:scale-95"
               >
                 <MessageCircle className="mr-2 size-4" /> Hubungi
               </a>
@@ -412,7 +413,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                     type="button"
                     onClick={requestPasswordReset}
                     disabled={isResetPending}
-                    className="h-10 w-fit border-none bg-palembang-red px-4 font-semibold text-white hover:bg-palembang-red/90"
+                    className="h-11 w-full sm:w-fit min-h-[44px] border-none bg-palembang-red px-4 font-semibold text-white hover:bg-palembang-red/90 active:scale-[0.98]"
                   >
                     {isResetPending ? (
                       <Loader2 className="mr-2 size-4 animate-spin" />
@@ -440,14 +441,14 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                 {draft.bio || "Belum ada bio untuk profil ini."}
               </p>
 
-              <div className="mt-6 flex gap-4">
+              <div className="mt-6 flex gap-3 sm:gap-4 items-center">
                 {draft.instagramUrl ? (
                   <a
                     href={draft.instagramUrl}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Instagram"
-                    className="rounded-full bg-white/10 p-2 text-white/70 transition-colors hover:bg-white/20 hover:text-pink-500"
+                    className="flex size-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-pink-500 active:scale-95"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -472,7 +473,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                     target="_blank"
                     rel="noreferrer"
                     aria-label="X"
-                    className="rounded-full bg-white/10 p-2 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+                    className="flex size-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white active:scale-95"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -495,7 +496,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                     target="_blank"
                     rel="noreferrer"
                     aria-label="LinkedIn"
-                    className="rounded-full bg-white/10 p-2 text-white/70 transition-colors hover:bg-white/20 hover:text-blue-400"
+                    className="flex size-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-blue-400 active:scale-95"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -520,7 +521,7 @@ export function ProfilePage({ initialProfile }: { initialProfile: ProfileData })
                     target="_blank"
                     rel="noreferrer"
                     aria-label="WhatsApp"
-                    className="rounded-full bg-white/10 p-2 text-white/70 transition-colors hover:bg-white/20 hover:text-green-500 sm:hidden"
+                    className="flex size-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-green-500 active:scale-95 sm:hidden"
                   >
                     <MessageCircle className="size-5" />
                   </a>

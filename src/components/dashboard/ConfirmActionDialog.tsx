@@ -11,6 +11,8 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+import { Loader2 } from "lucide-react"
+
 interface ConfirmActionDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -19,6 +21,7 @@ interface ConfirmActionDialogProps {
     confirmText?: string
     cancelText?: string
     variant?: "destructive" | "default"
+    isLoading?: boolean
     onConfirm: () => void
 }
 
@@ -30,6 +33,7 @@ export function ConfirmActionDialog({
     confirmText = "Ya, Lanjutkan",
     cancelText = "Batal",
     variant = "destructive",
+    isLoading = false,
     onConfirm,
 }: ConfirmActionDialogProps) {
     return (
@@ -39,18 +43,25 @@ export function ConfirmActionDialog({
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>{description}</AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => onOpenChange(false)}>
+                <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                    <AlertDialogCancel
+                        onClick={() => onOpenChange(false)}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto min-h-[44px] active:scale-[0.98] mt-0"
+                    >
                         {cancelText}
                     </AlertDialogCancel>
                     <AlertDialogAction
                         variant={variant}
-                        onClick={() => {
+                        disabled={isLoading}
+                        onClick={(e) => {
+                            e.preventDefault()
                             onConfirm()
-                            onOpenChange(false)
                         }}
+                        className="w-full sm:w-auto min-h-[44px] active:scale-[0.98]"
                     >
-                        {confirmText}
+                        {isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                        {isLoading ? "Memproses..." : confirmText}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

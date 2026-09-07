@@ -1,6 +1,6 @@
 "use client"
 
-import { Archive, Eye, RotateCcw, Save, Send } from "lucide-react"
+import { Archive, Eye, Loader2, RotateCcw, Save, Send } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -157,6 +157,7 @@ export function ArticleEditor({
 
       setIsDirty(false)
       toast.success(result.message)
+      setArchiveDialogOpen(false)
       router.push("/dashboard/create-article")
       router.refresh()
     })
@@ -174,6 +175,7 @@ export function ArticleEditor({
 
       setIsDirty(false)
       toast.success(result.message)
+      setRepublishDialogOpen(false)
       router.push("/dashboard/create-article")
       router.refresh()
     })
@@ -210,19 +212,19 @@ export function ArticleEditor({
             variant="outline"
             disabled={isBusy}
             onClick={() => void handleSave()}
-            className="gap-2"
+            className="min-h-[40px] px-3.5 gap-2 active:scale-[0.98]"
           >
-            <Save className="size-4" />
-            {initialArticle ? "Save Artikel" : "Simpan Draf"}
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {isPending ? "Menyimpan..." : initialArticle ? "Save Artikel" : "Simpan Draf"}
           </Button>
           <Button
             type="button"
             variant="outline"
             disabled={isBusy}
             onClick={() => void handlePreview()}
-            className="gap-2"
+            className="min-h-[40px] px-3.5 gap-2 active:scale-[0.98]"
           >
-            <Eye className="size-4" />
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
             Preview
           </Button>
           {canPost ? (
@@ -230,10 +232,10 @@ export function ArticleEditor({
               type="button"
               disabled={isBusy}
               onClick={() => void handlePost()}
-              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+              className="min-h-[40px] px-3.5 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
             >
-              <Send className="size-4" />
-              Post
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              {isPending ? "Mengirim..." : "Post"}
             </Button>
           ) : null}
           {canArchive ? (
@@ -242,10 +244,14 @@ export function ArticleEditor({
               variant="outline"
               disabled={isBusy}
               onClick={() => setArchiveDialogOpen(true)}
-              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+              className="min-h-[40px] px-3.5 gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-[0.98]"
             >
-              <Archive className="size-4" />
-              Archive
+              {isPending && archiveDialogOpen ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Archive className="size-4" />
+              )}
+              {isPending && archiveDialogOpen ? "Mengarsipkan..." : "Archive"}
             </Button>
           ) : null}
           {canRepublish ? (
@@ -253,10 +259,14 @@ export function ArticleEditor({
               type="button"
               disabled={isBusy}
               onClick={() => setRepublishDialogOpen(true)}
-              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+              className="min-h-[40px] px-3.5 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
             >
-              <RotateCcw className="size-4" />
-              Publikasikan
+              {isPending && republishDialogOpen ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RotateCcw className="size-4" />
+              )}
+              {isPending && republishDialogOpen ? "Mempublikasikan..." : "Publikasikan"}
             </Button>
           ) : null}
         </div>
@@ -281,9 +291,9 @@ export function ArticleEditor({
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-4">
+      <div className="grid min-w-0 max-w-full gap-6 lg:grid-cols-4">
         {/* Kolom Kiri: Form Judul, Excerpt & Rich Text Editor */}
-        <div className="space-y-6 lg:col-span-3">
+        <div className="min-w-0 max-w-full space-y-6 lg:col-span-3">
           <div className="space-y-4 rounded-xl border bg-background p-5 shadow-sm">
             <Field label="Judul Artikel">
               <Input
@@ -293,7 +303,7 @@ export function ArticleEditor({
                   markDirty()
                 }}
                 placeholder="Masukkan judul artikel yang menarik..."
-                className="text-lg font-semibold"
+                className="text-lg font-semibold min-h-[44px]"
               />
             </Field>
             <Field label="Ringkasan / Excerpt Singkat">
@@ -373,9 +383,10 @@ export function ArticleEditor({
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
         title="Konfirmasi Archive Artikel"
-        description={`Artikel "${title || "ini"}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Artikel tetap tampil pada daftar Kelola Artikel dan dapat dipublikasikan ulang tanpa review.`}
+        description={`Artikel "${title || "ini"}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Artikel tetap tampil pada daftar dan dapat dipublikasikan ulang kapan saja tanpa review.`}
         confirmText="Ya, Archive Artikel"
         variant="default"
+        isLoading={isPending}
         onConfirm={handleArchive}
       />
 
@@ -386,6 +397,7 @@ export function ArticleEditor({
         description={`Artikel "${title || "ini"}" akan kembali tampil pada halaman publik. Artikel ini sudah pernah disetujui sehingga tidak perlu review ulang.`}
         confirmText="Ya, Publikasikan"
         variant="default"
+        isLoading={isPending}
         onConfirm={handleRepublish}
       />
     </div>

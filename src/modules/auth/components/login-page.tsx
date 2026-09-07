@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useActionState, useState } from "react"
-import { ArrowRight, Eye, EyeOff } from "lucide-react"
+import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -116,8 +116,16 @@ export function LoginPage({
           disabled={isPending}
           className="mt-1 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
         >
-          {isPending ? "Memproses..." : "Masuk"}{" "}
-          {!isPending && <ArrowRight className="size-4" />}
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Memproses...
+            </>
+          ) : (
+            <>
+              Masuk <ArrowRight className="ml-2 size-4" />
+            </>
+          )}
         </Button>
       </form>
       <p className="mt-8 text-center text-xs text-white/50">

@@ -84,13 +84,13 @@ function SectionCard({
   return (
     <div className="overflow-visible rounded-xl border bg-background shadow-sm">
       <div
-        className={`flex cursor-pointer items-center justify-between bg-muted/30 p-4 transition-colors hover:bg-muted/50 ${
+        className={`flex cursor-pointer items-center justify-between bg-muted/30 p-4 min-h-[56px] transition-colors hover:bg-muted/50 active:bg-muted/60 ${
           isExpanded ? "rounded-t-xl border-b" : "rounded-xl"
         }`}
         onClick={() => setIsExpanded((current) => !current)}
       >
         <div>
-          <h3 className="font-display text-lg font-semibold">{title}</h3>
+          <h3 className="font-display text-base sm:text-lg font-semibold">{title}</h3>
           {desc ? (
             <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
           ) : null}
@@ -99,7 +99,7 @@ function SectionCard({
           type="button"
           variant="ghost"
           size="icon"
-          className="pointer-events-none shrink-0"
+          className="pointer-events-none shrink-0 size-9"
         >
           {isExpanded ? (
             <ChevronUp className="size-4" />
@@ -108,7 +108,7 @@ function SectionCard({
           )}
         </Button>
       </div>
-      {isExpanded ? <div className="space-y-5 p-6">{children}</div> : null}
+      {isExpanded ? <div className="space-y-5 p-4 sm:p-6">{children}</div> : null}
     </div>
   )
 }
@@ -523,7 +523,7 @@ export function ManageLandingPageForm({
           type="button"
           onClick={() => void handleSave()}
           disabled={isPending}
-          className="w-fit bg-palembang-red text-white hover:bg-palembang-red/90"
+          className="w-full sm:w-fit min-h-[44px] bg-palembang-red text-white hover:bg-palembang-red/90 font-semibold active:scale-[0.98] transition-transform"
         >
           {isPending ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
@@ -535,7 +535,7 @@ export function ManageLandingPageForm({
       </div>
 
       <div className="relative border-b">
-        <div className="flex gap-6 overflow-x-auto pb-px hide-scrollbar">
+        <div className="flex gap-2 sm:gap-6 overflow-x-auto pb-px hide-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -544,9 +544,9 @@ export function ManageLandingPageForm({
                 activeTabRef.current = tab
                 setActiveTab(tab)
               }}
-              className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
+              className={`whitespace-nowrap border-b-2 py-3 px-3 sm:px-1 min-h-[44px] flex items-center text-sm font-medium transition-colors cursor-pointer active:scale-95 ${
                 activeTab === tab
-                  ? "border-palembang-red text-palembang-red"
+                  ? "border-palembang-red text-palembang-red font-semibold"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
               }`}
             >

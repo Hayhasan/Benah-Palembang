@@ -8,6 +8,7 @@ import {
   Clock,
   Eye,
   Link2,
+  Loader2,
   MapPin,
   MessageCircle,
   Save,
@@ -199,6 +200,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
 
       setIsDirty(false)
       toast.success(result.message)
+      setArchiveDialogOpen(false)
       router.push("/dashboard/create-event")
       router.refresh()
     })
@@ -216,6 +218,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
 
       setIsDirty(false)
       toast.success(result.message)
+      setRepublishDialogOpen(false)
       router.push("/dashboard/create-event")
       router.refresh()
     })
@@ -251,19 +254,19 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
             variant="outline"
             disabled={isBusy}
             onClick={() => void handleSave()}
-            className="gap-2"
+            className="min-h-[40px] px-3.5 gap-2 active:scale-[0.98]"
           >
-            <Save className="size-4" />
-            {initialEvent ? "Save Event" : "Simpan Draf"}
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {isPending ? "Menyimpan..." : initialEvent ? "Save Event" : "Simpan Draf"}
           </Button>
           <Button
             type="button"
             variant="outline"
             disabled={isBusy}
             onClick={() => void handlePreview()}
-            className="gap-2"
+            className="min-h-[40px] px-3.5 gap-2 active:scale-[0.98]"
           >
-            <Eye className="size-4" />
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
             Preview
           </Button>
           {canPost ? (
@@ -271,10 +274,10 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
               type="button"
               disabled={isBusy}
               onClick={() => void handlePost()}
-              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+              className="min-h-[40px] px-3.5 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
             >
-              <Send className="size-4" />
-              Post
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              {isPending ? "Mengirim..." : "Post"}
             </Button>
           ) : null}
           {canArchive ? (
@@ -283,10 +286,14 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
               variant="outline"
               disabled={isBusy}
               onClick={() => setArchiveDialogOpen(true)}
-              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+              className="min-h-[40px] px-3.5 gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-[0.98]"
             >
-              <Archive className="size-4" />
-              Archive
+              {isPending && archiveDialogOpen ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Archive className="size-4" />
+              )}
+              {isPending && archiveDialogOpen ? "Mengarsipkan..." : "Archive"}
             </Button>
           ) : null}
           {canRepublish ? (
@@ -294,10 +301,14 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
               type="button"
               disabled={isBusy}
               onClick={() => setRepublishDialogOpen(true)}
-              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+              className="min-h-[40px] px-3.5 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
             >
-              <RotateCcw className="size-4" />
-              Publikasikan
+              {isPending && republishDialogOpen ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RotateCcw className="size-4" />
+              )}
+              {isPending && republishDialogOpen ? "Mempublikasikan..." : "Publikasikan"}
             </Button>
           ) : null}
         </div>
@@ -322,8 +333,8 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-4">
-        <div className="space-y-6 lg:col-span-3">
+      <div className="grid min-w-0 max-w-full gap-6 lg:grid-cols-4">
+        <div className="min-w-0 max-w-full space-y-6 lg:col-span-3">
           <div className="space-y-4 rounded-xl border bg-background p-5 shadow-sm">
             <Field label="Judul Event">
               <Input
@@ -333,7 +344,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
                   markDirty()
                 }}
                 placeholder="Nama acara..."
-                className="text-lg font-semibold"
+                className="text-lg font-semibold min-h-[44px]"
               />
             </Field>
             <Field label="Deskripsi Singkat">
@@ -510,6 +521,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
         description={`Event "${title || "ini"}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Event tetap tampil pada daftar Kelola Event dan dapat dipublikasikan ulang tanpa review.`}
         confirmText="Ya, Archive Event"
         variant="default"
+        isLoading={isPending}
         onConfirm={handleArchive}
       />
 
@@ -520,6 +532,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
         description={`Event "${title || "ini"}" akan kembali tampil pada halaman publik. Event ini sudah pernah disetujui sehingga tidak perlu review ulang.`}
         confirmText="Ya, Publikasikan"
         variant="default"
+        isLoading={isPending}
         onConfirm={handleRepublish}
       />
     </div>

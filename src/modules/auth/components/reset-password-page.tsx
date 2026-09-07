@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useActionState, useState } from "react"
-import { AlertTriangle, ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react"
+import { AlertTriangle, ArrowRight, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -140,7 +140,11 @@ export function ResetPasswordPage({
               disabled={isPending}
               className="h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
             >
-              <KeyRound className="size-4" />
+              {isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <KeyRound className="mr-2 size-4" />
+              )}
               {isPending ? "Memperbarui..." : "Simpan password baru"}
             </Button>
           </form>

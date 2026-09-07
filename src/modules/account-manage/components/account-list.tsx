@@ -1,8 +1,8 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState, useTransition } from "react"
-import { Ban, Eye, Search, ShieldCheck, Trash2 } from "lucide-react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { Ban, Eye, Loader2, Search, ShieldCheck, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
@@ -71,11 +71,10 @@ export function AccountList({ routeRole, data }: AccountListProps) {
   const [confirmation, setConfirmation] = useState<ConfirmationState>(null)
   const [isPending, startTransition] = useTransition()
   const [now, setNow] = useState(() => new Date(data.generatedAt).getTime())
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
+  const [searchInput, setSearchInput] = useState(data.query)
+  const lastSearchedQueryRef = useRef(data.query)
+  const isInputFocusedRef = useRef(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   function buildHref(page: number, query = data.query) {
     const params = new URLSearchParams()
@@ -88,12 +87,61 @@ export function AccountList({ routeRole, data }: AccountListProps) {
     return search ? `${pathname}?${search}` : pathname
   }
 
-  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const query = String(formData.get("q") ?? "")
-    router.push(buildHref(1, query))
-  }
+  const executeSearch = useCallback(
+    (newQuery: string) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+      const normalizedInput = newQuery.trim()
+      const normalizedCurrent = (data.query ?? "").trim()
+      if (normalizedInput !== normalizedCurrent) {
+        lastSearchedQueryRef.current = normalizedInput
+        startTransition(() => {
+          router.replace(buildHref(1, newQuery), { scroll: false })
+        })
+      }
+    },
+    [data.query, pathname, router],
+  )
+
+  // Sync state with server query only if not focused and coming from external navigation
+  useEffect(() => {
+    if (data.query === lastSearchedQueryRef.current) {
+      return
+    }
+    if (isInputFocusedRef.current) {
+      return
+    }
+    lastSearchedQueryRef.current = data.query
+    setSearchInput(data.query)
+  }, [data.query])
+
+  // Debounce search when user types (wait 600ms after user stops typing)
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+
+    if (searchInput.trim() === (data.query ?? "").trim()) {
+      return
+    }
+
+    timerRef.current = setTimeout(() => {
+      executeSearch(searchInput)
+    }, 600)
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [searchInput, executeSearch, data.query])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   function handleConfirm() {
     if (!confirmation) return
@@ -154,23 +202,62 @@ export function AccountList({ routeRole, data }: AccountListProps) {
 
       <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
         <div className="border-b p-4">
-          <form onSubmit={handleSearch} className="flex max-w-md gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                name="q"
-                defaultValue={data.query}
-                placeholder={config.searchPlaceholder}
-                className="pl-9"
-              />
-            </div>
-            <Button type="submit" variant="outline">
-              Cari
-            </Button>
-          </form>
+          <div className="relative max-w-md">
+            {isPending ? (
+              <Loader2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-palembang-red animate-spin" />
+            ) : (
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            )}
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onFocus={() => {
+                isInputFocusedRef.current = true
+              }}
+              onBlur={() => {
+                isInputFocusedRef.current = false
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  executeSearch(searchInput)
+                }
+              }}
+              placeholder={config.searchPlaceholder}
+              className="pl-9 pr-9 min-h-[42px]"
+            />
+            {searchInput ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (timerRef.current) {
+                    clearTimeout(timerRef.current)
+                    timerRef.current = null
+                  }
+                  setSearchInput("")
+                  lastSearchedQueryRef.current = ""
+                  startTransition(() => {
+                    router.replace(buildHref(1, ""), { scroll: false })
+                  })
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Hapus pencarian"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative">
+          {isPending && (
+            <div className="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none animate-in fade-in duration-100">
+              <div className="flex items-center gap-2 bg-background/90 border shadow-md px-3.5 py-1.5 rounded-full text-xs font-medium text-foreground">
+                <Loader2 className="size-3.5 animate-spin text-palembang-red" />
+                <span>Memuat data...</span>
+              </div>
+            </div>
+          )}
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
@@ -252,7 +339,7 @@ export function AccountList({ routeRole, data }: AccountListProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1.5 text-xs"
+                          className="gap-1.5 text-xs min-h-[36px] px-2.5 active:scale-95"
                           onClick={() =>
                             router.push(
                               `/dashboard/account/${routeRole}/${account.id}`,
@@ -269,8 +356,8 @@ export function AccountList({ routeRole, data }: AccountListProps) {
                               disabled={isPending}
                               className={
                                 account.isBanned
-                                  ? "gap-1.5 border-emerald-200 text-xs text-emerald-600 hover:bg-emerald-50"
-                                  : "gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                                  ? "gap-1.5 border-emerald-200 text-xs text-emerald-600 hover:bg-emerald-50 min-h-[36px] px-2.5 active:scale-95"
+                                  : "gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50 min-h-[36px] px-2.5 active:scale-95"
                               }
                               onClick={() =>
                                 setConfirmation({
@@ -279,23 +366,36 @@ export function AccountList({ routeRole, data }: AccountListProps) {
                                 })
                               }
                             >
-                              {account.isBanned ? (
+                              {isPending && confirmation?.account.id === account.id && (confirmation.action === "ban" || confirmation.action === "unban") ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : account.isBanned ? (
                                 <ShieldCheck className="size-3.5" />
                               ) : (
                                 <Ban className="size-3.5" />
                               )}
-                              {account.isBanned ? "Unban" : "Ban"}
+                              {isPending && confirmation?.account.id === account.id && (confirmation.action === "ban" || confirmation.action === "unban")
+                                ? "Memproses..."
+                                : account.isBanned
+                                  ? "Unban"
+                                  : "Ban"}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               disabled={isPending}
-                              className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
+                              className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50 min-h-[36px] px-2.5 active:scale-95"
                               onClick={() =>
                                 setConfirmation({ action: "delete", account })
                               }
                             >
-                              <Trash2 className="size-3.5" /> Delete
+                              {isPending && confirmation?.account.id === account.id && confirmation.action === "delete" ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-3.5" />
+                              )}
+                              {isPending && confirmation?.account.id === account.id && confirmation.action === "delete"
+                                ? "Memproses..."
+                                : "Delete"}
                             </Button>
                           </>
                         )}
@@ -338,6 +438,7 @@ export function AccountList({ routeRole, data }: AccountListProps) {
           confirmText={confirmationCopy.confirmText}
           cancelText="Batal"
           variant={confirmationCopy.variant}
+          isLoading={isPending}
           onConfirm={handleConfirm}
         />
       )}

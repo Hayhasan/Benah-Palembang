@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useActionState, useEffect, useState } from "react"
-import { ArrowRight, Check, Mail, RotateCcw } from "lucide-react"
+import { ArrowRight, Check, Loader2, Mail, RotateCcw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -114,7 +114,11 @@ export function ForgotPasswordPage() {
             disabled={isPending}
             className="mt-3 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
           >
-            <Mail className="size-4" />
+            {isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Mail className="mr-2 size-4" />
+            )}
             {isPending ? "Memproses..." : "Kirim tautan reset"}
           </Button>
         </form>

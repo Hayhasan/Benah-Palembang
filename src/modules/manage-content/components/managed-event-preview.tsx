@@ -7,6 +7,7 @@ import {
   Clock3,
   Eye,
   Heart,
+  Loader2,
   MapPin,
   MessageCircle,
   RotateCcw,
@@ -113,7 +114,14 @@ export function ManagedEventPreview({
                 onClick={() => handleAction("approve")}
                 className="gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
               >
-                <CheckCircle className="size-3.5" /> Setujui
+                {isPending && confirmModal.action === "approve" ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle className="size-3.5" />
+                )}
+                {isPending && confirmModal.action === "approve"
+                  ? "Memproses..."
+                  : "Setujui"}
               </Button>
               <Button
                 variant="outline"
@@ -122,7 +130,14 @@ export function ManagedEventPreview({
                 onClick={() => handleAction("reject")}
                 className="gap-1.5 border-zinc-300 text-xs text-zinc-700 hover:bg-zinc-100"
               >
-                <XCircle className="size-3.5" /> Tolak
+                {isPending && confirmModal.action === "reject" ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <XCircle className="size-3.5" />
+                )}
+                {isPending && confirmModal.action === "reject"
+                  ? "Memproses..."
+                  : "Tolak"}
               </Button>
             </>
           )}
@@ -135,7 +150,14 @@ export function ManagedEventPreview({
               onClick={() => handleAction("takedown")}
               className="gap-1.5 border-red-200 text-xs text-red-600 hover:bg-red-50"
             >
-              <Trash2 className="size-3.5" /> Takedown
+              {isPending && confirmModal.action === "takedown" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="size-3.5" />
+              )}
+              {isPending && confirmModal.action === "takedown"
+                ? "Memproses..."
+                : "Takedown"}
             </Button>
           )}
 
@@ -146,7 +168,14 @@ export function ManagedEventPreview({
               onClick={() => handleAction("restore")}
               className="gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             >
-              <RotateCcw className="size-3.5" /> Pulihkan (Publish)
+              {isPending && confirmModal.action === "restore" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <RotateCcw className="size-3.5" />
+              )}
+              {isPending && confirmModal.action === "restore"
+                ? "Memproses..."
+                : "Pulihkan (Publish)"}
             </Button>
           )}
 
@@ -157,7 +186,14 @@ export function ManagedEventPreview({
               onClick={() => handleAction("restore")}
               className="gap-1.5 bg-red-600 text-xs text-white hover:bg-red-700"
             >
-              <RotateCcw className="size-3.5" /> Restore
+              {isPending && confirmModal.action === "restore" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <RotateCcw className="size-3.5" />
+              )}
+              {isPending && confirmModal.action === "restore"
+                ? "Memproses..."
+                : "Restore"}
             </Button>
           )}
         </div>

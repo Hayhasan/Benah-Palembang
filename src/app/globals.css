@@ -147,12 +147,14 @@
   }
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
   .font-display {
     font-family: var(--font-playfair);
@@ -431,3 +433,85 @@ select:-webkit-autofill {
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff !important;
 }
+
+/* Ensure TipTap / ProseMirror rich text editor wraps text automatically on mobile and never blows out horizontally */
+.ProseMirror {
+  word-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.ProseMirror p,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6,
+.ProseMirror blockquote,
+.ProseMirror li,
+.ProseMirror span,
+.ProseMirror a {
+  word-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
+}
+
+.ProseMirror pre,
+.ProseMirror code {
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+  max-width: 100% !important;
+}
+
+.ProseMirror table {
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  word-break: break-word !important;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+.ProseMirror img,
+.ProseMirror video {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Sembunyikan visual horizontal scrollbar di seluruh website & dashboard */
+*::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+/* Untuk seluruh elemen dengan overflow horizontal */
+.overflow-x-auto,
+.overflow-x-scroll,
+.hide-scrollbar,
+.no-scrollbar,
+[class*="overflow-x-"] {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE dan Edge */
+}
+
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-x-scroll::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar,
+[class*="overflow-x-"]::-webkit-scrollbar {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+

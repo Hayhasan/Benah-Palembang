@@ -13,9 +13,11 @@ import {
   RotateCcw,
   Activity,
   History,
+  Loader2,
+  X,
 } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 
 import { PaginationControls } from "@/components/dashboard/PaginationControls"
 import { Button } from "@/components/ui/button"
@@ -59,32 +61,72 @@ export function ActivityLogList({ data }: ActivityLogListProps) {
   const [selectedLog, setSelectedLog] = useState<ActivityLogItem | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [searchInput, setSearchInput] = useState(data.query)
+  const lastSearchedQueryRef = useRef(data.query)
+  const isInputFocusedRef = useRef(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const updateUrl = (newPage: number, newQuery: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+  const updateUrl = useCallback(
+    (newPage: number, newQuery: string) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+      const params = new URLSearchParams(searchParams.toString())
+      const trimmedQuery = newQuery.trim()
 
-    if (newQuery.trim()) {
-      params.set("q", newQuery.trim())
-    } else {
-      params.delete("q")
+      if (trimmedQuery) {
+        params.set("q", trimmedQuery)
+      } else {
+        params.delete("q")
+      }
+
+      if (newPage > 1) {
+        params.set("page", String(newPage))
+      } else {
+        params.delete("page")
+      }
+
+      lastSearchedQueryRef.current = trimmedQuery
+      startTransition(() => {
+        const qs = params.toString()
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      })
+    },
+    [pathname, router, searchParams],
+  )
+
+  // Sync state with server query only if not focused and coming from external navigation
+  useEffect(() => {
+    if (data.query === lastSearchedQueryRef.current) {
+      return
+    }
+    if (isInputFocusedRef.current) {
+      return
+    }
+    lastSearchedQueryRef.current = data.query
+    setSearchInput(data.query)
+  }, [data.query])
+
+  // Debounce search when user types (wait 600ms after user stops typing)
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
     }
 
-    if (newPage > 1) {
-      params.set("page", String(newPage))
-    } else {
-      params.delete("page")
+    if (searchInput.trim() === (data.query ?? "").trim()) {
+      return
     }
 
-    startTransition(() => {
-      const qs = params.toString()
-      router.push(qs ? `${pathname}?${qs}` : pathname)
-    })
-  }
+    timerRef.current = setTimeout(() => {
+      updateUrl(1, searchInput)
+    }, 600)
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateUrl(1, searchInput)
-  }
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [searchInput, updateUrl, data.query])
 
   const handlePageChange = (page: number) => {
     updateUrl(page, data.query)
@@ -108,16 +150,50 @@ export function ActivityLogList({ data }: ActivityLogListProps) {
 
       <div className="rounded-xl border bg-background shadow-sm overflow-hidden">
         <div className="p-4 border-b flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <div className="relative w-full sm:w-80">
+            {isPending ? (
+              <Loader2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-palembang-red animate-spin" />
+            ) : (
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            )}
             <input
               type="text"
               placeholder="Cari log (user, aksi, deskripsi)..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onFocus={() => {
+                isInputFocusedRef.current = true
+              }}
+              onBlur={() => {
+                isInputFocusedRef.current = false
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  updateUrl(1, searchInput)
+                }
+              }}
+              className="h-10 sm:h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-9 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
-          </form>
+            {searchInput ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (timerRef.current) {
+                    clearTimeout(timerRef.current)
+                    timerRef.current = null
+                  }
+                  setSearchInput("")
+                  lastSearchedQueryRef.current = ""
+                  updateUrl(1, "")
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Hapus pencarian"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </div>
           {isPending && (
             <span className="text-xs text-muted-foreground animate-pulse self-center sm:self-auto">
               Memuat data...
@@ -125,7 +201,15 @@ export function ActivityLogList({ data }: ActivityLogListProps) {
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative">
+          {isPending && (
+            <div className="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none animate-in fade-in duration-100">
+              <div className="flex items-center gap-2 bg-background/90 border shadow-md px-3.5 py-1.5 rounded-full text-xs font-medium text-foreground">
+                <Loader2 className="size-3.5 animate-spin text-palembang-red" />
+                <span>Memuat data...</span>
+              </div>
+            </div>
+          )}
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
               <tr>
@@ -171,7 +255,7 @@ export function ActivityLogList({ data }: ActivityLogListProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-1.5 text-xs text-foreground hover:bg-muted"
+                        className="gap-1.5 text-xs text-foreground hover:bg-muted min-h-[36px] px-3 active:scale-95"
                         onClick={() => openDetail(log)}
                       >
                         <Eye className="size-3.5" /> Detail

@@ -31,19 +31,19 @@ export function PaginationControls({
 
     return (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border-t bg-muted/10 text-sm">
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 Menampilkan <span className="font-semibold text-foreground">{startItem}</span> -{" "}
                 <span className="font-semibold text-foreground">{endItem}</span> dari{" "}
                 <span className="font-semibold text-foreground">{totalItems}</span> data
             </p>
 
-            <div className="flex items-center gap-1.5 self-center sm:self-auto">
+            <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 self-stretch sm:self-auto">
                 <Button
                     variant="outline"
                     size="sm"
                     disabled={currentPage === 1}
                     onClick={() => onPageChange(currentPage - 1)}
-                    className="h-8 px-2 text-xs gap-1"
+                    className="h-9 sm:h-8 min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-2 text-xs gap-1 active:scale-95"
                 >
                     <ChevronLeft className="size-3.5" /> Prev
                 </Button>
@@ -56,7 +56,7 @@ export function PaginationControls({
                             variant={isActive ? "default" : "outline"}
                             size="sm"
                             onClick={() => onPageChange(p)}
-                            className={`h-8 w-8 p-0 text-xs font-semibold ${
+                            className={`h-9 w-9 sm:h-8 sm:w-8 min-h-[36px] min-w-[36px] sm:min-h-[32px] sm:min-w-[32px] p-0 text-xs font-semibold active:scale-95 ${
                                 isActive 
                                     ? "bg-palembang-red text-white hover:bg-palembang-red/90" 
                                     : "hover:bg-muted text-foreground"
@@ -72,7 +72,7 @@ export function PaginationControls({
                     size="sm"
                     disabled={currentPage === totalPages || totalPages === 0}
                     onClick={() => onPageChange(currentPage + 1)}
-                    className="h-8 px-2 text-xs gap-1"
+                    className="h-9 sm:h-8 min-h-[36px] sm:min-h-[32px] px-2.5 sm:px-2 text-xs gap-1 active:scale-95"
                 >
                     Next <ChevronRight className="size-3.5" />
                 </Button>

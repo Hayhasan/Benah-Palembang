@@ -73,3 +73,27 @@ export async function getPublicEvent(
     relatedEvents: relatedEvents.map(mapPublicEventListItem),
   }
 }
+
+export async function getPublicEventMeta(id: number) {
+  await connection()
+
+  return prisma.event.findFirst({
+    where: {
+      id,
+      status: "PUBLISHED",
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      bannerUrl: true,
+      category: true,
+      startsAt: true,
+      endsAt: true,
+      location: true,
+      organizer: true,
+    },
+  })
+}
+

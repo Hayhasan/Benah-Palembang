@@ -80,3 +80,45 @@ export async function getPublicArticle(
     relatedArticles: relatedArticles.map(mapPublicArticleCard),
   }
 }
+
+export async function getPublicArticleMeta(slug: string) {
+  await connection()
+
+  return prisma.article.findFirst({
+    where: {
+      slug,
+      status: "PUBLISHED",
+      publishedAt: { not: null },
+      deletedAt: null,
+      websiteArticleSection: {
+        deletedAt: null,
+        websiteContent: { key: "home", deletedAt: null },
+      },
+    },
+    select: {
+      title: true,
+      excerpt: true,
+      coverImageUrl: true,
+      publishedAt: true,
+      updatedAt: true,
+      author: {
+        select: {
+          name: true,
+          username: true,
+        },
+      },
+      websiteArticleSection: {
+        select: {
+          categoryHeroTitle: true,
+          articleCategorySlug: true,
+        },
+      },
+      tags: {
+        select: {
+          label: true,
+        },
+      },
+    },
+  })
+}
+
