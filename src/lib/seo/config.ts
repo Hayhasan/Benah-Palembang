@@ -1,7 +1,29 @@
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  process.env.APP_URL ||
-  "https://benahpalembang.com"
+function getValidSiteUrl(): string {
+  const candidate = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    ""
+  ).trim()
+
+  // Mencegah localhost/127.0.0.1 masuk ke sitemap, robots, dan schema.org
+  // Jika di lokal atau di server produksi env belum terisi domain publik,
+  // otomatis gunakan domain resmi https://benahpalembang.com
+  if (
+    !candidate ||
+    candidate.includes("localhost") ||
+    candidate.includes("127.0.0.1")
+  ) {
+    return "https://benahpalembang.com"
+  }
+
+  if (!/^https?:\/\//i.test(candidate)) {
+    return `https://${candidate.replace(/\/$/, "")}`
+  }
+
+  return candidate.replace(/\/$/, "")
+}
+
+export const SITE_URL = getValidSiteUrl()
 
 export const SITE_NAME = "Benah Palembang"
 
