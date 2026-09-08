@@ -5,6 +5,7 @@ import { connection } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 
 import type { LandingArticlesBySection } from "../types/public-article"
+import { sortArticlesByFairPriority } from "../utils/article-ranking"
 import {
   mapPublicArticleCard,
   publicArticleCardSelect,
@@ -13,36 +14,74 @@ import {
 export async function getLandingArticles(): Promise<LandingArticlesBySection> {
   await connection()
 
-  const pins = await prisma.websiteArticleSectionPin.findMany({
+  const sections = await prisma.websiteArticleSection.findMany({
     where: {
-      websiteArticleSection: {
-        deletedAt: null,
-        isVisible: true,
-        websiteContent: { key: "home", deletedAt: null },
-      },
-      article: {
-        status: "PUBLISHED",
-        publishedAt: { not: null },
-        deletedAt: null,
-      },
+      deletedAt: null,
+      isVisible: true,
+      websiteContent: { key: "home", deletedAt: null },
     },
-    orderBy: [
-      { websiteArticleSection: { position: "asc" } },
-      { position: "asc" },
-    ],
+    orderBy: { position: "asc" },
     select: {
-      websiteArticleSection: { select: { sectionKey: true } },
-      article: { select: publicArticleCardSelect },
+      id: true,
+      sectionKey: true,
+      maxItems: true,
+      pins: {
+        where: {
+          article: {
+            status: "PUBLISHED",
+            publishedAt: { not: null },
+            deletedAt: null,
+          },
+        },
+        orderBy: { position: "asc" },
+        select: {
+          article: { select: publicArticleCardSelect },
+        },
+      },
     },
   })
 
-  return pins.reduce<LandingArticlesBySection>((grouped, pin) => {
-    const item = mapPublicArticleCard(pin.article)
-    if (item.sectionKey !== pin.websiteArticleSection.sectionKey) return grouped
+  const grouped: LandingArticlesBySection = {}
 
-    const sectionArticles = grouped[item.sectionKey] ?? []
-    sectionArticles.push(item)
-    grouped[item.sectionKey] = sectionArticles
-    return grouped
-  }, {})
+  for (const section of sections) {
+    const pinnedArticles = section.pins.map((pin) =>
+      mapPublicArticleCard(pin.article),
+    )
+    const pinnedIds = new Set(pinnedArticles.map((a) => a.id))
+    const capacity = Math.max(1, section.maxItems || 4)
+    const needed = capacity - pinnedArticles.length
+
+    if (needed > 0) {
+      const candidateArticles = await prisma.article.findMany({
+        where: {
+          websiteArticleSectionId: section.id,
+          status: "PUBLISHED",
+          publishedAt: { not: null },
+          deletedAt: null,
+          ...(pinnedIds.size > 0
+            ? { id: { notIn: Array.from(pinnedIds) } }
+            : {}),
+        },
+        select: {
+          ...publicArticleCardSelect,
+          _count: {
+            select: {
+              likes: true,
+              comments: { where: { deletedAt: null } },
+            },
+          },
+        },
+      })
+
+      const prioritized = sortArticlesByFairPriority(candidateArticles).slice(
+        0,
+        needed,
+      )
+      pinnedArticles.push(...prioritized.map(mapPublicArticleCard))
+    }
+
+    grouped[section.sectionKey] = pinnedArticles
+  }
+
+  return grouped
 }

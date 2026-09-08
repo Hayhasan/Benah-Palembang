@@ -63,7 +63,7 @@ export const DEFAULT_USER_ACCOUNTS: AccountMock[] = [
 ]
 
 export const DEFAULT_ADMIN_ACCOUNTS: AccountMock[] = [
-    { id: "ADM-001", name: "Dina Kirana", email: "super@example.com", role: "SuperAdmin", date: "01 Jan 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=9", isBanned: false },
+    { id: "ADM-001", name: "Dina Kirana", email: "info@benahpalembang.com", role: "SuperAdmin", date: "01 Jan 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=9", isBanned: false },
     { id: "ADM-002", name: "Agus Supriyadi", email: "agus.s@benahpalembang.id", role: "SuperAdmin", date: "01 Jan 2026", lastLogin: "2 jam lalu", avatar: "https://i.pravatar.cc/150?img=12", isBanned: false },
     { id: "ADM-003", name: "Fajar Pratama", email: "admin@example.com", role: "Admin", date: "15 Jan 2026", lastLogin: "Online", avatar: "https://i.pravatar.cc/150?img=15", isBanned: false },
     { id: "ADM-004", name: "Nurul Aini", email: "nurul.aini@benahpalembang.id", role: "Admin", date: "20 Jan 2026", lastLogin: "5 jam lalu", avatar: "https://i.pravatar.cc/150?img=20", isBanned: false },

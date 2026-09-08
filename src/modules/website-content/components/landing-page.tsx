@@ -262,19 +262,19 @@ function LandingCta({ data }: { data: LandingPageView["cta"] }) {
               <p className="text-sm leading-relaxed text-white/75 sm:text-base">
                 {data.description}
               </p>
-              <div className="mt-8 flex w-full flex-row items-center gap-2.5 sm:w-auto sm:gap-4">
+              <div className="mt-8 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
                 <Link
                   href={data.buttonUrl}
-                  className="flex flex-1 sm:flex-initial items-center justify-center gap-1.5 sm:gap-3 rounded-full bg-palembang-red px-3 sm:px-7 py-3 sm:py-3.5 text-center text-[11px] sm:text-xs font-bold uppercase tracking-[0.06em] sm:tracking-[0.14em] text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-palembang-charcoal whitespace-nowrap"
+                  className="flex w-full sm:w-auto sm:flex-initial items-center justify-center gap-2 sm:gap-3 rounded-full bg-palembang-red px-5 sm:px-7 py-3.5 text-center text-xs font-bold uppercase tracking-[0.12em] sm:tracking-[0.14em] text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-palembang-charcoal whitespace-nowrap"
                 >
                   <span>{data.buttonLabel}</span>
-                  <ArrowRight className="size-3.5 sm:size-4 shrink-0" />
+                  <ArrowRight className="size-4 shrink-0" />
                 </Link>
                 <a
                   href={`mailto:${data.contactEmail}`}
-                  className="flex flex-1 sm:flex-initial items-center justify-center gap-1.5 sm:gap-2 rounded-full border border-white/20 bg-white/5 px-3 sm:px-6 py-3 sm:py-3.5 text-center text-[11px] sm:text-xs font-semibold text-white/80 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white whitespace-nowrap"
+                  className="flex w-full sm:w-auto sm:flex-initial items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 sm:px-6 py-3.5 text-center text-xs font-semibold text-white/80 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white whitespace-nowrap"
                 >
-                  <Mail className="size-3.5 sm:size-4 text-palembang-red shrink-0" />
+                  <Mail className="size-4 text-palembang-red shrink-0" />
                   <span>{data.contactLabel}</span>
                 </a>
               </div>

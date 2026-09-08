@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, Search } from "lucide-react"
+import { ChevronDown, Search, SearchX } from "lucide-react"
 import { useState } from "react"
 
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
@@ -91,6 +91,9 @@ export function ArticleCategoryPage({
             </div>
           ) : (
             <div className="reveal-on-scroll min-h-[35vh] flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-2xl border border-border/70 bg-muted/30 text-muted-foreground shadow-sm">
+                <SearchX className="size-8 text-palembang-red" />
+              </div>
               <p className="font-display text-2xl sm:text-3xl">Cerita tidak ditemukan.</p>
               <p className="mt-3 text-sm text-muted-foreground">
                 Coba kata kunci lain atau periksa kembali nanti.

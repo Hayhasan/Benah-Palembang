@@ -96,7 +96,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");var r=t==="light"||t==="dark"?t:t==="system"&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r}catch(e){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}})();`,
+            __html: `(function(){try{var t=localStorage.getItem("theme");var isDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;var r=(t==="light"||t==="dark")?t:(isDark?"dark":"light");document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r}catch(e){var f=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.classList.add(f);document.documentElement.style.colorScheme=f}})();`,
           }}
         />
         <OrganizationJsonLd />

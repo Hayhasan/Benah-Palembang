@@ -5,6 +5,7 @@ import { connection } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 
 import type { PublicArticleCardData } from "../types/public-article"
+import { sortArticlesByFairPriority } from "../utils/article-ranking"
 import {
   mapPublicArticleCard,
   publicArticleCardSelect,
@@ -26,13 +27,18 @@ export async function getPublicArticlesByCategory(
         websiteContent: { key: "home", deletedAt: null },
       },
     },
-    orderBy: [
-      { isFeatured: "desc" },
-      { publishedAt: "desc" },
-      { id: "desc" },
-    ],
-    select: publicArticleCardSelect,
+    select: {
+      ...publicArticleCardSelect,
+      _count: {
+        select: {
+          likes: true,
+          comments: { where: { deletedAt: null } },
+        },
+      },
+    },
   })
 
-  return articles.map(mapPublicArticleCard)
+  const prioritizedArticles = sortArticlesByFairPriority(articles)
+
+  return prioritizedArticles.map((article) => mapPublicArticleCard(article))
 }

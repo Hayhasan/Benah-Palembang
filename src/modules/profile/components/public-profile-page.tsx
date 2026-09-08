@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   Eye,
+  FileText,
   Heart,
   MapPin,
   MessageCircle,
@@ -205,7 +206,12 @@ export function PublicProfilePage({ profile }: { profile: PublicProfileData }) {
               ) : null}
             </div>
           ) : (
-            <div className="reveal-on-scroll rounded-2xl border border-white/10 bg-white/5 px-6 py-14 text-center text-sm text-white/60">Belum ada artikel yang dipublikasikan.</div>
+            <div className="reveal-on-scroll flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-14 text-center text-sm text-white/60">
+              <div className="mb-3 flex size-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/40">
+                <FileText className="size-6 text-palembang-red" />
+              </div>
+              Belum ada artikel yang dipublikasikan.
+            </div>
           )}
         </section>
 

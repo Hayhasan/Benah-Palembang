@@ -61,7 +61,7 @@ Seeder memiliki ketergantungan relasional yang ketat antar-modul dan harus dieks
 - **Akun Kunci Pengembangan:**
   | Peran (*Role*) | Email Canonical | Kata Sandi Development |
   | :--- | :--- | :--- |
-  | `SUPERADMIN` | `super@example.com` | `12345678` |
+  | `SUPERADMIN` | `info@benahpalembang.com` | `Benah@1717` |
   | `ADMIN` | `admin@example.com` | `12345678` |
   | `USER` | `user@example.com` | `12345678` |
 - **Karakteristik Data:**

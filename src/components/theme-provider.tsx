@@ -81,7 +81,7 @@ function isEditableTarget(target: EventTarget | null) {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark",
+  defaultTheme = "system",
   storageKey = "theme",
   disableTransitionOnChange = true,
   ...props
