@@ -1,4 +1,4 @@
-import { Eye, FileText, Heart } from "lucide-react"
+import { Eye, FileText } from "lucide-react"
 import Link from "next/link"
 
 import type { ArticleGalleryData } from "../types/article-gallery"
@@ -87,10 +87,6 @@ export function ArticleGallery({
                   <span className="flex items-center gap-1.5">
                     <Eye className="size-3.5" />
                     {article.views.toLocaleString("id-ID")}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="size-3.5 text-palembang-red" />
-                    {article.likes.toLocaleString("id-ID")}
                   </span>
                 </div>
               </div>

@@ -1,109 +1,110 @@
 "use client"
 
-import { ChevronDown, Search, SearchX } from "lucide-react"
 import { useState } from "react"
+import { ChevronDown, SearchX } from "lucide-react"
 
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
 import { PublicArticleCard } from "@/modules/article/components/public-article-card"
 import type { PublicArticleCardData } from "@/modules/article/types/public-article"
 
 import type { ArticleCategoryPageData } from "../types/article-category-page"
+import { LandingHero } from "./landing-hero"
+import { CollaborationCta } from "./collaboration-cta"
 
 export function ArticleCategoryPage({
   data,
   articles,
+  contact,
 }: {
   data: ArticleCategoryPageData
   articles: PublicArticleCardData[]
+  contact: {
+    email: string
+    emailUrl: string
+    whatsappUrl: string
+  }
 }) {
-  const [query, setQuery] = useState("")
-  const [showAll, setShowAll] = useState(false)
-  const filtered = articles.filter((article) =>
-    `${article.title} ${article.excerpt}`
-      .toLowerCase()
-      .includes(query.toLowerCase()),
-  )
-  const initialCount = 4
-  const visibleArticles =
-    showAll || query ? filtered : filtered.slice(0, initialCount)
-  const hasMore = !showAll && !query && filtered.length > initialCount
+  const [displayCount, setDisplayCount] = useState(6)
+
+  const heroSlides = data.heroSlides.map((slide, index) => ({
+    imageUrl: slide.imageUrl,
+    imageAlt: slide.imageAlt,
+    eyebrow: slide.label,
+    title: slide.title,
+    description: slide.description,
+    photographerName: slide.photographerName || undefined,
+    buttonLabel: "JELAJAHI CERITA",
+    buttonUrl: `/${data.slug}`,
+    position: slide.position || index + 1,
+    isVisible: slide.isVisible ?? true,
+  }))
+
+  const visibleArticles = articles.slice(0, displayCount)
+  const hasMore = articles.length > displayCount
 
   return (
-    <>
-      <div className="relative overflow-hidden bg-palembang-charcoal px-6 pb-20 pt-40 text-white sm:px-10 lg:px-16">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-25 sm:w-2/3 lg:w-1/2 lg:opacity-40">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={data.hero.imageUrl}
-            alt={data.hero.imageAlt}
-            className="size-full object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-palembang-charcoal via-palembang-charcoal/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
-        </div>
-        <div className="relative z-10 mx-auto max-w-[1240px]">
-          <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
-            Category / {data.category}
-          </p>
-          <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">
-            {data.hero.title}
-          </h1>
-          <p className="reveal-on-scroll reveal-delay-150 mt-8 max-w-lg text-base leading-7 text-white/65">
-            {data.hero.description}
-          </p>
-          <div className="reveal-on-scroll reveal-delay-200 mt-10 flex max-w-xl items-center gap-3 border-b border-white/30 pb-3">
-            <Search className="size-4 text-white/50" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search stories..."
-              aria-label="Search stories"
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40"
-            />
-          </div>
-        </div>
-      </div>
-      <main className="relative px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
-        <div className="mx-auto max-w-[1240px]">
-          {filtered.length > 0 ? (
-            <div className="relative">
-              <div className="reveal-stagger columns-2 gap-3 sm:columns-2 sm:gap-6 lg:columns-4">
-                {visibleArticles.map((article) => (
-                  <PublicArticleCard
-                    key={article.id}
-                    article={article}
-                    masonry
-                  />
-                ))}
-              </div>
-              {hasMore ? (
-                <div className="reveal-on-scroll absolute inset-x-0 -bottom-8 flex h-64 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
-                  <button
-                    type="button"
-                    onClick={() => setShowAll(true)}
-                    className="group flex items-center gap-3 rounded-full border border-border bg-background/95 px-7 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-foreground shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-palembang-red hover:text-palembang-red"
-                  >
-                    Tampilkan Seluruh Cerita ({filtered.length} Berita)
-                    <ChevronDown className="size-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <div className="reveal-on-scroll min-h-[35vh] flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-2xl border border-border/70 bg-muted/30 text-muted-foreground shadow-sm">
-                <SearchX className="size-8 text-palembang-red" />
-              </div>
-              <p className="font-display text-2xl sm:text-3xl">Cerita tidak ditemukan.</p>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Coba kata kunci lain atau periksa kembali nanti.
-              </p>
-            </div>
-          )}
+    <div className="bg-white text-zinc-900">
+      {/* 1. HEROES: 3-Panel Widescreen Carousel */}
+      <LandingHero slides={heroSlides} />
 
+      {/* 2. CATEGORY ARTICLE SECTION (Matching Reference Screenshot) */}
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        {/* Category Title with subtle dotted divider line matching reference */}
+        <div>
+          <h1 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold text-black tracking-tight leading-tight">
+            {data.category}
+          </h1>
+          {data.heroSlides && data.heroSlides[0]?.description && (
+            <p className="mt-2 font-serif text-sm sm:text-base text-black/70">
+              {data.heroSlides[0].description}
+            </p>
+          )}
+          <div className="mt-4 mb-8 sm:mb-12 border-b border-dotted border-zinc-300 w-full" />
         </div>
+
+        {/* 3-Column Articles Grid */}
+        {articles.length > 0 ? (
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 sm:gap-x-10 lg:gap-x-12 gap-y-12 lg:gap-y-16">
+              {visibleArticles.map((article) => (
+                <PublicArticleCard key={article.id} article={article} />
+              ))}
+            </div>
+
+            {hasMore && (
+              <div className="mt-14 sm:mt-16 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setDisplayCount((prev) => prev + 6)}
+                  className="flex items-center gap-2 rounded-none border border-black bg-white px-8 py-3 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                >
+                  More Articles
+                  <ChevronDown className="size-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="min-h-[30vh] flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+              <SearchX className="size-6" />
+            </div>
+            <h2 className="font-sans text-xl font-bold text-zinc-800">
+              Belum ada artikel di kategori {data.category}
+            </h2>
+            <p className="mt-2 font-serif text-sm text-zinc-500">
+              Cerita baru akan segera hadir. Silakan periksa kembali nanti.
+            </p>
+          </div>
+        )}
       </main>
+
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pb-10 sm:pb-16">
+        <CollaborationCta contact={contact} />
+      </main>
+
+      {/* 3. FOOTER */}
       <Footer />
-    </>
+    </div>
   )
 }

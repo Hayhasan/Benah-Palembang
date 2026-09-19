@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client"
 
+import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
 import type {
   PublicEventDetail,
   PublicEventListItem,
@@ -34,12 +35,15 @@ export const publicEventListSelect = {
   title: true,
   description: true,
   bannerUrl: true,
+  additionalBannerUrls: true,
   category: true,
   startsAt: true,
   endsAt: true,
   location: true,
   organizer: true,
+  photographer: true,
   views: true,
+  publishedAt: true,
 } satisfies Prisma.EventSelect
 
 export const publicEventDetailSelect = {
@@ -47,20 +51,17 @@ export const publicEventDetailSelect = {
   content: true,
   registrationUrl: true,
   whatsappUrl: true,
+  owner: {
+    select: {
+      name: true,
+      username: true,
+      avatarUrl: true,
+    },
+  },
   tags: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
     select: { label: true },
-  },
-  likes: {
-    select: {
-      userId: true,
-    },
-  },
-  _count: {
-    select: {
-      likes: true,
-    },
   },
 } satisfies Prisma.EventSelect
 
@@ -98,6 +99,7 @@ export function mapPublicEventListItem(
     title: event.title,
     description: event.description,
     bannerUrl: event.bannerUrl,
+    additionalBannerUrls: event.additionalBannerUrls,
     category: event.category,
     startsAt: event.startsAt.toISOString(),
     endsAt: event.endsAt?.toISOString() ?? null,
@@ -105,7 +107,10 @@ export function mapPublicEventListItem(
     timeLabel: formatTimeLabel(event.startsAt, event.endsAt),
     location: event.location,
     organizer: event.organizer,
+    photographer: event.photographer,
     views: event.views,
+    publishedAt: event.publishedAt?.toISOString() ?? null,
+    publishedAtLabel: event.publishedAt ? dateFormatter.format(event.publishedAt) : null,
   }
 }
 
@@ -113,16 +118,12 @@ export function mapPublicEventDetail(
   event: PublicEventDetailRecord,
   currentUserId?: string | null,
 ): PublicEventDetail {
-  const hasLiked = Boolean(
-    currentUserId && event.likes.some((like) => like.userId === currentUserId),
-  )
   return {
     ...mapPublicEventListItem(event),
     content: event.content,
     registrationUrl: event.registrationUrl,
     whatsappUrl: event.whatsappUrl,
     tags: event.tags.map((tag) => tag.label),
-    likesCount: event._count.likes,
-    hasLiked,
+    
   }
 }

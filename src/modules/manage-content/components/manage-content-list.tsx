@@ -3,9 +3,7 @@
 import {
   CheckCircle,
   Eye,
-  Heart,
   Loader2,
-  MessageCircle,
   RotateCcw,
   Search,
   Trash2,
@@ -296,31 +294,13 @@ export function ManageContentList({
 
                       {/* Statistik */}
                       <td className="whitespace-nowrap px-6 py-4">
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span
-                            className="flex items-center gap-1 font-medium"
-                            title="Views"
-                          >
-                            <Eye className="size-3.5 text-blue-500" />{" "}
-                            {content.stats.views}
-                          </span>
-                          <span
-                            className="flex items-center gap-1 font-medium"
-                            title="Likes"
-                          >
-                            <Heart className="size-3.5 text-red-500" />{" "}
-                            {content.stats.likes}
-                          </span>
-                          {isArticlePage ? (
-                            <span
-                              className="flex items-center gap-1 font-medium"
-                              title="Comments"
-                            >
-                              <MessageCircle className="size-3.5 text-emerald-500" />{" "}
-                              {content.stats.comments}
-                            </span>
-                          ) : null}
-                        </div>
+                        <span
+                          className="flex items-center gap-1 text-xs font-medium text-muted-foreground"
+                          title="Views"
+                        >
+                          <Eye className="size-3.5 text-blue-500" />{" "}
+                          {content.stats.views}
+                        </span>
                       </td>
 
                       {/* Status */}

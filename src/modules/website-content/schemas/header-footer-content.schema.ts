@@ -67,20 +67,24 @@ export const headerFooterContentEditorSchema = z
     key: z.literal("header-footer"),
     logo: z.object({
       imageUrl: imageUrlSchema,
-      imageAlt: requiredText("Alt logo", 255),
-      linkUrl: linkUrlSchema,
+      imageAlt: z.string(), // Keep it valid in schema if needed, we pass empty string now
     }),
     footer: z.object({
-      backgroundText: requiredText("Background text footer", 160),
+      logo: z.object({
+        imageUrl: z.union([imageUrlSchema, z.literal("")]),
+        imageAlt: z.union([requiredText("Alt logo footer", 255), z.literal("")]),
+      }),
+      title: z.union([requiredText("Title footer", 255), z.literal("")]),
+      backgroundText: z.string(), // Pass empty string now
       description: requiredText("Deskripsi footer", 5000),
+      creatorText: requiredText("Creator Text footer", 5000),
       copyrightText: requiredText("Copyright", 255),
-      exploreLinks: z.array(footerLinkSchema).max(30),
+      exploreLinks: z.array(z.any()).optional(), // Keep valid just in case
       connectLinks: z.array(footerConnectLinkSchema).max(30),
     }),
   })
   .superRefine((data, context) => {
     const collections = [
-      ["footer.exploreLinks", data.footer.exploreLinks],
       ["footer.connectLinks", data.footer.connectLinks],
     ] as const
 

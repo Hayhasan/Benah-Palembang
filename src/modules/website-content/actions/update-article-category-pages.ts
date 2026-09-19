@@ -19,11 +19,12 @@ import type {
 } from "../types/article-category-page-editor"
 
 function categoryHeroData(category: ArticleCategoryPageEditorItem) {
+  const firstSlide = category.heroSlides[0]
   return {
-    categoryHeroImageUrl: category.hero.imageUrl,
-    categoryHeroImageAlt: category.hero.imageAlt,
-    categoryHeroTitle: category.hero.title,
-    categoryHeroDescription: category.hero.description,
+    categoryHeroImageUrl: firstSlide?.imageUrl ?? "",
+    categoryHeroImageAlt: firstSlide?.imageAlt ?? "",
+    categoryHeroTitle: firstSlide?.title ?? "",
+    categoryHeroDescription: firstSlide?.description ?? "",
   }
 }
 
@@ -37,12 +38,13 @@ function defaultArticleSectionData(sectionKey: string) {
     throw new Error(`Default kategori artikel ${sectionKey} tidak ditemukan.`)
   }
 
+  const firstSlide = category.heroSlides?.[0]
   return {
     ...section,
-    categoryHeroImageUrl: category.hero.imageUrl,
-    categoryHeroImageAlt: category.hero.imageAlt,
-    categoryHeroTitle: category.hero.title,
-    categoryHeroDescription: category.hero.description,
+    categoryHeroImageUrl: firstSlide?.imageUrl ?? "",
+    categoryHeroImageAlt: firstSlide?.imageAlt ?? "",
+    categoryHeroTitle: firstSlide?.title ?? "",
+    categoryHeroDescription: firstSlide?.description ?? "",
   }
 }
 
@@ -76,9 +78,22 @@ async function createDefaultWebsiteContent(
       articleSections: {
         create: DEFAULT_LANDING_PAGE.articleSections.map((section) => {
           const submitted = submittedByKey.get(section.sectionKey)
+          const slides = submitted?.heroSlides ?? getDefaultArticleCategoryPage(section.sectionKey)?.heroSlides ?? []
           return {
             ...defaultArticleSectionData(section.sectionKey),
             ...(submitted ? categoryHeroData(submitted) : {}),
+            heroSlides: {
+              create: slides.map((s, index) => ({
+                imageUrl: s.imageUrl,
+                imageAlt: s.imageAlt,
+                label: s.label,
+                title: s.title,
+                description: s.description,
+                photographerName: s.photographerName,
+                position: s.position ?? index + 1,
+                isVisible: s.isVisible,
+              })),
+            },
           }
         }),
       },
@@ -128,17 +143,46 @@ async function updateArticleCategoryPages(
     }
 
     if (category.id === null) {
-      await tx.websiteArticleSection.create({
+      const section = await tx.websiteArticleSection.create({
         data: {
           websiteContentId: existing.id,
           ...defaultArticleSectionData(category.sectionKey),
           ...categoryHeroData(category),
         },
       })
+      await tx.websiteArticleSectionHeroSlide.createMany({
+        data: category.heroSlides.map((s, index) => ({
+          websiteArticleSectionId: section.id,
+          imageUrl: s.imageUrl,
+          imageAlt: s.imageAlt,
+          label: s.label,
+          title: s.title,
+          description: s.description,
+          photographerName: s.photographerName,
+          position: s.position ?? index + 1,
+          isVisible: s.isVisible,
+        }))
+      })
     } else {
       await tx.websiteArticleSection.update({
         where: { id: category.id },
         data: categoryHeroData(category),
+      })
+      await tx.websiteArticleSectionHeroSlide.deleteMany({
+        where: { websiteArticleSectionId: category.id }
+      })
+      await tx.websiteArticleSectionHeroSlide.createMany({
+        data: category.heroSlides.map((s, index) => ({
+          websiteArticleSectionId: category.id!,
+          imageUrl: s.imageUrl,
+          imageAlt: s.imageAlt,
+          label: s.label,
+          title: s.title,
+          description: s.description,
+          photographerName: s.photographerName,
+          position: s.position ?? index + 1,
+          isVisible: s.isVisible,
+        }))
       })
     }
   }

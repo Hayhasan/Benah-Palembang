@@ -6,6 +6,7 @@ export interface LandingHeroSlideData {
   description: string
   buttonLabel: string
   buttonUrl: string
+  photographerName?: string
   position: number
   isVisible: boolean
 }

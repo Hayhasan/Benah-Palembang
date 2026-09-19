@@ -13,8 +13,6 @@ export interface OwnedArticleListItem {
   statusLabel: string
   moderationNote: string | null
   views: number
-  likes: number
-  comments: number
 }
 
 export interface OwnedArticleList {
@@ -38,7 +36,9 @@ export interface OwnedArticleEditorData {
   title: string
   excerpt: string
   content: string
+  label?: string | null
   coverImageUrl: string
+  additionalBannerUrls: string[]
   websiteArticleSectionId: number
   categoryLabel: string
   categorySlug: string
@@ -55,9 +55,18 @@ export interface OwnedArticleEditorData {
   }
   publishedAt: string | null
   publishedAtLabel: string
+  updatedAt: string
+  updatedAtLabel: string
   views: number
-  commentsCount: number
-  likesCount: number
+  photographer?: string | null
+  additionalPhotographers: string[]
+  venueName?: string | null
+  venueAddress?: string | null
+  venuePriceLevel?: number | null
+  venueOpenDays?: string | null
+  venueOpenHours?: string | null
+  venueFeatures?: string[]
+  venueContact?: string | null
 }
 
 export type ArticleSaveIntent = "SAVE" | "POST"

@@ -32,7 +32,9 @@ export const articleEditorSchema = z.object({
   title: requiredText("Judul Artikel", 255),
   excerpt: requiredText("Ringkasan Artikel", 5000),
   content: requiredText("Konten Artikel", 100_000),
+  label: z.string().trim().max(160, "Label artikel maksimal 160 karakter.").optional().nullable(),
   coverImageUrl: httpsUrl("Banner Artikel"),
+  additionalBannerUrls: z.array(httpsUrl("Banner Tambahan")).max(10, "Maksimal 10 banner tambahan.").optional().default([]),
   websiteArticleSectionId: z.coerce
     .number()
     .int()
@@ -41,4 +43,13 @@ export const articleEditorSchema = z.object({
     .array(requiredText("Tag", 80))
     .max(12, "Tag maksimal 12 item.")
     .transform((tags) => [...new Set(tags)]),
+  photographer: z.string().trim().max(160, "Fotografer maksimal 160 karakter.").optional().nullable(),
+  additionalPhotographers: z.array(z.string().trim().max(160, "Fotografer maksimal 160 karakter.")).max(10).optional().default([]),
+  venueName: z.string().trim().max(255, "Nama tempat maksimal 255 karakter.").optional().nullable(),
+  venueAddress: z.string().trim().max(2000, "Alamat tempat maksimal 2.000 karakter.").optional().nullable(),
+  venuePriceLevel: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  venueOpenDays: z.string().trim().max(100, "Hari operasional maksimal 100 karakter.").optional().nullable(),
+  venueOpenHours: z.string().trim().max(100, "Jam operasional maksimal 100 karakter.").optional().nullable(),
+  venueFeatures: z.array(z.string().trim().max(80)).max(20).optional().default([]),
+  venueContact: z.string().trim().max(100, "Kontak maksimal 100 karakter.").optional().nullable(),
 })

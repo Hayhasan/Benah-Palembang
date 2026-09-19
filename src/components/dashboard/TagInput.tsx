@@ -11,14 +11,25 @@ interface TagInputProps {
     setTags: (tags: string[]) => void
     placeholder?: string
     disabled?: boolean
+    prefix?: string
+    allowSpaces?: boolean
 }
 
-export function TagInput({ tags, setTags, placeholder = "Ketik tag lalu pisahkan dengan spasi atau koma", disabled = false }: TagInputProps) {
+export function TagInput({
+    tags,
+    setTags,
+    placeholder = "Ketik tag lalu pisahkan dengan spasi atau koma",
+    disabled = false,
+    prefix = "#",
+    allowSpaces = false,
+}: TagInputProps) {
     const [inputValue, setInputValue] = useState("")
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (disabled) return
-        if (e.key === "Enter" || e.key === "," || e.key === " ") {
+        const isDelimiter =
+            e.key === "Enter" || e.key === "," || (!allowSpaces && e.key === " ")
+        if (isDelimiter) {
             e.preventDefault()
             const newTag = inputValue.trim().replace(/,/g, "")
             
@@ -51,13 +62,13 @@ export function TagInput({ tags, setTags, placeholder = "Ketik tag lalu pisahkan
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="px-2 py-1 gap-1 flex items-center bg-muted text-muted-foreground hover:bg-muted/80">
-                        #{tag}
+                    <Badge key={index} variant="secondary" className="px-2.5 py-1 gap-1.5 flex items-center bg-black text-white hover:bg-black/90 dark:bg-zinc-900 dark:text-white border-none rounded-[3px] text-xs font-medium">
+                        {prefix}{tag}
                         {!disabled && (
                             <button
                                 type="button"
                                 onClick={() => removeTag(tag)}
-                                className="hover:bg-black/10 rounded-full p-0.5 focus:outline-none"
+                                className="hover:bg-white/20 text-white rounded-full p-0.5 focus:outline-none transition-colors"
                             >
                                 <X className="size-3" />
                             </button>

@@ -19,10 +19,21 @@ export async function readArticleCategoryPageEditor(): Promise<ArticleCategoryPa
         select: {
           id: true,
           sectionKey: true,
-          categoryHeroImageUrl: true,
-          categoryHeroImageAlt: true,
-          categoryHeroTitle: true,
-          categoryHeroDescription: true,
+          heroSlides: {
+            where: { deletedAt: null },
+            orderBy: { position: "asc" },
+            select: {
+              id: true,
+              imageUrl: true,
+              imageAlt: true,
+              label: true,
+              title: true,
+              description: true,
+              photographerName: true,
+              position: true,
+              isVisible: true,
+            },
+          },
         },
       },
     },
@@ -37,23 +48,29 @@ export async function readArticleCategoryPageEditor(): Promise<ArticleCategoryPa
     categories: DEFAULT_ARTICLE_CATEGORY_PAGES.map((defaultCategory, index) => {
       const section = sectionsByKey.get(defaultCategory.sectionKey)
 
-      return section
+        return section
         ? {
             id: section.id,
             clientKey: `article-category-${section.id}`,
             sectionKey: section.sectionKey,
-            hero: {
-              imageUrl: section.categoryHeroImageUrl,
-              imageAlt: section.categoryHeroImageAlt,
-              title: section.categoryHeroTitle,
-              description: section.categoryHeroDescription,
-            },
+            heroSlides: section.heroSlides.length > 0 ? section.heroSlides.map(s => ({
+              id: s.id,
+              clientKey: `hero-slide-${s.id}`,
+              imageUrl: s.imageUrl,
+              imageAlt: s.imageAlt,
+              label: s.label,
+              title: s.title,
+              description: s.description,
+              photographerName: s.photographerName ?? "",
+              position: s.position,
+              isVisible: s.isVisible,
+            })) : defaultCategory.heroSlides,
           }
         : {
             id: null,
             clientKey: `default-article-category-${index + 1}`,
             sectionKey: defaultCategory.sectionKey,
-            hero: defaultCategory.hero,
+            heroSlides: defaultCategory.heroSlides,
           }
     }),
   }

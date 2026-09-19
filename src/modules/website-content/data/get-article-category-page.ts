@@ -25,10 +25,21 @@ export async function getArticleCategoryPage(
         select: {
           sectionKey: true,
           articleCategorySlug: true,
-          categoryHeroImageUrl: true,
-          categoryHeroImageAlt: true,
-          categoryHeroTitle: true,
-          categoryHeroDescription: true,
+          heroSlides: {
+            where: { deletedAt: null, isVisible: true },
+            orderBy: { position: "asc" },
+            select: {
+              id: true,
+              imageUrl: true,
+              imageAlt: true,
+              label: true,
+              title: true,
+              description: true,
+              photographerName: true,
+              position: true,
+              isVisible: true,
+            },
+          },
         },
       },
     },
@@ -52,11 +63,9 @@ export async function getArticleCategoryPage(
     sectionKey: section.sectionKey,
     slug: section.articleCategorySlug,
     category: category.category,
-    hero: {
-      imageUrl: section.categoryHeroImageUrl,
-      imageAlt: section.categoryHeroImageAlt,
-      title: section.categoryHeroTitle,
-      description: section.categoryHeroDescription,
-    },
+    heroSlides:
+      section.heroSlides.length > 0
+        ? section.heroSlides
+        : category.heroSlides,
   }
 }

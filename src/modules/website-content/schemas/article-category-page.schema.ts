@@ -19,16 +19,24 @@ const imageUrlSchema = z
     "Background kategori harus menggunakan path internal atau URL HTTP(S).",
   )
 
+const heroSlideSchema = z.object({
+  id: z.number().int().positive().nullable(),
+  clientKey: z.string().min(1).max(100),
+  imageUrl: imageUrlSchema,
+  imageAlt: requiredText("Alt gambar banner", 255),
+  label: requiredText("Label banner", 160),
+  title: requiredText("Judul banner", 255),
+  description: z.string().max(5000),
+  photographerName: z.string().max(160).optional(),
+  position: z.number().int().min(1),
+  isVisible: z.boolean(),
+})
+
 const categorySchema = z.object({
   id: z.number().int().positive().nullable(),
   clientKey: z.string().min(1).max(100),
   sectionKey: z.string().min(1).max(160),
-  hero: z.object({
-    imageUrl: imageUrlSchema,
-    imageAlt: requiredText("Alt background kategori", 255),
-    title: requiredText("Judul halaman kategori", 255),
-    description: requiredText("Deskripsi halaman kategori", 5000),
-  }),
+  heroSlides: z.array(heroSlideSchema).min(1, "Minimal 1 hero slide."),
 })
 
 export const articleCategoryPagesEditorSchema = z

@@ -10,8 +10,18 @@ export interface ArticleChangeSnapshot {
   excerpt: string
   content: string
   coverImageUrl: string
+  additionalBannerUrls: string[]
   categorySlug: string
   tags: string[]
+  photographer?: string | null
+  additionalPhotographers: string[]
+  venueName?: string | null
+  venueAddress?: string | null
+  venuePriceLevel?: number | null
+  venueOpenDays?: string | null
+  venueOpenHours?: string | null
+  venueFeatures?: string[]
+  venueContact?: string | null
 }
 
 const TEXT_PREVIEW_LIMIT = 200
@@ -74,8 +84,22 @@ export function buildArticleChangeSummary(
     text("excerpt", before.excerpt, after.excerpt),
     html("content", before.content, after.content),
     text("coverImageUrl", before.coverImageUrl, after.coverImageUrl),
+    list("additionalBannerUrls", before.additionalBannerUrls, after.additionalBannerUrls),
     text("categorySlug", before.categorySlug, after.categorySlug),
     list("tags", before.tags, after.tags),
+    text("photographer", before.photographer ?? null, after.photographer ?? null),
+    list("additionalPhotographers", before.additionalPhotographers, after.additionalPhotographers),
+    text("venueName", before.venueName ?? null, after.venueName ?? null),
+    text("venueAddress", before.venueAddress ?? null, after.venueAddress ?? null),
+    text(
+      "venuePriceLevel",
+      before.venuePriceLevel ? String(before.venuePriceLevel) : null,
+      after.venuePriceLevel ? String(after.venuePriceLevel) : null,
+    ),
+    text("venueOpenDays", before.venueOpenDays ?? null, after.venueOpenDays ?? null),
+    text("venueOpenHours", before.venueOpenHours ?? null, after.venueOpenHours ?? null),
+    list("venueFeatures", before.venueFeatures ?? [], after.venueFeatures ?? []),
+    text("venueContact", before.venueContact ?? null, after.venueContact ?? null),
   ]
 
   const changed = comparisons.filter((comparison) => comparison.changed)

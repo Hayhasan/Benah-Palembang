@@ -6,7 +6,7 @@ import { useSession } from "@/modules/auth/hooks/use-session"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
 import { 
     LayoutDashboard, Monitor, Users, FileText, 
-    PenTool, CalendarPlus, Activity,
+    PenTool, CalendarPlus, Activity, Briefcase,
     ChevronLeft, ChevronRight, Menu, ChevronDown, LogOut, X
 } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -14,13 +14,14 @@ import { useRouter } from "next/navigation"
 import { DEFAULT_AVATAR } from "@/lib/constants/placeholder"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
+import { useDashboardSidebar } from "@/context/DashboardSidebarContext"
 
 export function Sidebar() {
     const router = useRouter()
     const user = useCurrentUser()
     const { logout, isLoggingOut } = useSession()
     const { requestNavigation } = useUnsavedChanges()
-    const [collapsed, setCollapsed] = useState(false)
+    const { collapsed, toggleCollapsed } = useDashboardSidebar()
     const location = useLocation()
     const [mobileOpen, setMobileOpen] = useState(false)
     const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
@@ -70,6 +71,7 @@ export function Sidebar() {
         },
         { title: "Create Article", icon: PenTool, path: "/dashboard/create-article", roles: ["SUPERADMIN", "ADMIN", "USER"] },
         { title: "Create Event", icon: CalendarPlus, path: "/dashboard/create-event", roles: ["SUPERADMIN", "ADMIN", "USER"] },
+        { title: "Create Collaboration", icon: Briefcase, path: "/dashboard/collaboration", roles: ["SUPERADMIN", "ADMIN", "USER"] },
         { title: "Log Activities", icon: Activity, path: "/dashboard/logs", roles: ["SUPERADMIN"] },
     ]
 
@@ -128,7 +130,7 @@ export function Sidebar() {
                     ) : (
                         <button 
                             type="button"
-                            onClick={() => setCollapsed(!collapsed)} 
+                            onClick={toggleCollapsed} 
                             className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             aria-label={collapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
                         >
@@ -315,7 +317,7 @@ export function Sidebar() {
 
             {/* Desktop Sidebar */}
             <aside className={cn(
-                "hidden lg:flex fixed left-0 top-0 z-30 h-screen border-r bg-background transition-all duration-300 flex-col",
+                "hidden lg:flex fixed left-0 top-0 z-40 h-screen border-r bg-background transition-all duration-300 flex-col",
                 collapsed ? "w-16" : "w-64"
             )}>
                 {renderNavContent(false)}

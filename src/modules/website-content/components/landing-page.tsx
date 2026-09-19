@@ -1,434 +1,307 @@
-import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight, Mail, Sparkles } from "lucide-react"
+import Image from "next/image"
+import { ArrowRight, CalendarDays, MapPin } from "lucide-react"
 
 import { PublicFooter } from "@/features/public/components/PublicFooter"
-import { SectionHeading } from "@/features/public/components/SectionHeading"
 import { PublicArticleCard } from "@/modules/article/components/public-article-card"
-import type { LandingArticlesBySection } from "@/modules/article/types/public-article"
+import type { LandingArticlesBySection, PublicArticleCardData } from "@/modules/article/types/public-article"
+import type { PublicEventListItem } from "@/modules/event/types/public-event"
 
-import { MAX_EXPLORE_ITEMS } from "../constants/explore-items"
-import type {
-  LandingArticleSectionData,
-  LandingPageView,
-} from "../types/landing-page"
+import type { LandingPageView } from "../types/landing-page"
 import { LandingHero } from "./landing-hero"
 
 interface LandingPageProps {
   data: LandingPageView
   articlesBySection: LandingArticlesBySection
+  latestArticles?: PublicArticleCardData[]
+  events?: PublicEventListItem[]
 }
 
-// Tailwind hanya membaca class literal, jadi jumlah kolom dipetakan eksplisit.
-const exploreGridColumns: Record<number, string> = {
-  1: "lg:grid-cols-1",
-  2: "lg:grid-cols-2",
-  3: "lg:grid-cols-3",
-  4: "lg:grid-cols-4",
-  5: "lg:grid-cols-5",
-  6: "lg:grid-cols-6",
+const EVENT_TIME_ZONE = "Asia/Jakarta"
+const datePartFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "numeric",
+  timeZone: EVENT_TIME_ZONE,
+  year: "numeric",
+})
+
+function getMonthKey(date: Date) {
+  const parts = datePartFormatter.formatToParts(date)
+  const month = parts.find((part) => part.type === "month")?.value
+  const year = parts.find((part) => part.type === "year")?.value
+  return `${year}-${month}`
 }
 
-const articleSectionStyle = {
-  background: "bg-background text-foreground",
-  gradientHorizontal: "from-background via-background/70",
-  gradientVertical: "from-background/40 via-transparent to-background",
-  link: "text-palembang-red",
-  buttonBorder:
-    "border-palembang-red text-palembang-red group-hover:bg-palembang-red group-hover:text-white",
-}
-
-function HighlightedTitle({ title }: { title: string }) {
-  const separatorIndex = title.lastIndexOf(" ")
-
-  if (separatorIndex < 0) {
-    return <span className="text-palembang-red">{title}</span>
-  }
-
-  return (
-    <>
-      {title.slice(0, separatorIndex)}{" "}
-      <span className="text-palembang-red">
-        {title.slice(separatorIndex + 1)}
-      </span>
-    </>
-  )
-}
-
-function FeaturedArticleSection({
-  section,
+export function LandingPage({
+  data,
   articlesBySection,
-}: {
-  section: LandingArticleSectionData
-  articlesBySection: LandingArticlesBySection
-}) {
-  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(0, 3)
-  const style = articleSectionStyle
-
-  if (sectionArticles.length === 0) return null
-
-  return (
-    <section
-      className={`reveal-on-scroll relative overflow-hidden px-6 py-24 sm:px-10 lg:px-16 lg:py-32 ${style.background}`}
-    >
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-10 sm:w-2/3 lg:w-1/2 lg:opacity-20 dark:opacity-20 dark:lg:opacity-30">
-        <Image
-          fill
-          src={section.backgroundImageUrl}
-          alt=""
-          sizes="(max-width: 640px) 100vw, 50vw"
-          className="size-full object-cover object-right"
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-r ${style.gradientHorizontal} to-transparent`}
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-b ${style.gradientVertical}`}
-        />
-      </div>
-      <div className="relative z-10 mx-auto max-w-[1240px]">
-        <SectionHeading
-          eyebrow={section.eyebrow}
-          title={section.title}
-          description={section.description}
-        />
-        <div className="reveal-stagger mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
-          {sectionArticles.map((article, index) => (
-            <PublicArticleCard
-              key={article.id}
-              article={article}
-              featured={index === 0}
-            />
-          ))}
-        </div>
-        <div className="reveal-on-scroll mt-12 flex justify-end">
-          <Link
-            href={`/${section.articleCategorySlug}`}
-            className={`group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] ${style.link}`}
-          >
-            {section.linkLabel}
-            <span
-              className={`rounded-full border p-2 transition-colors ${style.buttonBorder}`}
-            >
-              <ArrowRight className="size-4" />
-            </span>
-          </Link>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function CategoryArticleSection({
-  section,
-  articlesBySection,
-}: {
-  section: LandingArticleSectionData
-  articlesBySection: LandingArticlesBySection
-}) {
-  const sectionArticles = (articlesBySection[section.sectionKey] ?? []).slice(0, 3)
-  const style = articleSectionStyle
-
-  if (sectionArticles.length === 0) return null
-
-  return (
-    <section
-      className={`reveal-on-scroll relative overflow-hidden px-6 py-24 sm:px-10 lg:px-16 lg:py-32 ${style.background}`}
-    >
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-10 sm:w-2/3 lg:w-1/2 lg:opacity-20 dark:opacity-20 dark:lg:opacity-30">
-        <Image
-          fill
-          src={section.backgroundImageUrl}
-          alt=""
-          sizes="(max-width: 640px) 100vw, 50vw"
-          className="size-full object-cover object-right"
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-r ${style.gradientHorizontal} to-transparent`}
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-b ${style.gradientVertical}`}
-        />
-      </div>
-      <div className="relative z-10 mx-auto max-w-[1240px]">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <SectionHeading
-            eyebrow={section.eyebrow}
-            title={section.title}
-            description={section.description}
-          />
-          <Link
-            href={`/${section.articleCategorySlug}`}
-            className={`group hidden items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] md:flex ${style.link}`}
-          >
-            {section.linkLabel}
-            <span
-              className={`rounded-full border p-2 transition-colors ${style.buttonBorder}`}
-            >
-              <ArrowRight className="size-4" />
-            </span>
-          </Link>
-        </div>
-        <div className="reveal-stagger mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
-          {sectionArticles.map((article, index) => (
-            <PublicArticleCard
-              key={article.id}
-              article={article}
-              featured={index === 0}
-            />
-          ))}
-        </div>
-        <div className="reveal-on-scroll mt-12 flex justify-end md:hidden">
-          <Link
-            href={`/${section.articleCategorySlug}`}
-            className={`group flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] ${style.link}`}
-          >
-            {section.linkLabel}
-            <span
-              className={`rounded-full border p-2 transition-colors ${style.buttonBorder}`}
-            >
-              <ArrowRight className="size-4" />
-            </span>
-          </Link>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function LandingArticleSection({
-  section,
-  articlesBySection,
-}: {
-  section: LandingArticleSectionData
-  articlesBySection: LandingArticlesBySection
-}) {
-  if (section.sectionKey === "featured") {
-    return (
-      <FeaturedArticleSection
-        section={section}
-        articlesBySection={articlesBySection}
-      />
-    )
-  }
-
-  return (
-    <CategoryArticleSection
-      section={section}
-      articlesBySection={articlesBySection}
-    />
-  )
-}
-
-function LandingCta({ data }: { data: LandingPageView["cta"] }) {
-  const titleLines = data.title
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-
-  return (
-    <section className="reveal-on-scroll relative overflow-hidden bg-background px-6 py-20 text-foreground sm:px-10 lg:px-16 lg:py-28">
-      <div className="mx-auto max-w-[1240px]">
-        <div className="reveal-scale relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-zinc-900 via-black/85 to-zinc-950 p-8 text-white shadow-2xl sm:p-14 lg:p-16">
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-25 sm:w-2/3 lg:w-1/2 lg:opacity-35">
-            <Image
-              fill
-              src={data.backgroundImageUrl}
-              alt=""
-              sizes="(max-width: 640px) 100vw, 50vw"
-              className="size-full object-cover object-right"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-transparent to-zinc-950" />
-          </div>
-          <div className="relative z-10 flex flex-col justify-between gap-10 lg:flex-row lg:items-end">
-            <div>
-              <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
-                <span className="size-2 rounded-full bg-palembang-red" />
-                {data.eyebrow}
-              </div>
-              <h2 className="mt-4 max-w-2xl font-display text-4xl font-black leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
-                {titleLines.map((line, index) => (
-                  <span
-                    key={`${index}-${line}`}
-                    className={`block ${index === 0 ? "text-white" : "text-palembang-red"}`}
-                  >
-                    {line}
-                  </span>
-                ))}
-              </h2>
-            </div>
-            <div className="max-w-md">
-              <p className="text-sm leading-relaxed text-white/75 sm:text-base">
-                {data.description}
-              </p>
-              <div className="mt-8 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-                <Link
-                  href={data.buttonUrl}
-                  className="flex w-full sm:w-auto sm:flex-initial items-center justify-center gap-2 sm:gap-3 rounded-full bg-palembang-red px-5 sm:px-7 py-3.5 text-center text-xs font-bold uppercase tracking-[0.12em] sm:tracking-[0.14em] text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:text-palembang-charcoal whitespace-nowrap"
-                >
-                  <span>{data.buttonLabel}</span>
-                  <ArrowRight className="size-4 shrink-0" />
-                </Link>
-                <a
-                  href={`mailto:${data.contactEmail}`}
-                  className="flex w-full sm:w-auto sm:flex-initial items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 sm:px-6 py-3.5 text-center text-xs font-semibold text-white/80 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white whitespace-nowrap"
-                >
-                  <Mail className="size-4 text-palembang-red shrink-0" />
-                  <span>{data.contactLabel}</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-export function LandingPage({ data, articlesBySection }: LandingPageProps) {
+  latestArticles = [],
+  events = [],
+}: LandingPageProps) {
   const heroSlides = data.heroSlides.filter((slide) => slide.isVisible)
-  const perspectives = data.explore.items
-    .filter((item) => item.isVisible)
-    .slice(0, MAX_EXPLORE_ITEMS)
-  const articleSections = data.articleSections.filter(
-    (section) => section.isVisible,
-  )
-  const teamMembers = data.team.members.filter((member) => member.isVisible)
+
+  // Filter This Month's Events, fallback to latest events (3 events)
+  const currentMonth = getMonthKey(new Date())
+  const thisMonthEvents = events
+    .filter((event) => getMonthKey(new Date(event.startsAt)) === currentMonth)
+    .slice(0, 3)
+
+  const fallbackEvents =
+    thisMonthEvents.length > 0 ? thisMonthEvents : events.slice(0, 3)
+
+  // Team members
+  const teamMembers =
+    data.team?.members?.filter((member) => member.isVisible) || []
+
+  // 1 Section: Artikel Terbaru
+  const articleSections = [
+    {
+      title: "ARTIKEL TERBARU",
+      slug: "artikel",
+      articles: latestArticles.slice(0, 3),
+    },
+    ...(data.articleSections
+      ?.filter((section) => section.isVisible)
+      .map((section) => ({
+        title: section.title.toLowerCase().includes("cerita dari palembang") ? "Cerita Warga" : section.title,
+        slug: section.articleCategorySlug,
+        articles: (articlesBySection[section.sectionKey] || []).slice(0, 3),
+      })) || []),
+  ]
 
   return (
-    <>
+    <div className="bg-white text-zinc-900">
+      {/* 1. HEROES: 3-Panel Widescreen Carousel */}
       <LandingHero slides={heroSlides} />
-      <main className="bg-background text-foreground">
-        <section className="reveal-on-scroll bg-background px-6 py-24 text-foreground sm:px-10 lg:px-16 lg:py-36">
-          <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[0.75fr_1.7fr]">
-            <div className="reveal-slide-left">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-palembang-red">
-                {data.about.eyebrow}
-              </p>
-              <div className="mt-8 h-24 w-px bg-palembang-red/50" />
-              <p className="mt-5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                {data.about.establishedText}
-              </p>
-            </div>
-            <div className="reveal-on-scroll reveal-delay-150">
-              <h2 className="max-w-4xl font-display text-4xl font-bold leading-[1.05] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
-                <HighlightedTitle title={data.about.title} />
-              </h2>
-              <p className="mt-8 max-w-2xl text-base leading-8 text-muted-foreground">
-                {data.about.description}
-              </p>
-              <div className="mt-10 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-palembang-red">
-                <span className="rounded-full border border-palembang-red p-2">
-                  <Sparkles className="size-4" />
-                </span>
-                {data.about.closingText}
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {perspectives.length > 0 ? (
-          <section className="reveal-on-scroll bg-background px-6 py-24 text-foreground sm:px-10 lg:px-16 lg:py-32">
-            <div className="mx-auto max-w-[1240px]">
-              <SectionHeading
-                eyebrow={data.explore.eyebrow}
-                title={data.explore.title}
-              />
-              {/*
-                Garis pemisah digambar oleh border kiri/atas tiap card, bukan
-                oleh background container. Baris terakhir yang tidak penuh
-                karena itu tidak memunculkan blok kosong berwarna border.
-              */}
-              <div className="mt-12 overflow-hidden rounded-[1.5rem] border border-border bg-card">
-                <div
-                  className={`reveal-stagger -ml-px -mt-px grid grid-cols-2 sm:grid-cols-3 ${
-                    exploreGridColumns[perspectives.length] ?? "lg:grid-cols-6"
-                  }`}
+      {/* Main Content Container (Consistent max-w-[1240px]) */}
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-16 sm:space-y-20">
+        {/* 2-6. ARTICLE SECTIONS (Cerita Warga, Gaya Hidup, Ruang Kota, Industri Kreatif, Kebudayaan) */}
+        {articleSections.map((section) => (
+          <div key={section.slug} className="space-y-16 sm:space-y-20">
+            <section aria-label={section.title} className="space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-200 pb-3 sm:pb-3.5">
+                <span className="rounded-[3px] bg-black text-white border border-black px-4 py-1.5 text-xs sm:text-[13px] font-bold uppercase tracking-[0.16em]">
+                  {section.title}
+                </span>
+                <Link
+                  href={`/${section.slug}`}
+                  className="flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-black hover:text-zinc-600 transition-colors"
                 >
-                  {perspectives.map((item, index) => (
-                    <Link
-                      key={`${item.position}-${item.linkUrl}`}
-                      href={item.linkUrl}
-                      className="group relative min-h-48 overflow-hidden border-l border-t border-border bg-card p-4 text-foreground transition-colors hover:bg-muted sm:min-h-64 sm:p-6"
-                    >
-                      <div className="flex h-full flex-col justify-between">
-                        <div>
-                          <span className="font-display text-3xl text-palembang-red sm:text-5xl">
-                            {String(index + 1).padStart(2, "0")}
-                          </span>
-                          <h3 className="mt-3 font-display text-lg font-bold leading-tight transition-colors group-hover:text-palembang-red sm:mt-5 sm:text-2xl">
-                            {item.label}
-                          </h3>
-                        </div>
-                        <span className="mt-4 flex flex-col justify-between text-[10px] uppercase tracking-[0.13em] text-muted-foreground group-hover:text-foreground sm:mt-0 sm:flex-row sm:items-center sm:text-xs">
-                          <span>
-                            {[item.count, item.countLabel]
-                              .filter((part) => part !== null && part !== undefined)
-                              .join(" ")}
-                          </span>
-                          <ArrowUpRight className="mt-1 size-4 text-palembang-red transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 sm:mt-0 sm:size-5" />
-                        </span>
-                      </div>
-                    </Link>
+                  More Articles <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+
+              {section.articles.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {section.articles.map((article) => (
+                    <PublicArticleCard key={article.id} article={article} />
                   ))}
                 </div>
+              ) : (
+                <p className="py-8 text-center text-sm text-black/70 font-serif">
+                  Belum ada artikel untuk kategori ini.
+                </p>
+              )}
+            </section>
+
+            <hr className="border-t border-zinc-200" />
+          </div>
+        ))}
+
+        {/* 7. THIS MONTH AGENDA */}
+        <section aria-label="This Month Agenda" className="space-y-6">
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-3 sm:pb-3.5">
+            <span className="rounded-[3px] bg-black text-white border border-black px-4 py-1.5 text-xs sm:text-[13px] font-bold uppercase tracking-[0.16em]">
+              AGENDA BULAN INI
+            </span>
+            <Link
+              href="/agenda"
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-black hover:text-zinc-600 transition-colors"
+            >
+              More Events <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+
+          {fallbackEvents.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {fallbackEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/agenda/${event.id}`}
+                  className="group flex flex-col overflow-hidden"
+                >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100">
+                    <Image
+                      fill
+                      src={event.bannerUrl}
+                      alt={event.title}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="size-full object-cover transition-transform duration-500 group-hover:scale-103"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col pt-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black">
+                      {event.category}
+                    </p>
+                    <h4 className="mt-1 font-sans text-base sm:text-lg font-bold leading-snug tracking-tight text-black group-hover:underline line-clamp-2 min-h-[44px] sm:min-h-[48px]">
+                      {event.title}
+                    </h4>
+                    <div className="my-2 border-b border-dotted border-zinc-300" />
+                    <div className="flex flex-col space-y-1 text-xs text-black/80">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="size-3.5 text-black shrink-0" />
+                        <span>{event.dateLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="size-3.5 text-black shrink-0" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-black/70 font-serif">
+              Belum ada agenda terdaftar untuk bulan ini.
+            </p>
+          )}
+        </section>
+
+        {/* Divider */}
+        <hr className="border-t border-zinc-200" />
+
+        {/* 8. ABOUT BENAH PALEMBANG */}
+        {data.about.title && (
+          <section id="about" aria-label="About Benah Palembang" className="py-6 sm:py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8 lg:gap-16 items-start">
+              {/* Left Column: Eyebrow Badge & Established Text */}
+              <div className="flex flex-col items-start space-y-4">
+                <span className="rounded-[3px] bg-black text-white border border-black px-4 py-1.5 text-xs sm:text-[13px] font-bold uppercase tracking-[0.16em]">
+                  ABOUT BENAH PALEMBANG
+                </span>
+                {data.about.establishedText && (
+                  <p className="text-xs uppercase tracking-[0.16em] text-black/60 font-medium">
+                    {data.about.establishedText}
+                  </p>
+                )}
+              </div>
+
+              {/* Right Column: Title, Divider, Editorial Description & Closing Text */}
+              <div>
+                <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-black leading-snug">
+                  {data.about.title}
+                </h2>
+
+                <div className="my-6 border-b border-dotted border-zinc-300 w-full" />
+
+                <p className="font-serif text-base sm:text-lg leading-relaxed text-black/80 w-full text-justify">
+                  {data.about.description}
+                </p>
+
+                {data.about.closingText && (
+                  <div className="mt-8 flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.16em] text-black">
+                    <span className="size-2 rounded-full bg-black inline-block" />
+                    <span>{data.about.closingText}</span>
+                  </div>
+                )}
               </div>
             </div>
           </section>
-        ) : null}
+        )}
 
-        {articleSections.map((section) => (
-          <LandingArticleSection
-            key={section.sectionKey}
-            section={section}
-            articlesBySection={articlesBySection}
-          />
-        ))}
+        {/* 9. OUR TEAM */}
+        {teamMembers.length > 0 && (
+          <>
+            <hr className="border-t border-zinc-200" />
+            <section aria-label="Our Team" className="py-2">
+              <div className="flex flex-col items-center text-center space-y-6">
+                {/* Header: Align Center */}
+                <div className="flex flex-col items-center text-center max-w-2xl mx-auto w-full">
+                  <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-black">
+                    {data.team.title || "Di Balik Benah Palembang"}
+                  </h2>
+                  {data.team.description && (
+                    <p className="mt-2 font-serif text-sm sm:text-base text-black/70">
+                      {data.team.description}
+                    </p>
+                  )}
+                  <div className="mt-6 border-b border-dotted border-zinc-300 w-full" />
+                </div>
 
-        <div>
-          {teamMembers.length > 0 ? (
-            <section className="reveal-on-scroll bg-background px-6 py-24 text-foreground sm:px-10 lg:px-16 lg:py-32">
-              <div className="mx-auto max-w-[1240px]">
-                <SectionHeading
-                  eyebrow={data.team.eyebrow}
-                  title={data.team.title}
-                  description={data.team.description}
-                />
-                <div className="reveal-stagger mt-10 grid grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+                {/* 3 Columns Grid: Centered */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 pt-2 w-full justify-center">
                   {teamMembers.map((member) => (
                     <div
                       key={`${member.position}-${member.name}`}
-                      className="group rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-md"
+                      className="group flex flex-col items-center text-center mx-auto w-full max-w-[320px]"
                     >
-                      <div className="img-zoom relative aspect-[4/5] overflow-hidden rounded-xl border border-border/50 bg-muted">
+                      <div className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-100 border border-zinc-200 rounded-none">
                         <Image
                           fill
                           src={member.imageUrl}
                           alt={member.name}
-                          sizes="(max-width: 1024px) 50vw, 25vw"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="size-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0"
                         />
                       </div>
-                      <p className="mt-3 font-display text-lg font-bold sm:mt-5 sm:text-2xl">
-                        {member.name}
-                      </p>
-                      <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.16em] text-palembang-red sm:text-[10px]">
-                        {member.role}
-                      </p>
-                      <p className="mt-2 line-clamp-3 text-xs leading-5 text-muted-foreground sm:mt-3 sm:line-clamp-none sm:text-sm sm:leading-6">
-                        {member.bio}
-                      </p>
+                      <div className="flex flex-1 flex-col items-center text-center pt-3.5 w-full">
+                        <h3 className="font-sans text-base sm:text-lg font-bold text-black group-hover:underline transition-colors">
+                          {member.name}
+                        </h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/60 mt-0.5">
+                          {member.role}
+                        </p>
+                        <div className="my-2.5 border-b border-dotted border-zinc-200 w-20 mx-auto" />
+                        <p className="font-serif text-xs sm:text-[13px] leading-relaxed text-black/80 line-clamp-3">
+                          {member.bio}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </section>
-          ) : null}
-          <LandingCta data={data.cta} />
-        </div>
+          </>
+        )}
+
+        {/* Divider */}
+        <hr className="border-t border-zinc-200" />
+
+        {/* 10. CTA COLLABORATION */}
+        <section aria-label="Collaboration Call to Action" className="py-2">
+          <div className="border border-black bg-white p-8 sm:p-12">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-block rounded-[3px] bg-black text-white border border-black px-4 py-1.5 text-xs sm:text-[13px] font-bold uppercase tracking-[0.16em]">
+                {data.cta.eyebrow || "COLLABORATION"}
+              </span>
+              <h2 className="mt-4 font-sans text-2xl sm:text-3xl font-bold tracking-tight text-black">
+                {data.cta.title || "Jalin Kolaborasi Bersama Benah Palembang"}
+              </h2>
+              <p className="mt-3 font-serif text-sm leading-relaxed text-black/80">
+                {data.cta.description || "Membuka ruang sinergi bagi brand, kreator, jurnalis warga, dan komunitas untuk merayakan dinamika, budaya, dan denyut kehidupan kota Palembang."}
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  href={data.cta.buttonUrl || "/kolaborasi"}
+                  className="rounded-[3px] bg-black px-6 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-white hover:bg-zinc-800 transition-colors"
+                >
+                  {data.cta.buttonLabel || "Jelajahi Kolaborasi"}
+                </Link>
+                <a
+                  href={`mailto:${data.cta.contactEmail || "kolaborasi@benahpalembang.id"}`}
+                  className="rounded-[3px] border border-black bg-white px-6 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-black hover:text-white transition-colors"
+                >
+                  {data.cta.contactLabel || "Hubungi Kami"}
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
+
+      {/* FOOTER */}
       <PublicFooter />
-    </>
+    </div>
   )
 }

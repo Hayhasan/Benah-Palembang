@@ -32,10 +32,10 @@ interface OverviewBaseData {
 export interface ManagementOverviewData extends OverviewBaseData {
   audience: "MANAGEMENT"
   metrics: {
-    users: OverviewMetricItem
+    visits: OverviewMetricItem
     articles: OverviewMetricItem
     events: OverviewMetricItem
-    requests: OverviewMetricItem
+    collaborations: OverviewMetricItem
   }
   recentContents: OverviewRecentContentItem[]
 }

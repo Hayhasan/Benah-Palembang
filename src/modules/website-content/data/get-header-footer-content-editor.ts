@@ -13,22 +13,13 @@ import { footerConnectPlatformFromDatabase } from "./header-footer-content.mappe
 export const headerFooterContentEditorSelect = {
   key: true,
   logoImageUrl: true,
-  logoImageAlt: true,
-  logoLinkUrl: true,
-  footerBackgroundText: true,
+  footerLogoImageUrl: true,
+  footerLogoImageAlt: true,
+  footerTitle: true,
   footerDescription: true,
+  footerCreatorText: true,
   copyrightText: true,
-  footerExploreLinks: {
-    where: { deletedAt: null },
-    orderBy: { position: "asc" },
-    select: {
-      id: true,
-      label: true,
-      linkUrl: true,
-      position: true,
-      isVisible: true,
-    },
-  },
+
   footerConnectLinks: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -54,17 +45,17 @@ export function mapHeaderFooterContentToEditor(
     key: "header-footer",
     logo: {
       imageUrl: content.logoImageUrl,
-      imageAlt: content.logoImageAlt,
-      linkUrl: content.logoLinkUrl,
+      imageAlt: "", // Kept in Editor type but not DB
     },
     footer: {
-      backgroundText: content.footerBackgroundText,
+      logo: {
+        imageUrl: content.footerLogoImageUrl || "",
+        imageAlt: content.footerLogoImageAlt || "",
+      },
+      title: content.footerTitle || "",
       description: content.footerDescription,
+      creatorText: content.footerCreatorText,
       copyrightText: content.copyrightText,
-      exploreLinks: content.footerExploreLinks.map((link) => ({
-        ...link,
-        clientKey: `footer-explore-${link.id}`,
-      })),
       connectLinks: content.footerConnectLinks.map((link) => ({
         ...link,
         platform: footerConnectPlatformFromDatabase(link.platform),
@@ -79,13 +70,6 @@ export function mapDefaultHeaderFooterContentToEditor(): HeaderFooterContentEdit
     ...DEFAULT_HEADER_FOOTER_CONTENT,
     footer: {
       ...DEFAULT_HEADER_FOOTER_CONTENT.footer,
-      exploreLinks: DEFAULT_HEADER_FOOTER_CONTENT.footer.exploreLinks.map(
-        (link, index) => ({
-          ...link,
-          id: null,
-          clientKey: `default-footer-explore-${index + 1}`,
-        }),
-      ),
       connectLinks: DEFAULT_HEADER_FOOTER_CONTENT.footer.connectLinks.map(
         (link, index) => ({
           ...link,

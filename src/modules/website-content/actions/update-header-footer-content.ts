@@ -19,24 +19,16 @@ function rootData(data: HeaderFooterContentEditorData) {
   return {
     logoImageUrl: data.logo.imageUrl,
     logoImageAlt: data.logo.imageAlt,
-    logoLinkUrl: data.logo.linkUrl,
-    footerBackgroundText: data.footer.backgroundText,
+    footerLogoImageUrl: data.footer.logo.imageUrl,
+    footerLogoImageAlt: data.footer.logo.imageAlt,
+    footerTitle: data.footer.title,
     footerDescription: data.footer.description,
+    footerCreatorText: data.footer.creatorText,
     copyrightText: data.footer.copyrightText,
   }
 }
 
-function footerExploreLinkData(
-  link: HeaderFooterContentEditorData["footer"]["exploreLinks"][number],
-  position: number,
-) {
-  return {
-    label: link.label,
-    linkUrl: link.linkUrl,
-    position,
-    isVisible: link.isVisible,
-  }
-}
+
 
 function footerConnectLinkData(
   link: HeaderFooterContentEditorData["footer"]["connectLinks"][number],
@@ -73,11 +65,6 @@ async function createHeaderFooterContent(
     data: {
       key: data.key,
       ...rootData(data),
-      footerExploreLinks: {
-        create: data.footer.exploreLinks.map((link, index) =>
-          footerExploreLinkData(link, index + 1),
-        ),
-      },
       footerConnectLinks: {
         create: data.footer.connectLinks.map((link, index) =>
           footerConnectLinkData(link, index + 1),
@@ -92,24 +79,17 @@ async function updateHeaderFooterContent(
   data: HeaderFooterContentEditorData,
   existing: {
     id: number
-    footerExploreLinks: { id: number }[]
     footerConnectLinks: { id: number }[]
   },
 ) {
-  assertIdsBelongToRoot(
-    "Link Explore",
-    data.footer.exploreLinks.map((link) => link.id),
-    existing.footerExploreLinks.map((link) => link.id),
-  )
+
   assertIdsBelongToRoot(
     "Link Connect",
     data.footer.connectLinks.map((link) => link.id),
     existing.footerConnectLinks.map((link) => link.id),
   )
 
-  const exploreLinkIds = data.footer.exploreLinks.flatMap((link) =>
-    link.id === null ? [] : [link.id],
-  )
+
   const connectLinkIds = data.footer.connectLinks.flatMap((link) =>
     link.id === null ? [] : [link.id],
   )
@@ -120,14 +100,7 @@ async function updateHeaderFooterContent(
     data: rootData(data),
   })
 
-  await tx.websiteFooterExploreLink.updateMany({
-    where: {
-      headerFooterContentId: existing.id,
-      deletedAt: null,
-      id: { notIn: exploreLinkIds },
-    },
-    data: { deletedAt: now },
-  })
+
   await tx.websiteFooterConnectLink.updateMany({
     where: {
       headerFooterContentId: existing.id,
@@ -137,19 +110,7 @@ async function updateHeaderFooterContent(
     data: { deletedAt: now },
   })
 
-  for (const [index, link] of data.footer.exploreLinks.entries()) {
-    const values = footerExploreLinkData(link, index + 1)
-    if (link.id === null) {
-      await tx.websiteFooterExploreLink.create({
-        data: { headerFooterContentId: existing.id, ...values },
-      })
-    } else {
-      await tx.websiteFooterExploreLink.update({
-        where: { id: link.id },
-        data: values,
-      })
-    }
-  }
+
 
   for (const [index, link] of data.footer.connectLinks.entries()) {
     const values = footerConnectLinkData(link, index + 1)
@@ -187,10 +148,6 @@ export async function updateHeaderFooterContentAction(
         where: { key: "header-footer", deletedAt: null },
         select: {
           id: true,
-          footerExploreLinks: {
-            where: { deletedAt: null },
-            select: { id: true },
-          },
           footerConnectLinks: {
             where: { deletedAt: null },
             select: { id: true },

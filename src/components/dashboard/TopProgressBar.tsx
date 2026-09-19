@@ -8,17 +8,21 @@ export function TopProgressBar() {
   const [isVisible, setIsVisible] = useState(false)
   const [progress, setProgress] = useState(0)
 
-  // Selesai loading saat pathname atau searchParams berubah
   useEffect(() => {
     if (isVisible) {
-      setProgress(100)
-      const timer = setTimeout(() => {
+      const finishTimer = setTimeout(() => {
+        setProgress(100)
+      }, 0)
+      const hideTimer = setTimeout(() => {
         setIsVisible(false)
         setProgress(0)
       }, 300)
-      return () => clearTimeout(timer)
+      return () => {
+        clearTimeout(finishTimer)
+        clearTimeout(hideTimer)
+      }
     }
-  }, [location.pathname, location.search])
+  }, [isVisible, location.pathname, location.search])
 
   useEffect(() => {
     let t1: NodeJS.Timeout

@@ -3,7 +3,9 @@ export interface PublicArticleCardData {
   slug: string
   title: string
   excerpt: string
+  label?: string | null
   coverImageUrl: string
+  additionalBannerUrls: string[]
   category: string
   categorySlug: string
   sectionKey: string
@@ -22,25 +24,22 @@ export interface PublicArticleAuthorData {
   roleLabel: string
 }
 
-export interface PublicArticleCommentItem {
-  id: number
-  userId: string
-  userName: string
-  userAvatarUrl: string
-  content: string
-  createdAt: string
-  createdAtLabel: string
-  isArticleAuthor: boolean
-}
+
 
 export interface PublicArticleDetailData extends PublicArticleCardData {
   authorId: string
   content: string
   tags: string[]
+  additionalPhotographers: string[]
   author: PublicArticleAuthorData
-  comments: PublicArticleCommentItem[]
-  likesCount: number
-  hasLiked: boolean
+  photographer?: string | null
+  venueName?: string | null
+  venueAddress?: string | null
+  venuePriceLevel?: number | null
+  venueOpenDays?: string | null
+  venueOpenHours?: string | null
+  venueFeatures?: string[]
+  venueContact?: string | null
 }
 
 export interface PublicArticlePageData {

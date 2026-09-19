@@ -49,6 +49,7 @@ export const eventEditorSchema = z.object({
   description: requiredText("Deskripsi", 5000),
   content: requiredText("Detail Event", 100_000),
   bannerUrl: httpsUrl("Banner Event"),
+  additionalBannerUrls: z.array(httpsUrl("Banner Tambahan")).max(10, "Maksimal 10 banner tambahan.").optional().default([]),
   category: requiredText("Kategori", 100),
   startsOn: z
     .string()
@@ -58,6 +59,7 @@ export const eventEditorSchema = z.object({
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Waktu Event tidak valid."),
   location: requiredText("Lokasi", 255),
   organizer: requiredText("Penyelenggara", 255),
+  photographer: z.string().trim().max(255).nullable().optional(),
   registrationUrl: optionalHttpsUrl("Tautan pendaftaran"),
   whatsappUrl,
   tags: z

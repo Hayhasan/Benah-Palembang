@@ -39,17 +39,17 @@ export function ResetPasswordPage({
 
   return (
     <AuthPageShell asideDescription="Buat password baru untuk mengamankan kembali akun Anda.">
-      <h1 className="mt-16 font-display text-4xl font-bold tracking-[-0.04em]">
+      <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-zinc-900">
         Atur password baru.
       </h1>
 
       {tokenStatus.status !== "valid" ? (
-        <div className="mt-8 rounded-xl border border-red-400/25 bg-red-400/10 p-6">
-          <div className="flex items-center gap-3 text-red-300">
+        <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6">
+          <div className="flex items-center gap-3 text-red-600">
             <AlertTriangle className="size-5" />
             <p className="text-sm font-semibold">Tautan tidak dapat digunakan</p>
           </div>
-          <p className="mt-3 text-xs leading-5 text-white/65">
+          <p className="mt-3 text-xs leading-5 text-zinc-600">
             {invalidStatusCopy(tokenStatus.status)} Silakan minta tautan reset
             password baru.
           </p>
@@ -62,13 +62,13 @@ export function ResetPasswordPage({
         </div>
       ) : (
         <>
-          <p className="mt-3 text-sm leading-6 text-white/60">
+          <p className="mt-2 text-sm text-zinc-500">
             Masukkan password baru untuk akun {tokenStatus.maskedEmail}.
           </p>
           <form action={formAction} className="mt-8 space-y-4" noValidate>
             <input type="hidden" name="token" value={token} />
 
-            <label className="block text-xs font-semibold text-white/80">
+            <label className="block text-xs font-semibold text-zinc-700">
               Password Baru
               <div className="relative mt-2">
                 <input
@@ -78,12 +78,12 @@ export function ResetPasswordPage({
                   autoComplete="new-password"
                   placeholder="••••••••"
                   aria-invalid={Boolean(state.fieldErrors?.password)}
-                  className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:ring-[3px] focus:ring-palembang-red/30"
+                  className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 pr-10 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-palembang-red focus:bg-white focus:ring-[3px] focus:ring-palembang-red/30 transition-shadow"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((visible) => !visible)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition-colors hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-600"
                   tabIndex={-1}
                   aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                 >
@@ -91,13 +91,13 @@ export function ResetPasswordPage({
                 </button>
               </div>
               {state.fieldErrors?.password?.[0] && (
-                <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+                <span className="mt-1.5 block text-[11px] font-medium text-red-500">
                   {state.fieldErrors.password[0]}
                 </span>
               )}
             </label>
 
-            <label className="block text-xs font-semibold text-white/80">
+            <label className="block text-xs font-semibold text-zinc-700">
               Konfirmasi Password Baru
               <div className="relative mt-2">
                 <input
@@ -107,12 +107,12 @@ export function ResetPasswordPage({
                   autoComplete="new-password"
                   placeholder="••••••••"
                   aria-invalid={Boolean(state.fieldErrors?.confirmPassword)}
-                  className="h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 pr-10 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:ring-[3px] focus:ring-palembang-red/30"
+                  className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 pr-10 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-palembang-red focus:bg-white focus:ring-[3px] focus:ring-palembang-red/30 transition-shadow"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmation((visible) => !visible)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition-colors hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-600"
                   tabIndex={-1}
                   aria-label={showConfirmation ? "Sembunyikan konfirmasi password" : "Tampilkan konfirmasi password"}
                 >
@@ -120,7 +120,7 @@ export function ResetPasswordPage({
                 </button>
               </div>
               {state.fieldErrors?.confirmPassword?.[0] && (
-                <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+                <span className="mt-1.5 block text-[11px] font-medium text-red-500">
                   {state.fieldErrors.confirmPassword[0]}
                 </span>
               )}
@@ -129,7 +129,7 @@ export function ResetPasswordPage({
             {state.message && (
               <p
                 role="alert"
-                className="rounded-md border border-red-400/20 bg-red-400/10 px-3 py-2.5 text-xs leading-5 text-red-200"
+                className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-5 text-red-700"
               >
                 {state.message}
               </p>
@@ -138,7 +138,7 @@ export function ResetPasswordPage({
             <Button
               type="submit"
               disabled={isPending}
-              className="h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
+              className="mt-3 h-11 w-full bg-palembang-red font-bold text-white hover:bg-palembang-red/90"
             >
               {isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -151,12 +151,14 @@ export function ResetPasswordPage({
         </>
       )}
 
-      <Link
-        href="/login"
-        className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-palembang-red hover:underline"
-      >
-        <ArrowRight className="size-3 rotate-180" /> Kembali ke login
-      </Link>
+      <div className="mt-8 text-center">
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-palembang-red hover:underline"
+        >
+          <ArrowRight className="size-3 rotate-180" /> Kembali ke login
+        </Link>
+      </div>
     </AuthPageShell>
   )
 }

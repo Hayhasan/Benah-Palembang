@@ -8,7 +8,6 @@ export interface ArticleGalleryItem {
   statusLabel: string
   updatedAtLabel: string
   views: number
-  likes: number
 }
 
 export interface ArticleGalleryData {

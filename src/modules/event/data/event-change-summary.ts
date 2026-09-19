@@ -10,10 +10,12 @@ export interface EventChangeSnapshot {
   description: string
   content: string
   bannerUrl: string
+  additionalBannerUrls: string[]
   category: string
   startsAt: Date
   location: string
   organizer: string
+  photographer: string | null
   registrationUrl: string | null
   whatsappUrl: string
   tags: string[]
@@ -88,10 +90,12 @@ export function buildEventChangeSummary(
     text("description", before.description, after.description),
     html("content", before.content, after.content),
     text("bannerUrl", before.bannerUrl, after.bannerUrl),
+    list("additionalBannerUrls", before.additionalBannerUrls, after.additionalBannerUrls),
     text("category", before.category, after.category),
     date("startsAt", before.startsAt, after.startsAt),
     text("location", before.location, after.location),
     text("organizer", before.organizer, after.organizer),
+    text("photographer", before.photographer, after.photographer),
     text("registrationUrl", before.registrationUrl, after.registrationUrl),
     text("whatsappUrl", before.whatsappUrl, after.whatsappUrl),
     list("tags", before.tags, after.tags),

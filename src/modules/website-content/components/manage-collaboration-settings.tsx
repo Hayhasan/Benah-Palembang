@@ -1,12 +1,32 @@
 "use client"
 
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Plus, Trash2, GripVertical, Edit2 } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 
 import type {
   CollaborationPageEditorData,
@@ -14,17 +34,20 @@ import type {
   CollaborationPartnerLogoEditorData,
 } from "../types/collaboration-page-editor"
 import type { CollaborationPlatform } from "../types/collaboration-page"
+import { CollaborationContentCard } from "./collaboration-page"
 
 function SectionCard({
   title,
   desc,
   children,
+  defaultExpanded = false,
 }: {
   title: string
   desc?: string
   children: ReactNode
+  defaultExpanded?: boolean
 }) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
   return (
     <div className="overflow-visible rounded-xl border bg-background shadow-sm">
@@ -60,10 +83,10 @@ function SectionCard({
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
+    <label className="space-y-2 block">
+      <span className="text-sm font-medium block">{label}</span>
       {children}
-    </div>
+    </label>
   )
 }
 
@@ -114,11 +137,62 @@ export function ManageCollaborationSettings({
   ) => void
 }) {
   const [newLogoName, setNewLogoName] = useState("")
-  const [newContentPlatform, setNewContentPlatform] =
-    useState<CollaborationPlatform>("youtube")
-  const [newContentLink, setNewContentLink] = useState("")
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false)
+
+
+  const [draggedHeroIndex, setDraggedHeroIndex] = useState<number | null>(null)
 
   const changeData = onChange
+
+  const addHeroSlide = () => {
+    if (data.heroSlides.length >= 10) {
+      toast.error("Maksimal 10 hero slide.")
+      return
+    }
+
+    changeData((current) => ({
+      ...current,
+      heroSlides: [
+        ...current.heroSlides,
+        {
+          id: null,
+          clientKey: clientKey("collaboration-slide"),
+          imageUrl: "",
+          imageAlt: "Banner image",
+          title: "",
+          description: "",
+          position: current.heroSlides.length + 1,
+          isVisible: true,
+        },
+      ],
+    }))
+  }
+
+  const removeHeroSlide = (clientKeyValue: string) => {
+    if (data.heroSlides.length <= 1) {
+      toast.error("Minimal 1 hero slide.")
+      return
+    }
+
+    changeData((current) => ({
+      ...current,
+      heroSlides: current.heroSlides
+        .filter((slide) => slide.clientKey !== clientKeyValue)
+        .map((slide, index) => ({ ...slide, position: index + 1 })),
+    }))
+  }
+
+  const updateHeroSlide = (
+    clientKeyValue: string,
+    values: Partial<CollaborationPageEditorData["heroSlides"][number]>,
+  ) => {
+    changeData((current) => ({
+      ...current,
+      heroSlides: current.heroSlides.map((slide) =>
+        slide.clientKey === clientKeyValue ? { ...slide, ...values } : slide,
+      ),
+    }))
+  }
 
   const updateLogo = (
     clientKeyValue: string,
@@ -132,93 +206,135 @@ export function ManageCollaborationSettings({
     }))
   }
 
-  const updateContent = (
-    clientKeyValue: string,
-    values: Partial<CollaborationPartnerContentEditorData>,
-  ) => {
-    changeData((current) => ({
-      ...current,
-      partnerContents: current.partnerContents.map((item) =>
-        item.clientKey === clientKeyValue ? { ...item, ...values } : item,
-      ),
-    }))
-  }
 
-  const addPartnerContent = () => {
-    if (!newContentLink.trim()) {
-      toast.error("URL konten wajib diisi.")
-      return
-    }
-
-    changeData((current) => ({
-      ...current,
-      partnerContents: [
-        ...current.partnerContents,
-        {
-          id: null,
-          clientKey: clientKey("collaboration-content"),
-          platform: newContentPlatform,
-          contentUrl: newContentLink.trim(),
-          position: current.partnerContents.length + 1,
-          isVisible: true,
-        },
-      ],
-    }))
-    setNewContentLink("")
-  }
 
   return (
     <div className="space-y-8">
       <SectionCard
         title="Section Heroes — Collaboration"
         desc="Konfigurasi tampilan heroes halaman kolaborasi."
+        defaultExpanded
       >
-        <Field label="Background">
-          <ImageUpload
-            value={data.hero.imageUrl}
-            onChange={(imageUrl) =>
-              changeData((current) => ({
-                ...current,
-                hero: { ...current.hero, imageUrl },
-              }))
-            }
-            placeholder="Upload background kolaborasi..."
-            aspect={16 / 9}
-          />
-        </Field>
-        <Field label="Alt Gambar">
-          <Input
-            value={data.hero.imageAlt}
-            onChange={(event) =>
-              changeData((current) => ({
-                ...current,
-                hero: { ...current.hero, imageAlt: event.target.value },
-              }))
-            }
-          />
-        </Field>
-        <Field label="Judul Halaman">
-          <Input
-            value={data.hero.title}
-            onChange={(event) =>
-              changeData((current) => ({
-                ...current,
-                hero: { ...current.hero, title: event.target.value },
-              }))
-            }
-          />
-        </Field>
-        <Field label="Deskripsi">
-          <Textarea
-            value={data.hero.description}
-            onChange={(description) =>
-              changeData((current) => ({
-                ...current,
-                hero: { ...current.hero, description },
-              }))
-            }
-          />
-        </Field>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 items-start px-4 sm:px-6 pt-6 pb-4 sm:pb-6">
+          {data.heroSlides.map((slide, slideIndex) => (
+            <div
+              key={slide.clientKey}
+              className={`relative flex flex-col justify-between space-y-4 rounded-lg border bg-muted/10 p-4 shadow-sm transition-all ${
+                draggedHeroIndex === slideIndex
+                  ? "opacity-50 ring-2 ring-primary"
+                  : ""
+              }`}
+              draggable
+              onDragStart={() => setDraggedHeroIndex(slideIndex)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                if (
+                  draggedHeroIndex === null ||
+                  draggedHeroIndex === slideIndex
+                )
+                  return
+
+                const newSlides = [...data.heroSlides]
+                const [draggedItem] = newSlides.splice(draggedHeroIndex, 1)
+                newSlides.splice(slideIndex, 0, draggedItem)
+
+                changeData((current) => ({
+                  ...current,
+                  heroSlides: newSlides.map((s, idx) => ({
+                    ...s,
+                    position: idx + 1,
+                  })),
+                }))
+                setDraggedHeroIndex(null)
+              }}
+              onDragEnd={() => setDraggedHeroIndex(null)}
+            >
+              <div className="absolute right-2 top-2 z-10 hidden sm:block">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-grab text-muted-foreground active:cursor-grabbing"
+                >
+                  <GripVertical className="size-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <Field label={`Background ${slideIndex + 1}`}>
+                  <ImageUpload
+                    value={slide.imageUrl}
+                    onChange={(imageUrl) => updateHeroSlide(slide.clientKey, { imageUrl })}
+                    placeholder="Upload background kolaborasi..."
+                    aspect={16 / 9}
+                  />
+                </Field>
+                <Field label="Alt Gambar">
+                  <Input
+                    value={slide.imageAlt}
+                    onChange={(event) =>
+                      updateHeroSlide(slide.clientKey, { imageAlt: event.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="Judul Halaman">
+                  <Input
+                    value={slide.title}
+                    onChange={(event) =>
+                      updateHeroSlide(slide.clientKey, { title: event.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="Deskripsi">
+                  <Textarea
+                    value={slide.description}
+                    onChange={(description) => updateHeroSlide(slide.clientKey, { description })}
+                  />
+                </Field>
+              </div>
+
+              {data.heroSlides.length > 1 && (
+                <div className="flex justify-end border-t pt-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button type="button" variant="destructive" size="sm" className="w-full sm:w-auto">
+                        <Trash2 className="mr-2 size-4" /> Hapus
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Banner?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tindakan ini tidak dapat dibatalkan. Banner ini akan dihapus dari halaman kolaborasi.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => removeHeroSlide(slide.clientKey)}
+                          className="bg-red-500 text-white hover:bg-red-600 focus:ring-red-500"
+                        >
+                          Ya, Hapus
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <Button
+            type="button"
+            onClick={addHeroSlide}
+            className="w-full"
+          >
+            <Plus className="mr-2 size-4" /> Tambah Banner
+          </Button>
+        </div>
       </SectionCard>
 
       <SectionCard
@@ -287,7 +403,7 @@ export function ManageCollaborationSettings({
         desc="Upload logo partner yang ditampilkan di halaman kolaborasi. Logo akan ditampilkan grayscale dan berwarna saat di-hover."
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
             {data.partnerLogos.map((logo) => (
               <div
                 key={logo.clientKey}
@@ -307,180 +423,100 @@ export function ManageCollaborationSettings({
                   className="h-7 px-2 text-center text-[10px]"
                   aria-label="Nama partner"
                 />
-                <button
-                  type="button"
-                  onClick={() =>
-                    changeData((current) => ({
-                      ...current,
-                      partnerLogos: current.partnerLogos
-                        .filter((item) => item.clientKey !== logo.clientKey)
-                        .map((item, index) => ({
-                          ...item,
-                          position: index + 1,
-                        })),
-                    }))
-                  }
-                  className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
-                  aria-label={`Hapus logo ${logo.name}`}
-                >
-                  x
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
+                      aria-label={`Hapus logo ${logo.name}`}
+                    >
+                      x
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Hapus Partner Logo?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tindakan ini tidak dapat dibatalkan. Logo {logo.name} akan dihapus dari halaman kolaborasi.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() =>
+                          changeData((current) => ({
+                            ...current,
+                            partnerLogos: current.partnerLogos
+                              .filter((item) => item.clientKey !== logo.clientKey)
+                              .map((item, index) => ({
+                                ...item,
+                                position: index + 1,
+                              })),
+                          }))
+                        }
+                        className="bg-red-500 text-white hover:bg-red-600 focus:ring-red-500"
+                      >
+                        Ya, Hapus
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))}
           </div>
-          <Field label="Nama Partner Baru">
-            <Input
-              value={newLogoName}
-              onChange={(event) => setNewLogoName(event.target.value)}
-              placeholder="Nama partner"
-            />
-          </Field>
-          <ImageUpload
-            value=""
-            onChange={(imageUrl) => {
-              changeData((current) => ({
-                ...current,
-                partnerLogos: [
-                  ...current.partnerLogos,
-                  {
-                    id: null,
-                    clientKey: clientKey("collaboration-logo"),
-                    name:
-                      newLogoName.trim() ||
-                      `Partner ${current.partnerLogos.length + 1}`,
-                    imageUrl,
-                    position: current.partnerLogos.length + 1,
-                    isVisible: true,
-                  },
-                ],
-              }))
-              setNewLogoName("")
-            }}
-            placeholder="Upload Logo Partner"
-            aspect={1}
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Partner Content"
-        desc="Kelola platform dan URL konten. Thumbnail serta rasio public diturunkan otomatis dari link dan dibuka pada tab baru."
-      >
-        <div className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Konten Saat Ini
-          </p>
-          {data.partnerContents.length === 0 ? (
-            <p className="text-sm italic text-muted-foreground">
-              Belum ada konten. Tambahkan konten pertama di bawah.
-            </p>
-          ) : null}
-          {data.partnerContents.map((content) => (
-            <div
-              key={content.clientKey}
-              className="rounded-lg border bg-muted/10 p-4"
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <span
-                  className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${platformBadgeClass(content.platform)}`}
-                >
-                  {content.platform}
-                </span>
-                <span className="flex-1 truncate text-sm text-muted-foreground">
-                  {content.contentUrl}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 text-red-500 hover:bg-red-50 hover:text-red-600"
-                  onClick={() =>
+          <Dialog open={isLogoModalOpen} onOpenChange={setIsLogoModalOpen}>
+            <DialogTrigger asChild>
+              <Button type="button" className="w-full">
+                <Plus className="mr-2 size-4" /> Tambah Partner Baru
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Tambah Partner Baru</DialogTitle>
+                <DialogDescription>
+                  Isi nama partner dan upload logo. Logo akan otomatis ditambahkan setelah upload selesai.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <Field label="Nama Partner">
+                  <Input
+                    value={newLogoName}
+                    onChange={(event) => setNewLogoName(event.target.value)}
+                    placeholder="Nama partner"
+                  />
+                </Field>
+                <ImageUpload
+                  value=""
+                  onChange={(imageUrl) => {
                     changeData((current) => ({
                       ...current,
-                      partnerContents: current.partnerContents
-                        .filter(
-                          (item) => item.clientKey !== content.clientKey,
-                        )
-                        .map((item, index) => ({
-                          ...item,
-                          position: index + 1,
-                        })),
+                      partnerLogos: [
+                        ...current.partnerLogos,
+                        {
+                          id: null,
+                          clientKey: clientKey("collaboration-logo"),
+                          name:
+                            newLogoName.trim() ||
+                            `Partner ${current.partnerLogos.length + 1}`,
+                          imageUrl,
+                          position: current.partnerLogos.length + 1,
+                          isVisible: true,
+                        },
+                      ],
                     }))
-                  }
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
-                <select
-                  value={content.platform}
-                  onChange={(event) =>
-                    updateContent(content.clientKey, {
-                      platform: event.target.value as CollaborationPlatform,
-                    })
-                  }
-                  className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="youtube">YouTube</option>
-                  <option value="instagram">Instagram</option>
-                  <option value="tiktok">TikTok</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="x">X (Twitter)</option>
-                </select>
-                <Input
-                  value={content.contentUrl}
-                  onChange={(event) =>
-                    updateContent(content.clientKey, {
-                      contentUrl: event.target.value,
-                    })
-                  }
-                  placeholder="https://youtube.com/..."
-                />
-              </div>
-            </div>
-          ))}
-
-          <div className="border-t pt-2">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tambah Konten Baru
-            </p>
-            <div className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
-                <select
-                  value={newContentPlatform}
-                  onChange={(event) =>
-                    setNewContentPlatform(
-                      event.target.value as CollaborationPlatform,
-                    )
-                  }
-                  className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="youtube">YouTube</option>
-                  <option value="instagram">Instagram</option>
-                  <option value="tiktok">TikTok</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="x">X (Twitter)</option>
-                </select>
-                <Input
-                  value={newContentLink}
-                  onChange={(event) => setNewContentLink(event.target.value)}
-                  placeholder="https://youtube.com/..."
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") addPartnerContent()
+                    setNewLogoName("")
+                    setIsLogoModalOpen(false)
                   }}
+                  placeholder="Upload Logo Partner"
+                  aspect={1}
                 />
               </div>
-              <Button
-                type="button"
-                onClick={addPartnerContent}
-                className="w-full bg-palembang-red text-white hover:bg-palembang-red/90"
-              >
-                <Plus className="mr-2 size-4" /> Add
-              </Button>
-            </div>
-          </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </SectionCard>
+
+
     </div>
   )
 }

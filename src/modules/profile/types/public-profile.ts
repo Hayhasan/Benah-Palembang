@@ -7,7 +7,6 @@ export interface PublicProfileArticle {
   category: string
   publishedAtLabel: string
   views: number
-  likes: number
 }
 
 export interface PublicProfileEvent {
@@ -33,7 +32,6 @@ export interface PublicProfileData {
   linkedinUrl: string | null
   articleCount: number
   totalViews: number
-  totalLikes: number
   articles: PublicProfileArticle[]
   events: PublicProfileEvent[]
 }

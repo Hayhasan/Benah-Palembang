@@ -4,9 +4,7 @@ import {
   Archive,
   Edit2,
   Eye,
-  Heart,
   Loader2,
-  MessageCircle,
   Plus,
   RotateCcw,
   Search,
@@ -86,16 +84,19 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
   const isInputFocusedRef = useRef(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  function buildHref(page: number, query = data.query) {
-    const params = new URLSearchParams()
-    const normalizedQuery = query.trim()
+  const buildHref = useCallback(
+    (page: number, query = data.query) => {
+      const params = new URLSearchParams()
+      const normalizedQuery = query.trim()
 
-    if (normalizedQuery) params.set("q", normalizedQuery)
-    if (page > 1) params.set("page", String(page))
+      if (normalizedQuery) params.set("q", normalizedQuery)
+      if (page > 1) params.set("page", String(page))
 
-    const search = params.toString()
-    return search ? `${pathname}?${search}` : pathname
-  }
+      const search = params.toString()
+      return search ? `${pathname}?${search}` : pathname
+    },
+    [data.query, pathname],
+  )
 
   const executeSearch = useCallback(
     (newQuery: string) => {
@@ -112,7 +113,7 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
         })
       }
     },
-    [data.query, pathname, router],
+    [buildHref, data.query, router],
   )
 
   // Sync state with server query only if not focused and coming from external navigation
@@ -332,20 +333,10 @@ export function OwnedArticleList({ data }: { data: OwnedArticleListData }) {
                       {article.updatedAtLabel}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1 font-medium">
-                          <Eye className="size-3.5 text-blue-500" />
-                          {article.views.toLocaleString("id-ID")}
-                        </span>
-                        <span className="flex items-center gap-1 font-medium">
-                          <Heart className="size-3.5 text-palembang-red" />
-                          {article.likes.toLocaleString("id-ID")}
-                        </span>
-                        <span className="flex items-center gap-1 font-medium">
-                          <MessageCircle className="size-3.5 text-emerald-500" />
-                          {article.comments.toLocaleString("id-ID")}
-                        </span>
-                      </div>
+                      <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <Eye className="size-3.5 text-blue-500" />
+                        {article.views.toLocaleString("id-ID")}
+                      </span>
                     </td>
                     <td className="px-6 py-4 align-top">
                       <span

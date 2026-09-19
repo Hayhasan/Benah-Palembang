@@ -2,14 +2,18 @@ import type { CollaborationPageData } from "../types/collaboration-page"
 
 export const DEFAULT_COLLABORATION_PAGE = {
   key: "collaboration",
-  hero: {
-    imageUrl:
-      "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop",
-    imageAlt: "Background Kolaborasi",
-    title: "Mari Benahi Palembang bersama.",
-    description:
-      "Kami terbuka untuk berkolaborasi dengan komunitas, brand, creative worker, organisasi, media, dan siapa pun yang ingin ikut membuat Palembang lebih hidup.",
-  },
+  heroSlides: [
+    {
+      imageUrl:
+        "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop",
+      imageAlt: "Background Kolaborasi",
+      title: "Mari Benahi Palembang bersama.",
+      description:
+        "Kami terbuka untuk berkolaborasi dengan komunitas, brand, creative worker, organisasi, media, dan siapa pun yang ingin ikut membuat Palembang lebih hidup.",
+      position: 1,
+      isVisible: true,
+    },
+  ],
   contact: {
     email: "kolaborasi@benahpalembang.id",
     phone: "08551241878",

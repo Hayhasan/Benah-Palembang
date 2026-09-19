@@ -49,11 +49,7 @@ export const ownedEventListSelect = {
   views: true,
   status: true,
   moderationNote: true,
-  _count: {
-    select: {
-      likes: true,
-    },
-  },
+  
 } satisfies Prisma.EventSelect
 
 export const ownedEventEditorSelect = {
@@ -62,11 +58,13 @@ export const ownedEventEditorSelect = {
   description: true,
   content: true,
   bannerUrl: true,
+  additionalBannerUrls: true,
   category: true,
   startsAt: true,
   endsAt: true,
   location: true,
   organizer: true,
+  photographer: true,
   registrationUrl: true,
   whatsappUrl: true,
   views: true,
@@ -77,11 +75,7 @@ export const ownedEventEditorSelect = {
     orderBy: { position: "asc" },
     select: { label: true },
   },
-  _count: {
-    select: {
-      likes: true,
-    },
-  },
+  publishedAt: true,
 } satisfies Prisma.EventSelect
 
 type OwnedEventListRecord = Prisma.EventGetPayload<{
@@ -131,7 +125,7 @@ export function mapOwnedEventListItem(
     statusLabel: ownedEventStatusLabel(event.status),
     moderationNote: event.moderationNote,
     views: event.views,
-    likes: event._count.likes,
+    
   }
 }
 
@@ -144,6 +138,7 @@ export function mapOwnedEventEditor(
     description: event.description,
     content: event.content,
     bannerUrl: event.bannerUrl,
+    additionalBannerUrls: event.additionalBannerUrls,
     category: event.category,
     startsAt: event.startsAt.toISOString(),
     startsOn: inputDate(event.startsAt),
@@ -152,6 +147,7 @@ export function mapOwnedEventEditor(
     timeLabel: `${inputTimeFormatter.format(event.startsAt)} WIB`,
     location: event.location,
     organizer: event.organizer,
+    photographer: event.photographer,
     registrationUrl: event.registrationUrl ?? "",
     whatsappUrl: event.whatsappUrl,
     status: event.status,
@@ -159,6 +155,7 @@ export function mapOwnedEventEditor(
     moderationNote: event.moderationNote,
     tags: event.tags.map((tag) => tag.label),
     views: event.views,
-    likesCount: event._count.likes,
+    publishedAt: event.publishedAt?.toISOString() ?? null,
+    publishedAtLabel: event.publishedAt ? dateFormatter.format(event.publishedAt) : null,
   }
 }

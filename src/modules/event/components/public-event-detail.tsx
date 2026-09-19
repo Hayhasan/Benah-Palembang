@@ -1,332 +1,370 @@
 "use client"
 
 import {
-  ArrowRight,
+  Calendar,
   CalendarDays,
+  Check,
   Clock3,
+  Copy,
   Eye,
-  Heart,
   MapPin,
   MessageCircle,
-  Sparkles,
+  Share2,
   Ticket,
+  Users,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
-import { SectionHeading } from "@/features/public/components/SectionHeading"
-import { useSession } from "@/modules/auth/hooks/use-session"
+import { PublicEventHeroCarousel } from "./public-event-hero-carousel"
 
-import { toggleEventLikeAction } from "../actions/toggle-event-like"
-import type { PublicEventDetailData } from "../types/public-event"
-import { EventOrganizerCard } from "./event-organizer-card"
-import { EventShareButton } from "./event-share-button"
+import type { PublicEventDetail, PublicEventDetailData } from "../types/public-event"
 
-export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
-  const { event, relatedEvents } = data
-  const router = useRouter()
-  const { user, status } = useSession()
-  const isAuthenticated = status === "authenticated" && Boolean(user)
+function resolveEventPhotos(event: PublicEventDetail): string[] {
+  const photos: string[] = []
+  if (event.bannerUrl) {
+    photos.push(event.bannerUrl)
+  }
 
-  const [likeState, setLikeState] = useState({
-    hasLiked: event.hasLiked,
-    count: event.likesCount,
-  })
-  const [, startTransition] = useTransition()
-
-  const isLiked = isAuthenticated && likeState.hasLiked
-  const likesCount = Math.max(0, likeState.count)
-
-  function handleToggleLike() {
-    if (!isAuthenticated) {
-      toast.info("Silakan masuk terlebih dahulu untuk menyukai acara ini.", {
-        action: {
-          label: "Masuk",
-          onClick: () =>
-            router.push(
-              `/login?redirect=${encodeURIComponent(`/agenda/${event.id}`)}`,
-            ),
-        },
-      })
-      return
+  // Extract any additional images from the content HTML
+  const imgRegex = /<img\s+[^>]*src=["']([^"']+)["']/gi
+  let match: RegExpExecArray | null
+  while ((match = imgRegex.exec(event.content)) !== null) {
+    if (match[1] && !photos.includes(match[1])) {
+      photos.push(match[1])
     }
+  }
 
-    const previousState = likeState
-    const nextLiked = !isLiked
-    setLikeState({
-      hasLiked: nextLiked,
-      count: Math.max(0, likesCount + (nextLiked ? 1 : -1)),
-    })
+  return photos
+}
 
-    startTransition(async () => {
-      const result = await toggleEventLikeAction({ eventId: event.id })
-      if (!result.success) {
-        toast.error(result.message)
-        setLikeState(previousState)
-        return
+  export function PublicEventDetail({ data }: { data: PublicEventDetailData }) {
+    const { event, relatedEvents } = data
+  
+    const [copied, setCopied] = useState(false)
+  
+    async function copyLink() {
+      if (typeof window !== "undefined") {
+      await navigator.clipboard?.writeText(window.location.href)
+      setCopied(true)
+      toast.success("Tautan acara berhasil disalin!")
+      window.setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  function shareEvent() {
+    if (typeof window !== "undefined") {
+      if (navigator.share) {
+        void navigator.share({
+          title: event.title,
+          url: window.location.href,
+        }).catch(() => {})
+      } else {
+        void copyLink()
       }
-      setLikeState({
-        hasLiked: result.hasLiked ?? nextLiked,
-        count: result.likesCount ?? previousState.count,
-      })
-    })
+    }
   }
 
   const whatsappQuestionUrl = `${event.whatsappUrl}?text=${encodeURIComponent(
     `Halo, saya ingin bertanya dan mendapatkan informasi lebih lanjut tentang acara:\n${event.title}\nTanggal: ${event.dateLabel}\nLokasi: ${event.location}`,
   )}`
 
+  const photos = useMemo(() => {
+    return resolveEventPhotos(event)
+  }, [event])
+
   return (
-    <>
-      <div className="relative overflow-hidden bg-palembang-charcoal px-6 pb-20 pt-40 text-white sm:px-10 lg:px-16">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-45">
-          <Image
-            src={event.bannerUrl}
-            alt={event.title}
-            fill
-            priority
-            sizes="(min-width: 1024px) 50vw, (min-width: 640px) 67vw, 100vw"
-            className="object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-palembang-charcoal via-palembang-charcoal/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
-        </div>
-        <div className="relative z-10 mx-auto max-w-[1240px]">
-          <Link
-            href="/agenda"
-            className="reveal-on-scroll inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red hover:underline"
-          >
-            <ArrowRight className="size-3 rotate-180" />
-            Kembali ke Agenda
-          </Link>
-          <div className="reveal-on-scroll reveal-delay-100 mt-6">
-            <span className="inline-block rounded-full border border-palembang-red/40 bg-palembang-red/15 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-palembang-red">
+    <div className="bg-white text-zinc-900">
+      {/* 1. HEROES CAROUSEL AT THE VERY TOP (Fit to Screen Tanpa Padding / Full-width edge-to-edge) */}
+      <section aria-label="Event Photos Carousel" className="w-full">
+        <PublicEventHeroCarousel
+          photos={photos}
+          title={event.title}
+          description={event.description}
+          photographerName={event.photographer ?? undefined}
+          views={event.views}
+        />
+      </section>
+
+      {/* 2. EVENT HEADER (Contained with Padding) */}
+      <header className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4 text-xs text-black">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Category Pill */}
+            <Link
+              href="/agenda"
+              className="inline-block rounded-[3px] bg-black text-white border border-black px-3.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-[0.14em] hover:bg-zinc-800 transition-colors"
+            >
               {event.category}
-            </span>
+            </Link>
           </div>
-          <h1 className="reveal-on-scroll reveal-delay-150 mt-4 max-w-4xl font-display text-5xl font-black leading-[0.92] tracking-[-0.06em] sm:text-7xl lg:text-8xl">
-            {event.title}
-          </h1>
-          <p className="reveal-on-scroll reveal-delay-200 mt-8 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
-            {event.description}
-          </p>
-          <div className="reveal-on-scroll reveal-delay-250 mt-8 flex flex-wrap items-center gap-5 text-xs text-white/70">
-            <span className="flex items-center gap-2">
-              <CalendarDays className="size-4 text-palembang-red" />
-              {event.dateLabel}
-            </span>
-            <span className="flex items-center gap-2">
-              <Heart
-                className={`size-4 ${
-                  isLiked
-                    ? "fill-palembang-red text-palembang-red"
-                    : "text-palembang-red"
-                }`}
-              />
-              {likesCount.toLocaleString("id-ID")} likes
-            </span>
-            <span className="flex items-center gap-2">
-              <Eye className="size-4 text-palembang-red" />
-              {event.views.toLocaleString("id-ID")} views
-            </span>
-          </div>
-        </div>
-      </div>
 
-      <main className="px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
-        <div className="mx-auto max-w-[1240px]">
-          <div className="grid gap-12 lg:grid-cols-[1fr_380px]">
-            <div className="reveal-on-scroll">
-              <div className="reveal-scale relative aspect-[16/9] overflow-hidden rounded-[1.5rem]">
-                <Image
-                  src={event.bannerUrl}
-                  alt={event.title}
-                  fill
-                  sizes="(min-width: 1024px) 760px, 100vw"
-                  className="object-cover"
-                />
+          {event.publishedAtLabel && (
+            <div className="flex items-center gap-1.5 text-zinc-500">
+              <Calendar className="size-3.5" />
+              <span>Diposting {event.publishedAtLabel}</span>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* 3. MAIN CONTENT: EVENT BODY (LEFT) & DETAIL ACARA SIDEBAR (RIGHT) */}
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-16 sm:pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-10 xl:gap-16 items-start">
+          {/* Main Content Column */}
+          <article className="min-w-0">
+            <div className="mb-4">
+              <h2 className="font-sans text-xl sm:text-2xl font-bold tracking-tight text-black">
+                Tentang Acara
+              </h2>
+              <div className="mt-2.5 mb-6 border-b border-dotted border-zinc-300 w-full" />
+            </div>
+
+            <div
+              className="article-body prose prose-zinc max-w-none prose-headings:font-sans prose-headings:font-bold prose-p:font-serif prose-p:text-[15px] sm:prose-p:text-base prose-p:leading-[1.8] prose-p:text-zinc-800"
+              dangerouslySetInnerHTML={{ __html: event.content }}
+            />
+
+            {/* Tags */}
+            {event.tags.length > 0 && (
+              <div className="mt-10 flex flex-wrap gap-2 border-t border-zinc-100 pt-6">
+                {event.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-[3px] bg-black px-3 py-1 text-[11px] font-medium text-white"
+                  >
+                    #{tag}
+                  </span>
+                ))}
               </div>
-              <div className="reveal-on-scroll mt-10">
-                <h2 className="font-display text-2xl font-bold tracking-[-0.03em]">
-                  Tentang Acara
-                </h2>
-                <div
-                  className="article-body mt-4"
-                  dangerouslySetInnerHTML={{ __html: event.content }}
-                />
+            )}
+          </article>
+
+          {/* Right Sidebar: DETAIL ACARA (Sesuai gaya Detail Artikel) */}
+          <aside className="w-full lg:sticky lg:top-24 pt-2 space-y-8 flex flex-col items-center lg:items-start text-center lg:text-left">
+            {/* User Profile as Penyelenggara */}
+            <div className="w-full max-w-[280px] sm:max-w-[300px] text-zinc-900">
+              <div>
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.14em] uppercase text-black">
+                  DIPOSTING OLEH
+                </span>
+                <div className="mt-1.5 mb-3.5 border-b border-dotted border-zinc-300 w-full" />
               </div>
-              {event.tags.length > 0 ? (
-                <div className="mt-10 flex flex-wrap gap-2">
-                  {event.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground"
-                    >
-                      #{tag}
+              <div className="flex items-center justify-center lg:justify-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={undefined}
+                  alt={event.organizer}
+                  className="size-10 rounded-full object-cover ring-1 ring-zinc-200"
+                />
+                <div className="flex flex-col justify-center">
+                  <span className="font-bold text-sm text-black leading-snug">
+                    {event.organizer}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              aria-label="Detail Acara"
+              className="w-full max-w-[280px] sm:max-w-[300px] text-zinc-900 select-none"
+            >
+              {/* Heading */}
+              <div>
+                <h3 className="font-serif text-[19px] sm:text-[20px] font-normal tracking-[0.08em] text-[#595959] uppercase leading-tight">
+                  DETAIL ACARA
+                </h3>
+                <div className="mt-2.5 mb-3.5 border-b border-dotted border-zinc-300 w-full" />
+              </div>
+
+              {/* Info Container */}
+              <div className="flex flex-col gap-4 items-center lg:items-start">
+                {/* Tanggal */}
+                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
+                  <CalendarDays className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
+                  <div className="flex flex-col items-center lg:items-start">
+                    <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
+                      Tanggal
                     </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            <div>
-              <div className="reveal-on-scroll sticky top-28 space-y-6">
-                <EventOrganizerCard organizer={event.organizer} />
-                <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-sm">
-                  <h3 className="font-display text-lg font-bold">Detail Acara</h3>
-                  <div className="mt-6 space-y-5">
-                    <EventMeta
-                      icon={<CalendarDays className="size-5" />}
-                      label="Tanggal"
-                      value={event.dateLabel}
-                    />
-                    <EventMeta
-                      icon={<Clock3 className="size-5" />}
-                      label="Waktu"
-                      value={event.timeLabel}
-                    />
-                    <EventMeta
-                      icon={<MapPin className="size-5" />}
-                      label="Lokasi"
-                      value={event.location}
-                    />
-                    <EventMeta
-                      icon={<Sparkles className="size-5" />}
-                      label="Penyelenggara / Publisher"
-                      value={event.organizer}
-                    />
+                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5">
+                      {event.dateLabel}
+                    </span>
                   </div>
+                </div>
 
-                  <div className="mt-8 grid gap-3">
-                    {event.registrationUrl ? (
-                      <a
-                        href={event.registrationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-palembang-red text-sm font-bold text-white shadow-sm transition-colors hover:bg-palembang-red/90"
-                      >
-                        <Ticket className="size-4" />
-                        Daftar Sekarang
-                      </a>
-                    ) : (
-                      <div className="rounded-lg bg-muted px-4 py-3 text-center text-xs leading-5 text-muted-foreground">
-                        Informasi pendaftaran belum tersedia.
-                      </div>
-                    )}
+                {/* Waktu */}
+                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
+                  <Clock3 className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
+                  <div className="flex flex-col items-center lg:items-start">
+                    <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
+                      Waktu
+                    </span>
+                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5">
+                      {event.timeLabel}
+                    </span>
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleToggleLike}
-                        className={`h-11 w-full gap-1.5 px-2 text-xs font-semibold transition-all ${
-                          isLiked
-                            ? "border-palembang-red bg-palembang-red/10 text-palembang-red hover:bg-palembang-red/20 hover:text-palembang-red"
-                            : "hover:border-palembang-red hover:text-palembang-red"
-                        }`}
-                      >
-                        <Heart
-                          className={`size-4 ${
-                            isLiked ? "fill-palembang-red text-palembang-red" : ""
-                          }`}
-                        />
-                        <span>{isLiked ? "Disukai" : "Suka"}</span>
-                      </Button>
+                {/* Lokasi */}
+                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
+                  <MapPin className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
+                  <div className="flex flex-col items-center lg:items-start">
+                    <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
+                      Lokasi
+                    </span>
+                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5 leading-[1.45]">
+                      {event.location}
+                    </span>
+                  </div>
+                </div>
 
-                      <a
-                        href={whatsappQuestionUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-md border border-emerald-600/30 bg-emerald-600/10 px-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-600 hover:text-white dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
-                      >
-                        <MessageCircle className="size-4 shrink-0" />
-                        Tanya
-                      </a>
-
-                      <EventShareButton
-                        title={event.title}
-                        label="Bagikan"
-                        className="gap-1.5 px-2 text-xs"
-                      />
-                    </div>
+                {/* Penyelenggara */}
+                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
+                  <Users className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
+                  <div className="flex flex-col items-center lg:items-start">
+                    <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
+                      Penyelenggara
+                    </span>
+                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5 leading-[1.45]">
+                      {event.organizer}
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </main>
 
-      {relatedEvents.length > 0 ? (
-        <section className="reveal-on-scroll bg-background px-6 py-20 text-foreground sm:px-10 lg:px-16 lg:py-28">
-          <div className="mx-auto max-w-[1240px]">
-            <SectionHeading eyebrow="Jangan lewatkan" title="Agenda Lainnya" />
-            <div className="reveal-stagger mt-12 grid gap-8 sm:grid-cols-2">
+              <div className="mt-5 mb-5 border-b border-dotted border-zinc-300 w-full" />
+
+              <div className="space-y-2 pt-1">
+                {event.registrationUrl ? (
+                  <a
+                    href={event.registrationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-[3px] bg-black px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-white hover:bg-zinc-800 transition-colors"
+                  >
+                    <Ticket className="size-3.5" />
+                    Daftar Sekarang
+                  </a>
+                ) : (
+                  <div className="rounded-[3px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-center text-xs text-zinc-500 font-serif">
+                    Pendaftaran langsung di lokasi
+                  </div>
+                )}
+
+                <a
+                  href={whatsappQuestionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-[3px] border border-black bg-white px-4 py-2 text-xs font-semibold text-black hover:bg-black hover:text-white transition-colors"
+                >
+                  <MessageCircle className="size-3.5" />
+                  Tanya Penyelenggara
+                </a>
+              </div>
+
+              {/* BAGIKAN ACARA (Hanya button Share dan Salin Link) */}
+              <div className="pt-6">
+                <div>
+                  <span className="font-serif text-[11px] sm:text-[12px] tracking-[0.16em] uppercase text-[#737373]">
+                    BAGIKAN ACARA
+                  </span>
+                  <div className="mt-1.5 mb-2.5 border-b border-dotted border-zinc-300 w-full" />
+                </div>
+
+                <div className="flex items-center justify-center lg:justify-start gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={shareEvent}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-[3px] border border-black bg-white px-3 py-2 text-xs font-semibold text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                  >
+                    <Share2 className="size-3.5" />
+                    <span>Share</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => void copyLink()}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-[3px] border border-black bg-white px-3 py-2 text-xs font-semibold text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="size-3.5 text-emerald-600" />
+                        <span>Disalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="size-3.5" />
+                        <span>Salin Link</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        {/* 4. AGENDA LAINNYA (Related Events in Clean 3-Column Grid) */}
+        {relatedEvents.length > 0 && (
+          <section
+            aria-label="Agenda Lainnya"
+            className="mt-16 sm:mt-24 border-t border-zinc-200 pt-10 sm:pt-14"
+          >
+            <div>
+              <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-bold text-black tracking-tight leading-tight">
+                Agenda Lainnya
+              </h2>
+              <div className="mt-3 mb-8 sm:mb-12 border-b border-dotted border-zinc-300 w-full" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
               {relatedEvents.map((relatedEvent) => (
                 <Link
                   key={relatedEvent.id}
                   href={`/agenda/${relatedEvent.id}`}
-                  className="group block"
+                  className="group flex flex-col overflow-hidden"
                 >
-                  <div className="img-zoom relative aspect-[16/9] overflow-hidden rounded-[1.25rem] border border-border/50 bg-muted sm:aspect-[4/3]">
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100 rounded-none">
                     <Image
+                      fill
                       src={relatedEvent.bannerUrl}
                       alt={relatedEvent.title}
-                      fill
-                      sizes="(min-width: 640px) 50vw, 100vw"
-                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="size-full object-cover transition-transform duration-500 group-hover:scale-103"
                     />
                   </div>
-                  <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-palembang-red">
-                    {relatedEvent.category}
-                  </p>
-                  <h3 className="mt-2 font-display text-xl font-bold leading-tight tracking-[-0.03em] text-foreground transition-colors group-hover:text-palembang-red">
-                    {relatedEvent.title}
-                  </h3>
-                  <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays className="size-3.5 text-palembang-red" />
-                      {relatedEvent.dateLabel}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="size-3.5 text-palembang-red" />
-                      {relatedEvent.location.split(",")[0]}
-                    </span>
+                  <div className="flex flex-1 flex-col pt-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/70">
+                      {relatedEvent.category}
+                    </p>
+                    <h3 className="mt-1 font-sans text-base sm:text-lg font-bold leading-snug tracking-tight text-black group-hover:underline transition-colors line-clamp-2 min-h-[44px] sm:min-h-[48px]">
+                      {relatedEvent.title}
+                    </h3>
+                    <div className="my-2 border-b border-dotted border-zinc-300" />
+                    <div className="flex flex-col space-y-1 text-xs text-black/80 font-serif">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="size-3.5 text-black shrink-0" />
+                        <span>{relatedEvent.dateLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="size-3.5 text-black shrink-0" />
+                        <span className="truncate">{relatedEvent.location}</span>
+                      </div>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
-      <Footer />
-    </>
-  )
-}
+          </section>
+        )}
+      </main>
 
-function EventMeta({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 shrink-0 text-palembang-red">{icon}</span>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-1 text-sm font-semibold">{value}</p>
-      </div>
+      {/* 5. FOOTER */}
+      <Footer />
     </div>
   )
 }

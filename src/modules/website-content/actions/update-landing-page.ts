@@ -206,10 +206,10 @@ function defaultArticleCategoryHeroData(sectionKey: string) {
   }
 
   return {
-    categoryHeroImageUrl: category.hero.imageUrl,
-    categoryHeroImageAlt: category.hero.imageAlt,
-    categoryHeroTitle: category.hero.title,
-    categoryHeroDescription: category.hero.description,
+    categoryHeroImageUrl: category.heroSlides[0].imageUrl,
+    categoryHeroImageAlt: category.heroSlides[0].imageAlt,
+    categoryHeroTitle: category.heroSlides[0].title,
+    categoryHeroDescription: category.heroSlides[0].description,
   }
 }
 
@@ -457,54 +457,57 @@ export async function updateLandingPageAction(
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
-      const existing = await tx.websiteContent.findFirst({
-        where: { key: "home", deletedAt: null },
-        select: {
-          id: true,
-          heroSlides: { where: { deletedAt: null }, select: { id: true } },
-          articleSections: {
-            where: { deletedAt: null },
-            select: {
-              id: true,
-              sectionKey: true,
-              articleCategorySlug: true,
+    await prisma.$transaction(
+      async (tx) => {
+        const existing = await tx.websiteContent.findFirst({
+          where: { key: "home", deletedAt: null },
+          select: {
+            id: true,
+            heroSlides: { where: { deletedAt: null }, select: { id: true } },
+            articleSections: {
+              where: { deletedAt: null },
+              select: {
+                id: true,
+                sectionKey: true,
+                articleCategorySlug: true,
+              },
             },
+            teamMembers: { where: { deletedAt: null }, select: { id: true } },
           },
-          teamMembers: { where: { deletedAt: null }, select: { id: true } },
-        },
-      })
+        })
 
-      if (existing) {
-        await updateLandingPage(tx, parsed.data, existing)
-      } else {
-        await createLandingPage(tx, parsed.data)
-      }
+        if (existing) {
+          await updateLandingPage(tx, parsed.data, existing)
+        } else {
+          await createLandingPage(tx, parsed.data)
+        }
 
-      const websiteContent = await tx.websiteContent.findFirstOrThrow({
-        where: { key: "home", deletedAt: null },
-        select: { id: true },
-      })
-      await syncExploreItems(tx, websiteContent.id, parsed.data.explore.items)
-      await syncLandingArticlePins(
-        tx,
-        websiteContent.id,
-        parsed.data.articleSections,
-      )
+        const websiteContent = await tx.websiteContent.findFirstOrThrow({
+          where: { key: "home", deletedAt: null },
+          select: { id: true },
+        })
+        await syncExploreItems(tx, websiteContent.id, parsed.data.explore.items)
+        await syncLandingArticlePins(
+          tx,
+          websiteContent.id,
+          parsed.data.articleSections,
+        )
 
-      await recordActivityLog(
-        {
-          userId: actor.id,
-          userName: actor.name,
-          userRole: actor.role,
-          action: "UPDATE",
-          module: "WEBSITE",
-          description: "Memperbarui konten Landing Page (Home)",
-          afterState: { section: "home", title: parsed.data.about.title },
-        },
-        tx,
-      )
-    })
+        await recordActivityLog(
+          {
+            userId: actor.id,
+            userName: actor.name,
+            userRole: actor.role,
+            action: "UPDATE",
+            module: "WEBSITE",
+            description: "Memperbarui konten Landing Page (Home)",
+            afterState: { section: "home", title: parsed.data.about.title },
+          },
+          tx,
+        )
+      },
+      { maxWait: 10000, timeout: 30000 },
+    )
 
     revalidatePath("/")
     revalidatePath("/dashboard/website")

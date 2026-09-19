@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useRef, useState, useEffect } from "react"
 import {
   Camera,
   Crop,
@@ -9,15 +9,11 @@ import {
   UploadCloud,
   X,
 } from "lucide-react"
-import ReactCrop, {
-  centerCrop,
-  makeAspectCrop,
-  type Crop as CropType,
-  type PixelCrop,
-} from "react-image-crop"
+import Cropper, { type Area } from "react-easy-crop"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import {
   getImageUploadErrorMessage,
   type ImageUploadScope,
@@ -26,7 +22,7 @@ import {
 } from "@/lib/cloudinary/upload-image"
 import { cn } from "@/lib/utils"
 
-import "react-image-crop/dist/ReactCrop.css"
+// Import removed as react-easy-crop provides its own basic styles if needed, but it's largely self-contained or imported differently if required. Usually it doesn't need external css for basic functionality.
 
 interface ImageUploadProps {
   value: string
@@ -42,7 +38,16 @@ interface ImageUploadProps {
   onUploadingChange?: (isUploading: boolean) => void
 }
 
-function getCroppedImage(image: HTMLImageElement, crop: PixelCrop) {
+export const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener("load", () => resolve(image))
+    image.addEventListener("error", (error) => reject(error))
+    image.setAttribute("crossOrigin", "anonymous")
+    image.src = url
+  })
+
+function getCroppedImage(image: HTMLImageElement, crop: Area, mimeType: string = "image/png") {
   const canvas = document.createElement("canvas")
   const scaleX = image.naturalWidth / image.width
   const scaleY = image.naturalHeight / image.height
@@ -73,23 +78,13 @@ function getCroppedImage(image: HTMLImageElement, crop: PixelCrop) {
         if (blob) resolve(blob)
         else reject(new Error("Hasil crop gambar gagal dibuat."))
       },
-      "image/jpeg",
-      0.92,
+      mimeType,
+      mimeType === "image/jpeg" || mimeType === "image/webp" ? 0.92 : undefined,
     )
   })
 }
 
-function centerAspectCrop(
-  mediaWidth: number,
-  mediaHeight: number,
-  aspect: number,
-) {
-  return centerCrop(
-    makeAspectCrop({ unit: "%", width: 90 }, aspect, mediaWidth, mediaHeight),
-    mediaWidth,
-    mediaHeight,
-  )
-}
+// Removed centerAspectCrop as react-easy-crop handles centering automatically
 
 export function ImageUpload({
   value,
@@ -109,19 +104,27 @@ export function ImageUpload({
   const [showCropModal, setShowCropModal] = useState(false)
   const [rawImageUrl, setRawImageUrl] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [crop, setCrop] = useState<CropType>()
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [completedCrop, setCompletedCrop] = useState<Area | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [localPreviewUrl, setLocalPreviewUrl] = useState("")
 
-  const displayValue = value || defaultImage || ""
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  const displayValue = localPreviewUrl || value || defaultImage || ""
 
   const resetCropModal = useCallback(() => {
     if (rawImageUrl) URL.revokeObjectURL(rawImageUrl)
     setShowCropModal(false)
     setRawImageUrl("")
     setSelectedFile(null)
-    setCrop(undefined)
-    setCompletedCrop(undefined)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCompletedCrop(null)
   }, [rawImageUrl])
 
   const closeCropModal = useCallback(() => {
@@ -148,13 +151,7 @@ export function ImageUpload({
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-  const onImageLoad = useCallback(
-    (event: React.SyntheticEvent<HTMLImageElement>) => {
-      const { width, height } = event.currentTarget
-      setCrop(centerAspectCrop(width, height, aspect || 16 / 9))
-    },
-    [aspect],
-  )
+  // Removed onImageLoad as react-easy-crop handles initial crop aspect ratio
 
   const handlePreviewError = useCallback(() => {
     toast.error(
@@ -163,7 +160,7 @@ export function ImageUpload({
     resetCropModal()
   }, [resetCropModal])
 
-  const uploadImage = async (file: Blob, filename: string) => {
+  const uploadImage = async (file: Blob, filename: string, localUrlToRevoke?: string) => {
     setIsUploading(true)
     onUploadingChange?.(true)
     try {
@@ -174,26 +171,38 @@ export function ImageUpload({
       )
       onChange(secureUrl)
       toast.success("Gambar berhasil diunggah.")
-      resetCropModal()
     } catch (error) {
       console.error("Image upload failed:", error)
       toast.error(getImageUploadErrorMessage(error))
     } finally {
+      if (localUrlToRevoke) {
+        URL.revokeObjectURL(localUrlToRevoke)
+        setLocalPreviewUrl("")
+      }
       setIsUploading(false)
       onUploadingChange?.(false)
     }
   }
 
   const handleCropDone = async () => {
-    if (!completedCrop || !imageRef.current || !selectedFile) {
+    if (!completedCrop || !selectedFile || !rawImageUrl) {
       toast.error("Pilih area crop gambar terlebih dahulu.")
       return
     }
 
     try {
-      const croppedImage = await getCroppedImage(imageRef.current, completedCrop)
+      const image = await createImage(rawImageUrl)
+      const mimeType = selectedFile.type === "image/png" ? "image/png" : "image/webp"
+      const extension = selectedFile.type === "image/png" ? "png" : "webp"
+      const croppedImage = await getCroppedImage(image, completedCrop, mimeType)
       const basename = selectedFile.name.replace(/\.[^/.]+$/, "") || "image"
-      await uploadImage(croppedImage, `${basename}-cropped.jpg`)
+      
+      const localUrl = URL.createObjectURL(croppedImage)
+      setLocalPreviewUrl(localUrl)
+      
+      resetCropModal()
+      
+      await uploadImage(croppedImage, `${basename}-cropped.${extension}`, localUrl)
     } catch (error) {
       console.error("Image crop failed:", error)
       toast.error(getImageUploadErrorMessage(error))
@@ -202,7 +211,10 @@ export function ImageUpload({
 
   const handleSkipCrop = async () => {
     if (!selectedFile) return
-    await uploadImage(selectedFile, selectedFile.name)
+    const localUrl = URL.createObjectURL(selectedFile)
+    setLocalPreviewUrl(localUrl)
+    resetCropModal()
+    await uploadImage(selectedFile, selectedFile.name, localUrl)
   }
 
   const handleRemove = (event: React.MouseEvent) => {
@@ -229,7 +241,7 @@ export function ImageUpload({
             <img
               src={displayValue}
               alt={alt}
-              className="size-full object-cover"
+              className="size-full object-contain"
             />
             {!disabled ? (
               <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
@@ -269,7 +281,7 @@ export function ImageUpload({
             <img
               src={displayValue}
               alt={alt}
-              className="size-full object-cover"
+              className="size-full object-contain"
             />
             {!disabled ? (
               <div className="absolute inset-0 flex items-center justify-center gap-1 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
@@ -301,15 +313,24 @@ export function ImageUpload({
             ) : null}
           </div>
         ) : displayValue ? (
-          <div className="group relative h-48 w-full overflow-hidden rounded-md border bg-muted/20">
+          <div className="group relative h-full w-full min-h-32 overflow-hidden rounded-md border bg-muted/20 flex items-center justify-center">
             {/* The native image element is required by the crop canvas API. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={displayValue}
               alt={alt}
-              className="h-full w-full object-cover"
+              className={cn(
+                "h-full w-full object-contain transition-opacity",
+                isUploading ? "opacity-40" : "opacity-100"
+              )}
             />
-            {!value && defaultImage ? (
+            {isUploading && (
+               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 backdrop-blur-[2px]">
+                 <Loader2 className="size-8 animate-spin text-white mb-2" />
+                 <span className="text-xs font-semibold text-white tracking-widest uppercase">Mengunggah...</span>
+               </div>
+            )}
+            {!value && defaultImage && !isUploading ? (
               <div className="absolute left-2 top-2">
                 <span className="rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">
                   Default
@@ -379,74 +400,105 @@ export function ImageUpload({
         )}
       </div>
 
-      {showCropModal ? (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={closeCropModal}
-        >
-          <div
-            className="max-h-[90vh] w-full max-w-2xl space-y-4 overflow-auto rounded-2xl bg-background p-6 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-lg font-semibold">
-                <Crop className="size-5" /> Crop Gambar
-              </h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={closeCropModal}
-                disabled={isUploading}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Sesuaikan area gambar yang ingin ditampilkan. Anda bisa melewati
-              tahap ini jika tidak perlu crop.
+      <Dialog open={showCropModal && isMounted} onOpenChange={(open) => {
+        if (!open && !isUploading) closeCropModal()
+      }}>
+        <DialogContent className="max-w-2xl overflow-hidden p-0 bg-background shadow-2xl border-none z-[9999]" showCloseButton={false}>
+          {/* HEADER */}
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Crop className="size-5" /> Crop Gambar
+            </DialogTitle>
+            <DialogDescription className="hidden">Crop your image before uploading.</DialogDescription>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={closeCropModal}
+              disabled={isUploading}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+
+          {/* BODY */}
+          <div className="flex-1 overflow-auto p-6">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Sesuaikan area gambar dan zoom untuk mendapatkan tampilan yang pas.
             </p>
-            <div className="flex items-center justify-center overflow-hidden rounded-lg bg-muted/30">
-              <ReactCrop
+            <div className="relative flex h-[50vh] w-full items-center justify-center overflow-hidden rounded-lg bg-zinc-900/10 dark:bg-black/40">
+              <Cropper
+                image={rawImageUrl}
                 crop={crop}
-                onChange={(nextCrop) => setCrop(nextCrop)}
-                onComplete={(nextCrop) => setCompletedCrop(nextCrop)}
-                aspect={aspect}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imageRef}
-                  src={rawImageUrl}
-                  alt="Crop Preview"
-                  onLoad={onImageLoad}
-                  onError={handlePreviewError}
-                  className="max-h-[60vh]"
-                />
-              </ReactCrop>
+                zoom={zoom}
+                aspect={aspect || 16 / 9}
+                minZoom={0.2}
+                restrictPosition={false}
+                onCropChange={setCrop}
+                onCropComplete={(croppedArea, croppedAreaPixels) =>
+                  setCompletedCrop(croppedAreaPixels)
+                }
+                onZoomChange={setZoom}
+              />
             </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void handleSkipCrop()}
-                disabled={isUploading}
-              >
-                {isUploading ? <Loader2 className="size-4 animate-spin" /> : null}
-                Lewati Crop
-              </Button>
-              <Button
-                type="button"
-                onClick={() => void handleCropDone()}
-                disabled={isUploading}
-                className="bg-palembang-red text-white hover:bg-palembang-red/90"
-              >
-                {isUploading ? <Loader2 className="size-4 animate-spin" /> : null}
-                Terapkan Crop
-              </Button>
+            <div className="mt-4 flex items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground shrink-0">Zoom:</span>
+              <input
+                type="range"
+                value={zoom}
+                min={0.2}
+                max={3}
+                step={0.01}
+                aria-label="Zoom Range"
+                onChange={(e) => setZoom(Number(e.target.value))}
+                style={{
+                  background: `linear-gradient(to right, black ${
+                    ((zoom - 0.2) / (3 - 0.2)) * 100
+                  }%, #e4e4e7 ${((zoom - 0.2) / (3 - 0.2)) * 100}%)`,
+                }}
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-black [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black"
+              />
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  type="number"
+                  value={Math.round(zoom * 100)}
+                  min={20}
+                  max={300}
+                  onChange={(e) => {
+                    const val = Number(e.target.value)
+                    if (!isNaN(val)) {
+                      setZoom(Math.max(0.2, Math.min(3, val / 100)))
+                    }
+                  }}
+                  className="w-[60px] rounded border border-zinc-200 px-2 py-1 text-right text-sm outline-none focus:border-black"
+                />
+                <span className="text-sm font-medium text-muted-foreground">%</span>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+
+          {/* FOOTER */}
+          <div className="flex justify-end gap-3 border-t bg-muted/10 px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeCropModal}
+              disabled={isUploading}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleCropDone()}
+              disabled={isUploading}
+              className="bg-black text-white hover:bg-zinc-800"
+            >
+              {isUploading ? <Loader2 className="size-4 animate-spin" /> : null}
+              Terapkan Crop
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

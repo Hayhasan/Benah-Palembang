@@ -31,14 +31,18 @@ export interface CollaborationPartnerContentData {
   isVisible: boolean
 }
 
+export interface CollaborationHeroSlideData {
+  imageUrl: string
+  imageAlt: string
+  title: string
+  description: string
+  position: number
+  isVisible: boolean
+}
+
 export interface CollaborationPageData {
   key: "collaboration"
-  hero: {
-    imageUrl: string
-    imageAlt: string
-    title: string
-    description: string
-  }
+  heroSlides: CollaborationHeroSlideData[]
   contact: {
     email: string
     phone: string

@@ -41,6 +41,16 @@ const editorRecordSchema = {
   clientKey: z.string().min(1).max(100),
 }
 
+const collaborationHeroSlideSchema = z.object({
+  ...editorRecordSchema,
+  imageUrl: imageUrlSchema,
+  imageAlt: requiredText("Alt gambar hero", 255),
+  title: requiredText("Judul hero", 255),
+  description: requiredText("Deskripsi hero", 5000),
+  position: z.number().int().positive(),
+  isVisible: z.boolean(),
+})
+
 const partnerLogoSchema = z.object({
   ...editorRecordSchema,
   name: requiredText("Nama partner", 160),
@@ -49,26 +59,12 @@ const partnerLogoSchema = z.object({
   isVisible: z.boolean(),
 })
 
-const partnerContentSchema = z.object({
-  ...editorRecordSchema,
-  platform: z.enum(["youtube", "instagram", "tiktok", "facebook", "x"]),
-  contentUrl: optionalContentUrlSchema.refine(
-    (value) => value.length > 0,
-    "URL konten wajib diisi.",
-  ),
-  position: z.number().int().positive(),
-  isVisible: z.boolean(),
-})
+
 
 export const collaborationPageEditorSchema = z
   .object({
     key: z.literal("collaboration"),
-    hero: z.object({
-      imageUrl: imageUrlSchema,
-      imageAlt: requiredText("Alt gambar hero", 255),
-      title: requiredText("Judul hero", 255),
-      description: requiredText("Deskripsi hero", 5000),
-    }),
+    heroSlides: z.array(collaborationHeroSlideSchema).min(1, "Minimal 1 banner.").max(10, "Maksimal 10 banner."),
     contact: z.object({
       email: z
         .string()
@@ -80,12 +76,11 @@ export const collaborationPageEditorSchema = z
       whatsappUrl: actionUrlSchema,
     }),
     partnerLogos: z.array(partnerLogoSchema).max(50),
-    partnerContents: z.array(partnerContentSchema).max(100),
   })
   .superRefine((data, context) => {
     const collections = [
+      ["heroSlides", data.heroSlides],
       ["partnerLogos", data.partnerLogos],
-      ["partnerContents", data.partnerContents],
     ] as const
 
     for (const [field, records] of collections) {

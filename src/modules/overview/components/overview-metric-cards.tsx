@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   BookOpen,
   CalendarPlus,
-  FileText,
   Eye,
-  Inbox,
-  Users,
+  FileText,
+  Handshake,
 } from "lucide-react"
 
 import type { OverviewData } from "../types/overview"
@@ -57,17 +56,19 @@ export function OverviewMetricCards({ data }: { data: OverviewData }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* Total Visit */}
       <Card className="border-none bg-palembang-charcoal text-white shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
-          <Users className="size-4 opacity-70" />
+          <CardTitle className="text-xs sm:text-sm font-medium">Total Visit</CardTitle>
+          <Eye className="size-4 opacity-70" />
         </CardHeader>
         <CardContent>
-          <div className="text-xl sm:text-2xl font-bold font-display">{metrics.users.total}</div>
-          <p className="text-xs opacity-70 mt-1">{metrics.users.growth}</p>
+          <div className="text-xl sm:text-2xl font-bold font-display">{metrics.visits.total}</div>
+          <p className="text-xs opacity-70 mt-1">{metrics.visits.growth}</p>
         </CardContent>
       </Card>
 
+      {/* Total Artikel */}
       <Card className="border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xs sm:text-sm font-medium">Total Artikel</CardTitle>
@@ -81,9 +82,10 @@ export function OverviewMetricCards({ data }: { data: OverviewData }) {
         </CardContent>
       </Card>
 
+      {/* Total Event / Agenda */}
       <Card className="border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Total Event</CardTitle>
+          <CardTitle className="text-xs sm:text-sm font-medium">Total Event/Agenda</CardTitle>
           <CalendarPlus className="size-4 text-palembang-red" />
         </CardHeader>
         <CardContent>
@@ -94,15 +96,15 @@ export function OverviewMetricCards({ data }: { data: OverviewData }) {
         </CardContent>
       </Card>
 
-      {/* Total Request */}
+      {/* Total Kolaborasi */}
       <Card className="bg-palembang-red text-white border-none shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Total Request</CardTitle>
-          <Inbox className="size-4 opacity-80" />
+          <CardTitle className="text-xs sm:text-sm font-medium">Total Kolaborasi</CardTitle>
+          <Handshake className="size-4 opacity-80" />
         </CardHeader>
         <CardContent>
-          <div className="text-xl sm:text-2xl font-bold font-display">{metrics.requests.total}</div>
-          <p className="text-xs opacity-80 mt-1">{metrics.requests.growth}</p>
+          <div className="text-xl sm:text-2xl font-bold font-display">{metrics.collaborations.total}</div>
+          <p className="text-xs opacity-80 mt-1">{metrics.collaborations.growth}</p>
         </CardContent>
       </Card>
     </div>

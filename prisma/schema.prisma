@@ -46,9 +46,6 @@ model User {
   deletedAt           DateTime?        @db.Timestamptz(6)
   authoredArticles    Article[]        @relation("ArticleAuthor")
   ownedEvents         Event[]          @relation("EventOwner")
-  articleComments     ArticleComment[] @relation("ArticleCommentUser")
-  articleLikes        ArticleLike[]    @relation("ArticleLikeUser")
-  eventLikes          EventLike[]      @relation("EventLikeUser")
   activityLogs        ActivityLog[]    @relation("UserActivityLogs")
 
   @@index([role, deletedAt, createdAt])
@@ -198,6 +195,7 @@ model WebsiteArticleSection {
   deletedAt                   DateTime?                   @db.Timestamptz(6)
   articles                    Article[]
   pins                        WebsiteArticleSectionPin[]
+  heroSlides                  WebsiteArticleSectionHeroSlide[]
   exploreItems                WebsiteExploreItem[]        @relation("WebsiteExploreItemArticleSection")
   websiteContent              WebsiteContent              @relation(fields: [websiteContentId], references: [id])
 
@@ -222,6 +220,26 @@ model WebsiteArticleSectionPin {
   @@map("website_article_section_pins")
 }
 
+model WebsiteArticleSectionHeroSlide {
+  id                      Int                   @id @default(autoincrement())
+  websiteArticleSectionId Int
+  imageUrl                String                @db.Text
+  imageAlt                String                @db.VarChar(255)
+  label                   String                @db.VarChar(160)
+  title                   String                @db.VarChar(255)
+  description             String                @db.Text
+  photographerName        String?               @db.VarChar(160)
+  position                Int
+  isVisible               Boolean               @default(true)
+  createdAt               DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime              @updatedAt @db.Timestamptz(6)
+  deletedAt               DateTime?             @db.Timestamptz(6)
+  websiteArticleSection   WebsiteArticleSection @relation(fields: [websiteArticleSectionId], references: [id])
+
+  @@index([websiteArticleSectionId, deletedAt, position])
+  @@map("website_article_section_hero_slides")
+}
+
 model WebsiteTeamMember {
   id               Int            @id @default(autoincrement())
   websiteContentId Int
@@ -244,10 +262,6 @@ model WebsiteCollaborationContent {
   id              Int                                  @id @default(autoincrement())
   key             String                               @unique @db.VarChar(100)
   originalKey     String?                              @db.VarChar(100)
-  heroImageUrl    String                               @db.Text
-  heroImageAlt    String                               @db.VarChar(255)
-  heroTitle       String                               @db.VarChar(255)
-  heroDescription String                               @db.Text
   contactEmail    String                               @db.VarChar(255)
   contactPhone    String                               @db.VarChar(50)
   emailUrl        String                               @db.Text
@@ -255,11 +269,30 @@ model WebsiteCollaborationContent {
   createdAt       DateTime                             @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime                             @updatedAt @db.Timestamptz(6)
   deletedAt       DateTime?                            @db.Timestamptz(6)
+  heroSlides      WebsiteCollaborationHeroSlide[]
   partnerLogos    WebsiteCollaborationPartnerLogo[]
   partnerContents WebsiteCollaborationPartnerContent[]
 
   @@index([deletedAt])
   @@map("website_collaboration_contents")
+}
+
+model WebsiteCollaborationHeroSlide {
+  id                     Int                         @id @default(autoincrement())
+  collaborationContentId Int
+  imageUrl               String                      @db.Text
+  imageAlt               String                      @db.VarChar(255)
+  title                  String                      @db.VarChar(255)
+  description            String                      @db.Text
+  position               Int
+  isVisible              Boolean                     @default(true)
+  createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime                    @updatedAt @db.Timestamptz(6)
+  deletedAt              DateTime?                   @db.Timestamptz(6)
+  collaborationContent   WebsiteCollaborationContent @relation(fields: [collaborationContentId], references: [id])
+
+  @@index([collaborationContentId, deletedAt, position])
+  @@map("website_collaboration_hero_slides")
 }
 
 model WebsiteCollaborationPartnerLogo {
@@ -281,6 +314,7 @@ model WebsiteCollaborationPartnerLogo {
 model WebsiteCollaborationPartnerContent {
   id                     Int                          @id @default(autoincrement())
   collaborationContentId Int
+  title                  String?                      @db.VarChar(255)
   platform               WebsiteCollaborationPlatform
   contentUrl             String                       @db.Text
   position               Int
@@ -299,35 +333,19 @@ model WebsiteHeaderFooterContent {
   key                  String                     @unique @db.VarChar(100)
   originalKey          String?                    @db.VarChar(100)
   logoImageUrl         String                     @db.Text
-  logoImageAlt         String                     @db.VarChar(255)
-  logoLinkUrl          String                     @db.Text
-  footerBackgroundText String                     @default("PALEMBANG") @db.VarChar(160)
+  footerLogoImageUrl   String?                    @db.Text
+  footerLogoImageAlt   String?                    @db.VarChar(255)
+  footerTitle          String?                    @db.VarChar(255)
   footerDescription    String                     @db.Text
+  footerCreatorText    String                     @default("The content for Benah Palembang was created by the people of Palembang for the people of Palembang.") @db.Text
   copyrightText        String                     @db.VarChar(255)
   createdAt            DateTime                   @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime                   @updatedAt @db.Timestamptz(6)
   deletedAt            DateTime?                  @db.Timestamptz(6)
-  footerExploreLinks   WebsiteFooterExploreLink[]
   footerConnectLinks   WebsiteFooterConnectLink[]
 
   @@index([deletedAt])
   @@map("website_header_footer_contents")
-}
-
-model WebsiteFooterExploreLink {
-  id                    Int                        @id @default(autoincrement())
-  headerFooterContentId Int
-  label                 String                     @db.VarChar(160)
-  linkUrl               String                     @db.Text
-  position              Int
-  isVisible             Boolean                    @default(true)
-  createdAt             DateTime                   @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime                   @updatedAt @db.Timestamptz(6)
-  deletedAt             DateTime?                  @db.Timestamptz(6)
-  headerFooterContent   WebsiteHeaderFooterContent @relation(fields: [headerFooterContentId], references: [id])
-
-  @@index([headerFooterContentId, deletedAt, position])
-  @@map("website_footer_explore_links")
 }
 
 model WebsiteFooterConnectLink {
@@ -372,11 +390,13 @@ model Event {
   description     String        @db.Text
   content         String        @db.Text
   bannerUrl       String        @db.Text
+  additionalBannerUrls String[] @default([])
   category        String        @db.VarChar(100)
   startsAt        DateTime      @db.Timestamptz(6)
   endsAt          DateTime?     @db.Timestamptz(6)
   location        String        @db.VarChar(255)
   organizer       String        @db.VarChar(255)
+  photographer    String?       @db.VarChar(255)
   registrationUrl String?       @db.Text
   whatsappUrl     String        @db.Text
   views           Int           @default(0)
@@ -387,9 +407,9 @@ model Event {
   createdAt       DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime      @updatedAt @db.Timestamptz(6)
   deletedAt       DateTime?     @db.Timestamptz(6)
-  owner           User          @relation("EventOwner", fields: [ownerId], references: [id])
+  owner           User             @relation("EventOwner", fields: [ownerId], references: [id])
   tags            EventTag[]
-  likes           EventLike[]
+  dailyViews      EventDailyView[]
 
   @@index([ownerId, deletedAt, updatedAt])
   @@index([status, deletedAt, startsAt])
@@ -419,11 +439,22 @@ model Article {
   title                   String                     @db.VarChar(255)
   excerpt                 String                     @db.Text
   content                 String                     @db.Text
+  label                   String?                    @db.VarChar(160)
   coverImageUrl           String                     @db.Text
+  additionalBannerUrls    String[]                   @default([])
+  photographer            String?                    @db.VarChar(160)
+  additionalPhotographers String[]                   @default([])
   readingTime             Int
   isFeatured              Boolean                    @default(false)
   views                   Int                        @default(0)
   status                  ContentStatus              @default(DRAFT)
+  venueName               String?                    @db.VarChar(255)
+  venueAddress            String?                    @db.Text
+  venuePriceLevel         Int?                       @default(1)
+  venueOpenDays           String?                    @db.VarChar(100)
+  venueOpenHours          String?                    @db.VarChar(100)
+  venueFeatures           String[]                   @default([])
+  venueContact            String?                    @db.VarChar(100)
   moderationNote          String?                    @db.Text
   submittedAt             DateTime?                  @db.Timestamptz(6)
   publishedAt             DateTime?                  @db.Timestamptz(6)
@@ -433,9 +464,8 @@ model Article {
   author                  User                       @relation("ArticleAuthor", fields: [authorId], references: [id])
   websiteArticleSection   WebsiteArticleSection      @relation(fields: [websiteArticleSectionId], references: [id])
   tags                    ArticleTag[]
-  comments                ArticleComment[]
-  likes                   ArticleLike[]
   landingPins             WebsiteArticleSectionPin[]
+  dailyViews              ArticleDailyView[]
 
   @@index([authorId, deletedAt, updatedAt])
   @@index([websiteArticleSectionId, status, deletedAt, publishedAt])
@@ -456,49 +486,6 @@ model ArticleTag {
   @@map("article_tags")
 }
 
-model ArticleComment {
-  id        Int       @id @default(autoincrement())
-  articleId Int
-  userId    String    @db.Uuid
-  content   String    @db.Text
-  createdAt DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
-  deletedAt DateTime? @db.Timestamptz(6)
-  article   Article   @relation(fields: [articleId], references: [id])
-  user      User      @relation("ArticleCommentUser", fields: [userId], references: [id])
-
-  @@index([articleId, deletedAt, createdAt])
-  @@index([userId, deletedAt])
-  @@map("article_comments")
-}
-
-model ArticleLike {
-  id        Int      @id @default(autoincrement())
-  articleId Int
-  userId    String   @db.Uuid
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  article   Article  @relation(fields: [articleId], references: [id])
-  user      User     @relation("ArticleLikeUser", fields: [userId], references: [id])
-
-  @@unique([articleId, userId])
-  @@index([userId])
-  @@index([articleId])
-  @@map("article_likes")
-}
-
-model EventLike {
-  id        Int      @id @default(autoincrement())
-  eventId   Int
-  userId    String   @db.Uuid
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  event     Event    @relation(fields: [eventId], references: [id])
-  user      User     @relation("EventLikeUser", fields: [userId], references: [id])
-
-  @@unique([eventId, userId])
-  @@index([userId])
-  @@index([eventId])
-  @@map("event_likes")
-}
 
 enum ActivityAction {
   CREATE
@@ -546,4 +533,49 @@ model ActivityLog {
   @@index([action, createdAt])
   @@index([createdAt(sort: Desc)])
   @@map("activity_logs")
+}
+
+model DailyVisit {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique @db.Date
+  count     Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("daily_visits")
+}
+
+model HourlyVisit {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @db.Date
+  hour      Int      @db.SmallInt // 0-23
+  count     Int      @default(0)
+
+  @@unique([date, hour])
+  @@index([date])
+  @@map("hourly_visits")
+}
+
+model ArticleDailyView {
+  id        Int      @id @default(autoincrement())
+  articleId Int
+  date      DateTime @db.Date
+  count     Int      @default(0)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, date])
+  @@index([date])
+  @@map("article_daily_views")
+}
+
+model EventDailyView {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  date      DateTime @db.Date
+  count     Int      @default(0)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, date])
+  @@index([date])
+  @@map("event_daily_views")
 }

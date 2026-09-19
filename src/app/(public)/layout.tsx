@@ -4,6 +4,7 @@ import { AuthSessionProvider } from "@/modules/auth/components/auth-session-prov
 import { getCurrentUser } from "@/modules/auth/data/session-dal"
 import { HeaderFooterContentProvider } from "@/modules/website-content/components/header-footer-content-provider"
 import { getHeaderFooterContent } from "@/modules/website-content/data/get-header-footer-content"
+import { VisitTracker } from "@/components/public/visit-tracker"
 
 export default async function PublicLayout({
   children,
@@ -25,6 +26,7 @@ export default async function PublicLayout({
       <AuthSessionProvider initialUser={user}>
         <HeaderFooterContentProvider data={headerFooterContent}>
           <PublicScrollReveal />
+          <VisitTracker />
           <Header />
           {children}
         </HeaderFooterContentProvider>

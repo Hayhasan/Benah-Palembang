@@ -76,16 +76,19 @@ export function AccountList({ routeRole, data }: AccountListProps) {
   const isInputFocusedRef = useRef(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  function buildHref(page: number, query = data.query) {
-    const params = new URLSearchParams()
-    const normalizedQuery = query.trim()
+  const buildHref = useCallback(
+    (page: number, query = data.query) => {
+      const params = new URLSearchParams()
+      const normalizedQuery = query.trim()
 
-    if (normalizedQuery) params.set("q", normalizedQuery)
-    if (page > 1) params.set("page", String(page))
+      if (normalizedQuery) params.set("q", normalizedQuery)
+      if (page > 1) params.set("page", String(page))
 
-    const search = params.toString()
-    return search ? `${pathname}?${search}` : pathname
-  }
+      const search = params.toString()
+      return search ? `${pathname}?${search}` : pathname
+    },
+    [data.query, pathname],
+  )
 
   const executeSearch = useCallback(
     (newQuery: string) => {
@@ -102,7 +105,7 @@ export function AccountList({ routeRole, data }: AccountListProps) {
         })
       }
     },
-    [data.query, pathname, router],
+    [buildHref, data.query, router],
   )
 
   // Sync state with server query only if not focused and coming from external navigation

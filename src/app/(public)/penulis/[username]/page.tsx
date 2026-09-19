@@ -65,30 +65,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function Page({ params }: PageProps) {
-  const { username } = await params
-  const profile = await getPublicProfile(username)
-
-  if (!profile) notFound()
-
-  return (
-    <>
-      <BreadcrumbJsonLd
-        items={[
-          { name: "Beranda", url: "/" },
-          { name: "Penulis", url: `/penulis/${profile.username}` },
-          { name: profile.name, url: `/penulis/${profile.username}` },
-        ]}
-      />
-      <ProfileJsonLd
-        name={profile.name}
-        username={profile.username}
-        bio={profile.bio}
-        avatarUrl={profile.avatarUrl}
-        profileUrl={`/penulis/${profile.username}`}
-      />
-      <PublicProfilePage profile={profile} />
-    </>
-  )
+export default async function Page() {
+  notFound()
 }
 

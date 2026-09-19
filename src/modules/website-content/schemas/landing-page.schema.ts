@@ -154,7 +154,7 @@ const articleSectionSchema = z.object({
   linkLabel: requiredText("Label link section", 100),
   pinnedArticleIds: z
     .array(z.number().int().positive())
-    .max(3, "Artikel yang dipin maksimal 3 per section.")
+    .max(6, "Artikel yang dipin maksimal 6 per section.")
     .refine(
       (articleIds) => new Set(articleIds).size === articleIds.length,
       "Artikel yang sama tidak dapat dipin dua kali dalam satu section.",

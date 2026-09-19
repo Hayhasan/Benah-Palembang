@@ -12,10 +12,19 @@ import { collaborationPlatformFromDatabase } from "./collaboration-content.mappe
 
 export const collaborationPageEditorSelect = {
   key: true,
-  heroImageUrl: true,
-  heroImageAlt: true,
-  heroTitle: true,
-  heroDescription: true,
+  heroSlides: {
+    where: { deletedAt: null },
+    orderBy: { position: "asc" },
+    select: {
+      id: true,
+      imageUrl: true,
+      imageAlt: true,
+      title: true,
+      description: true,
+      position: true,
+      isVisible: true,
+    },
+  },
   contactEmail: true,
   contactPhone: true,
   emailUrl: true,
@@ -31,17 +40,7 @@ export const collaborationPageEditorSelect = {
       isVisible: true,
     },
   },
-  partnerContents: {
-    where: { deletedAt: null },
-    orderBy: { position: "asc" },
-    select: {
-      id: true,
-      platform: true,
-      contentUrl: true,
-      position: true,
-      isVisible: true,
-    },
-  },
+
 } satisfies Prisma.WebsiteCollaborationContentSelect
 
 type CollaborationContentEditorRecord =
@@ -54,12 +53,10 @@ export function mapCollaborationContentToEditor(
 ): CollaborationPageEditorData {
   return {
     key: "collaboration",
-    hero: {
-      imageUrl: content.heroImageUrl,
-      imageAlt: content.heroImageAlt,
-      title: content.heroTitle,
-      description: content.heroDescription,
-    },
+    heroSlides: content.heroSlides.map((slide) => ({
+      ...slide,
+      clientKey: `collaboration-slide-${slide.id}`,
+    })),
     contact: {
       email: content.contactEmail,
       phone: content.contactPhone,
@@ -70,29 +67,22 @@ export function mapCollaborationContentToEditor(
       ...logo,
       clientKey: `collaboration-logo-${logo.id}`,
     })),
-    partnerContents: content.partnerContents.map((item) => ({
-      ...item,
-      platform: collaborationPlatformFromDatabase(item.platform),
-      clientKey: `collaboration-content-${item.id}`,
-    })),
   }
 }
 
 export function mapDefaultCollaborationPageToEditor(): CollaborationPageEditorData {
   return {
     ...DEFAULT_COLLABORATION_PAGE,
+    heroSlides: DEFAULT_COLLABORATION_PAGE.heroSlides.map((slide, index) => ({
+      ...slide,
+      id: null,
+      clientKey: `default-collaboration-slide-${index + 1}`,
+    })),
     partnerLogos: DEFAULT_COLLABORATION_PAGE.partnerLogos.map(
       (logo, index) => ({
         ...logo,
         id: null,
         clientKey: `default-collaboration-logo-${index + 1}`,
-      }),
-    ),
-    partnerContents: DEFAULT_COLLABORATION_PAGE.partnerContents.map(
-      (item, index) => ({
-        ...item,
-        id: null,
-        clientKey: `default-collaboration-content-${index + 1}`,
       }),
     ),
   }

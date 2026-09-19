@@ -14,6 +14,7 @@ interface CloudinaryUploadResponse {
 }
 
 export const MAX_IMAGE_UPLOAD_SIZE = 10 * 1024 * 1024
+export const MAX_MEDIA_UPLOAD_SIZE = 50 * 1024 * 1024
 
 export const ALLOWED_IMAGE_UPLOAD_TYPES = new Set([
   "image/avif",
@@ -22,6 +23,14 @@ export const ALLOWED_IMAGE_UPLOAD_TYPES = new Set([
   "image/png",
   "image/svg+xml",
   "image/webp",
+])
+
+export const ALLOWED_MEDIA_UPLOAD_TYPES = new Set([
+  ...ALLOWED_IMAGE_UPLOAD_TYPES,
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-msvideo",
 ])
 
 const UPLOAD_TIMEOUT_MS = 120_000
@@ -84,21 +93,35 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export function validateImageUpload(file: File) {
+export function validateImageUpload(file: File, type: 'image' | 'media' = 'image') {
   if (file.size === 0) {
-    return "File gambar kosong atau rusak. Coba pilih file lain."
+    return "File kosong atau rusak. Coba pilih file lain."
   }
 
-  if (!file.type.startsWith("image/")) {
-    return "File yang dipilih bukan gambar. Gunakan file JPG, PNG, WEBP, AVIF, GIF, atau SVG."
-  }
+  if (type === 'image') {
+    if (!file.type.startsWith("image/")) {
+      return "File yang dipilih bukan gambar. Gunakan file JPG, PNG, WEBP, AVIF, GIF, atau SVG."
+    }
 
-  if (!ALLOWED_IMAGE_UPLOAD_TYPES.has(file.type)) {
-    return "Format gambar harus JPG, PNG, WEBP, AVIF, GIF, atau SVG."
-  }
+    if (!ALLOWED_IMAGE_UPLOAD_TYPES.has(file.type)) {
+      return "Format gambar harus JPG, PNG, WEBP, AVIF, GIF, atau SVG."
+    }
 
-  if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
-    return `Ukuran gambar ${formatFileSize(file.size)} melebihi batas 10 MB. Kompres atau perkecil resolusinya lalu coba lagi.`
+    if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
+      return `Ukuran gambar ${formatFileSize(file.size)} melebihi batas 10 MB. Kompres atau perkecil resolusinya lalu coba lagi.`
+    }
+  } else {
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      return "File yang dipilih harus berupa gambar atau video."
+    }
+
+    if (!ALLOWED_MEDIA_UPLOAD_TYPES.has(file.type)) {
+      return "Format file tidak didukung."
+    }
+
+    if (file.size > MAX_MEDIA_UPLOAD_SIZE) {
+      return `Ukuran file ${formatFileSize(file.size)} melebihi batas 50 MB. Kompres file lalu coba lagi.`
+    }
   }
 
   return null
@@ -160,7 +183,7 @@ async function postToCloudinary(cloudName: string, formData: FormData) {
 
   try {
     response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
       {
         method: "POST",
         body: formData,
@@ -208,16 +231,23 @@ export async function uploadImageToCloudinary(
   file: Blob,
   filename: string,
   uploadScope: ImageUploadScope,
+  type: 'image' | 'media' = 'image'
 ) {
   if (file.size === 0) {
     throw new ImageUploadError(
-      "File gambar kosong atau rusak. Coba pilih file lain.",
+      "File kosong atau rusak. Coba pilih file lain.",
     )
   }
 
-  if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
+  if (type === 'image' && file.size > MAX_IMAGE_UPLOAD_SIZE) {
     throw new ImageUploadError(
       `Ukuran gambar ${formatFileSize(file.size)} melebihi batas 10 MB. Kompres atau perkecil resolusinya lalu coba lagi.`,
+    )
+  }
+
+  if (type === 'media' && file.size > MAX_MEDIA_UPLOAD_SIZE) {
+    throw new ImageUploadError(
+      `Ukuran file ${formatFileSize(file.size)} melebihi batas 50 MB. Kompres lalu coba lagi.`,
     )
   }
 

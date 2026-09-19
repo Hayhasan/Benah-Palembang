@@ -67,7 +67,6 @@ export async function getPublicProfile(
           websiteArticleSection: {
             select: { categoryHeroTitle: true },
           },
-          _count: { select: { likes: true } },
         },
       },
       ownedEvents: {
@@ -100,7 +99,6 @@ export async function getPublicProfile(
     category: article.websiteArticleSection.categoryHeroTitle,
     publishedAtLabel: publishedAtFormatter.format(article.publishedAt!),
     views: article.views,
-    likes: article._count.likes,
   }))
 
   return {
@@ -121,7 +119,6 @@ export async function getPublicProfile(
     linkedinUrl: profile.linkedinUrl,
     articleCount: articles.length,
     totalViews: articles.reduce((total, article) => total + article.views, 0),
-    totalLikes: articles.reduce((total, article) => total + article.likes, 0),
     articles,
     events: profile.ownedEvents.map((event) => ({
       id: event.id,

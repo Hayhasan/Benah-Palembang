@@ -59,10 +59,10 @@ function defaultArticleCategoryHeroData(sectionKey: string) {
   }
 
   return {
-    categoryHeroImageUrl: category.hero.imageUrl,
-    categoryHeroImageAlt: category.hero.imageAlt,
-    categoryHeroTitle: category.hero.title,
-    categoryHeroDescription: category.hero.description,
+    categoryHeroImageUrl: category.heroSlides[0].imageUrl,
+    categoryHeroImageAlt: category.heroSlides[0].imageAlt,
+    categoryHeroTitle: category.heroSlides[0].title,
+    categoryHeroDescription: category.heroSlides[0].description,
   }
 }
 
@@ -189,10 +189,9 @@ async function seedCollaborationPage(prisma: PrismaClient) {
     await transaction.websiteCollaborationContent.create({
       data: {
         key: DEFAULT_COLLABORATION_PAGE.key,
-        heroImageUrl: DEFAULT_COLLABORATION_PAGE.hero.imageUrl,
-        heroImageAlt: DEFAULT_COLLABORATION_PAGE.hero.imageAlt,
-        heroTitle: DEFAULT_COLLABORATION_PAGE.hero.title,
-        heroDescription: DEFAULT_COLLABORATION_PAGE.hero.description,
+        heroSlides: {
+          create: DEFAULT_COLLABORATION_PAGE.heroSlides,
+        },
         contactEmail: DEFAULT_COLLABORATION_PAGE.contact.email,
         contactPhone: DEFAULT_COLLABORATION_PAGE.contact.phone,
         emailUrl: DEFAULT_COLLABORATION_PAGE.contact.emailUrl,
@@ -239,16 +238,11 @@ async function seedHeaderFooterContent(prisma: PrismaClient) {
       data: {
         key: DEFAULT_HEADER_FOOTER_CONTENT.key,
         logoImageUrl: DEFAULT_HEADER_FOOTER_CONTENT.logo.imageUrl,
-        logoImageAlt: DEFAULT_HEADER_FOOTER_CONTENT.logo.imageAlt,
-        logoLinkUrl: DEFAULT_HEADER_FOOTER_CONTENT.logo.linkUrl,
-        footerBackgroundText:
-          DEFAULT_HEADER_FOOTER_CONTENT.footer.backgroundText,
+        footerTitle: DEFAULT_HEADER_FOOTER_CONTENT.footer.title,
         footerDescription:
           DEFAULT_HEADER_FOOTER_CONTENT.footer.description,
+        footerCreatorText: DEFAULT_HEADER_FOOTER_CONTENT.footer.creatorText,
         copyrightText: DEFAULT_HEADER_FOOTER_CONTENT.footer.copyrightText,
-        footerExploreLinks: {
-          create: DEFAULT_HEADER_FOOTER_CONTENT.footer.exploreLinks,
-        },
         footerConnectLinks: {
           create: DEFAULT_HEADER_FOOTER_CONTENT.footer.connectLinks.map(
             (link) => ({

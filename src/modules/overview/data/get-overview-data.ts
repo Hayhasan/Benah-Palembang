@@ -21,44 +21,115 @@ import {
   mapContentStatusToOverviewStatus,
 } from "./overview.mapper"
 
-function buildChartData(
+function buildCreatorChartData(
   periodType: OverviewFilterType,
-  totalViews: number,
-  totalInteractions: number,
+  dailyViews: { date: Date; count: number }[],
+  periodStart: Date,
 ): OverviewChartPoint[] {
   if (periodType === "daily") {
-    const baseViews = Math.max(totalViews, 100)
+    const todayCount = dailyViews[0]?.count ?? 0
     const weights = [0.05, 0.03, 0.18, 0.32, 0.24, 0.18]
-
     return ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"].map(
       (name, index) => ({
         name,
-        views: Math.round(baseViews * (weights[index] ?? 0)),
-        interactions: Math.round(totalInteractions * (weights[index] ?? 0)),
-      }),
+        views: Math.round(todayCount * (weights[index] ?? 0)),
+        interactions: 0,
+      })
     )
   }
 
   if (periodType === "weekly") {
-    const weights = [0.12, 0.14, 0.16, 0.15, 0.18, 0.15, 0.1]
-
-    return ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"].map(
-      (name, index) => ({
-        name,
-        views: Math.round(totalViews * (weights[index] ?? 0)),
-        interactions: Math.round(totalInteractions * (weights[index] ?? 0)),
-      }),
-    )
+    const points: OverviewChartPoint[] = []
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(periodStart)
+      d.setDate(d.getDate() + i)
+      const view = dailyViews.find(v => v.date.toDateString() === d.toDateString())
+      points.push({
+        name: days[d.getDay()] ?? "",
+        views: view?.count ?? 0,
+        interactions: 0,
+      })
+    }
+    return points
   }
 
-  const weights = [0.22, 0.26, 0.28, 0.24]
-  return ["Minggu 1", "Minggu 2", "Minggu 3", "Minggu 4"].map(
-    (name, index) => ({
-      name,
-      views: Math.round(totalViews * (weights[index] ?? 0)),
-      interactions: Math.round(totalInteractions * (weights[index] ?? 0)),
-    }),
-  )
+  const points: OverviewChartPoint[] = [
+    { name: "Minggu 1", views: 0, interactions: 0 },
+    { name: "Minggu 2", views: 0, interactions: 0 },
+    { name: "Minggu 3", views: 0, interactions: 0 },
+    { name: "Minggu 4", views: 0, interactions: 0 },
+  ]
+  
+  dailyViews.forEach(v => {
+    const date = v.date.getDate()
+    if (date <= 7) points[0].views += v.count
+    else if (date <= 14) points[1].views += v.count
+    else if (date <= 21) points[2].views += v.count
+    else points[3].views += v.count
+  })
+  
+  return points
+}
+
+function buildRealChartData(
+  periodType: OverviewFilterType,
+  dailyVisits: { date: Date; count: number }[],
+  hourlyVisits: { hour: number; count: number }[],
+  periodStart: Date,
+): OverviewChartPoint[] {
+  if (periodType === "daily") {
+    return [
+      { name: "00:00", hours: [0, 1, 2, 3] },
+      { name: "04:00", hours: [4, 5, 6, 7] },
+      { name: "08:00", hours: [8, 9, 10, 11] },
+      { name: "12:00", hours: [12, 13, 14, 15] },
+      { name: "16:00", hours: [16, 17, 18, 19] },
+      { name: "20:00", hours: [20, 21, 22, 23] },
+    ].map(group => {
+      const views = hourlyVisits
+        .filter(v => group.hours.includes(v.hour))
+        .reduce((sum, v) => sum + v.count, 0)
+      return {
+        name: group.name,
+        views,
+        interactions: 0,
+      }
+    })
+  }
+
+  if (periodType === "weekly") {
+    const points: OverviewChartPoint[] = []
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(periodStart)
+      d.setDate(d.getDate() + i)
+      const visit = dailyVisits.find(v => v.date.toDateString() === d.toDateString())
+      points.push({
+        name: days[d.getDay()] ?? "",
+        views: visit?.count ?? 0,
+        interactions: 0,
+      })
+    }
+    return points
+  }
+
+  const points: OverviewChartPoint[] = [
+    { name: "Minggu 1", views: 0, interactions: 0 },
+    { name: "Minggu 2", views: 0, interactions: 0 },
+    { name: "Minggu 3", views: 0, interactions: 0 },
+    { name: "Minggu 4", views: 0, interactions: 0 },
+  ]
+  
+  dailyVisits.forEach(v => {
+    const date = v.date.getDate()
+    if (date <= 7) points[0].views += v.count
+    else if (date <= 14) points[1].views += v.count
+    else if (date <= 21) points[2].views += v.count
+    else points[3].views += v.count
+  })
+  
+  return points
 }
 
 function getPeriodConfig(input?: {
@@ -138,10 +209,8 @@ export async function getOverviewData(input?: {
       newPublishedEvents,
       articleViews,
       eventViews,
-      articleLikes,
-      eventLikes,
-      articleComments,
-    ] = await Promise.all([
+      articleDailyViews,
+      eventDailyViews,    ] = await Promise.all([
       prisma.article.count({
         where: { authorId: actor.id, status: "PUBLISHED", deletedAt: null },
       }),
@@ -172,41 +241,44 @@ export async function getOverviewData(input?: {
         _sum: { views: true },
         where: { ownerId: actor.id, status: "PUBLISHED", deletedAt: null },
       }),
-      prisma.articleLike.count({
+      prisma.articleDailyView.groupBy({
+        by: ["date"],
+        _sum: { count: true },
         where: {
-          article: {
-            authorId: actor.id,
-            status: "PUBLISHED",
-            deletedAt: null,
-          },
+          date: { gte: period.periodStart, lte: period.periodEnd },
+          article: { authorId: actor.id, status: "PUBLISHED", deletedAt: null },
         },
       }),
-      prisma.eventLike.count({
+      prisma.eventDailyView.groupBy({
+        by: ["date"],
+        _sum: { count: true },
         where: {
-          event: {
-            ownerId: actor.id,
-            status: "PUBLISHED",
-            deletedAt: null,
-          },
-        },
-      }),
-      prisma.articleComment.count({
-        where: {
-          deletedAt: null,
-          article: {
-            authorId: actor.id,
-            status: "PUBLISHED",
-            deletedAt: null,
-          },
+          date: { gte: period.periodStart, lte: period.periodEnd },
+          event: { ownerId: actor.id, status: "PUBLISHED", deletedAt: null },
         },
       }),
     ])
 
     const totalPublications = totalPublishedArticles + totalPublishedEvents
     const newPublications = newPublishedArticles + newPublishedEvents
-    const totalViews =
-      (articleViews._sum.views ?? 0) + (eventViews._sum.views ?? 0)
-    const totalInteractions = articleLikes + eventLikes + articleComments
+    const totalViews = (articleViews._sum.views ?? 0) + (eventViews._sum.views ?? 0)
+    const totalInteractions = 0
+    const dailyViewsMap = new Map<string, number>()
+    
+    articleDailyViews.forEach(v => {
+      const key = v.date.toDateString()
+      dailyViewsMap.set(key, (dailyViewsMap.get(key) ?? 0) + (v._sum.count ?? 0))
+    })
+    
+    eventDailyViews.forEach(v => {
+      const key = v.date.toDateString()
+      dailyViewsMap.set(key, (dailyViewsMap.get(key) ?? 0) + (v._sum.count ?? 0))
+    })
+
+    const dailyViews = Array.from(dailyViewsMap.entries()).map(([dateStr, count]) => ({
+      date: new Date(dateStr),
+      count,
+    }))
 
     return {
       audience: "CREATOR",
@@ -217,48 +289,36 @@ export async function getOverviewData(input?: {
       availableMonths: period.availableMonths,
       metrics: {
         publications: {
-          total: formatNumber(totalPublications),
-          growth: `+${newPublications} publikasi baru`,
+          total: formatNumber(newPublications),
+          growth: `Dari total ${totalPublications} publikasi`,
         },
         views: {
           total: formatCompactNumber(totalViews),
-          growth: "Akumulasi pembaca konten Anda",
+          growth: "Total akumulasi pembaca",
         },
       },
-      chartData: buildChartData(
+      chartData: buildCreatorChartData(
         period.periodType,
-        totalViews,
-        totalInteractions,
+        dailyViews,
+        period.periodStart,
       ),
     }
   }
 
   const [
-    totalUsers,
-    newUsers,
     totalArticles,
     newArticles,
     totalEvents,
     newEvents,
-    totalArticleRequests,
-    totalEventRequests,
-    pendingArticles,
-    pendingEvents,
+    totalCollaborationPartners,
     articleViews,
     eventViews,
-    articleLikes,
-    eventLikes,
-    articleComments,
+
     recentArticles,
     recentEvents,
+    dailyVisits,
+    hourlyVisits,
   ] = await Promise.all([
-    prisma.user.count({ where: { deletedAt: null } }),
-    prisma.user.count({
-      where: {
-        deletedAt: null,
-        createdAt: { gte: period.periodStart, lte: period.periodEnd },
-      },
-    }),
     prisma.article.count({ where: { deletedAt: null } }),
     prisma.article.count({
       where: {
@@ -273,17 +333,8 @@ export async function getOverviewData(input?: {
         createdAt: { gte: period.periodStart, lte: period.periodEnd },
       },
     }),
-    prisma.article.count({
-      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
-    }),
-    prisma.event.count({
-      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
-    }),
-    prisma.article.count({
-      where: { deletedAt: null, status: "PENDING_REVIEW" },
-    }),
-    prisma.event.count({
-      where: { deletedAt: null, status: "PENDING_REVIEW" },
+    prisma.websiteCollaborationPartnerLogo.count({
+      where: { deletedAt: null },
     }),
     prisma.article.aggregate({
       _sum: { views: true },
@@ -293,11 +344,13 @@ export async function getOverviewData(input?: {
       _sum: { views: true },
       where: { deletedAt: null },
     }),
-    prisma.articleLike.count(),
-    prisma.eventLike.count(),
-    prisma.articleComment.count({ where: { deletedAt: null } }),
+
     prisma.article.findMany({
-      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
+      where: { 
+        deletedAt: null, 
+        status: { notIn: ["DRAFT", "ARCHIVED"] },
+        createdAt: { gte: period.periodStart, lte: period.periodEnd }
+      },
       orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
       take: 5,
       select: {
@@ -310,7 +363,11 @@ export async function getOverviewData(input?: {
       },
     }),
     prisma.event.findMany({
-      where: { deletedAt: null, status: { notIn: ["DRAFT", "ARCHIVED"] } },
+      where: { 
+        deletedAt: null, 
+        status: { notIn: ["DRAFT", "ARCHIVED"] },
+        createdAt: { gte: period.periodStart, lte: period.periodEnd }
+      },
       orderBy: [{ submittedAt: "desc" }, { updatedAt: "desc" }],
       take: 5,
       select: {
@@ -322,6 +379,18 @@ export async function getOverviewData(input?: {
         owner: { select: { name: true } },
       },
     }),
+
+    prisma.dailyVisit.findMany({
+      where: {
+        date: { gte: period.periodStart, lte: period.periodEnd },
+      },
+    }) as Promise<{ date: Date; count: number }[]>,
+
+    prisma.hourlyVisit.findMany({
+      where: {
+        date: { gte: period.periodStart, lte: period.periodEnd },
+      },
+    }) as Promise<{ hour: number; count: number }[]>,
   ])
 
   const combinedRecentContent = [
@@ -355,7 +424,8 @@ export async function getOverviewData(input?: {
     }))
   const totalViews =
     (articleViews._sum.views ?? 0) + (eventViews._sum.views ?? 0)
-  const totalInteractions = articleLikes + eventLikes + articleComments
+  const totalVisitsInPeriod = dailyVisits.reduce((acc, curr) => acc + curr.count, 0)
+  const totalInteractions = 0
 
   return {
     audience: "MANAGEMENT",
@@ -365,27 +435,28 @@ export async function getOverviewData(input?: {
     selectedMonth: period.selectedMonth,
     availableMonths: period.availableMonths,
     metrics: {
-      users: {
-        total: formatNumber(totalUsers),
-        growth: `+${newUsers} user baru`,
+      visits: {
+        total: formatNumber(totalVisitsInPeriod),
+        growth: "Total kunjungan pada periode ini",
       },
       articles: {
-        total: formatNumber(totalArticles),
-        growth: `+${newArticles} artikel baru`,
+        total: formatNumber(newArticles),
+        growth: `Dari total ${totalArticles} artikel`,
       },
       events: {
-        total: formatNumber(totalEvents),
-        growth: `+${newEvents} agenda baru`,
+        total: formatNumber(newEvents),
+        growth: `Dari total ${totalEvents} agenda`,
       },
-      requests: {
-        total: formatNumber(totalArticleRequests + totalEventRequests),
-        growth: `${pendingArticles + pendingEvents} menunggu review`,
+      collaborations: {
+        total: formatNumber(totalCollaborationPartners),
+        growth: "Total aktif saat ini",
       },
     },
-    chartData: buildChartData(
+    chartData: buildRealChartData(
       period.periodType,
-      totalViews,
-      totalInteractions,
+      dailyVisits,
+      hourlyVisits,
+      period.periodStart,
     ),
     recentContents,
   }

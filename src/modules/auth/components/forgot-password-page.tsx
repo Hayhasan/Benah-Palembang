@@ -32,10 +32,10 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthPageShell asideDescription="Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.">
-      <h1 className="mt-16 font-display text-4xl font-bold tracking-[-0.04em]">
+      <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-zinc-900">
         Lupa password?
       </h1>
-      <p className="mt-3 text-sm leading-6 text-white/60">
+      <p className="mt-2 text-sm text-zinc-500">
         Masukkan alamat email Anda untuk menerima tautan reset password.
       </p>
 
@@ -45,11 +45,11 @@ export function ForgotPasswordPage() {
             <Check className="size-5" />
             <p className="text-sm font-semibold">Periksa email Anda</p>
           </div>
-          <p className="mt-3 text-xs leading-5 text-white/65">
+          <p className="mt-3 text-xs leading-5 text-zinc-600">
             {state.message}
           </p>
           {state.maskedEmail && (
-            <p className="mt-2 text-xs font-semibold text-white/80">
+            <p className="mt-2 text-xs font-semibold text-zinc-800">
               Tujuan: {state.maskedEmail}
             </p>
           )}
@@ -60,9 +60,9 @@ export function ForgotPasswordPage() {
               type="submit"
               variant="outline"
               disabled={isPending || remainingSeconds > 0}
-              className="w-full border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              className="w-full border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
             >
-              <RotateCcw className="size-4" />
+              <RotateCcw className="size-4 mr-2" />
               {isPending
                 ? "Mengirim..."
                 : remainingSeconds > 0
@@ -80,7 +80,7 @@ export function ForgotPasswordPage() {
         </div>
       ) : (
         <form action={formAction} className="mt-8 space-y-4" noValidate>
-          <label className="block text-xs font-semibold text-white/80">
+          <label className="block text-xs font-semibold text-zinc-700">
             Email
             <input
               name="email"
@@ -91,10 +91,10 @@ export function ForgotPasswordPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value.toLowerCase())}
               aria-invalid={Boolean(state.fieldErrors?.email)}
-              className="mt-2 h-11 w-full rounded-md border border-white/20 bg-zinc-900 px-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-palembang-red focus:bg-zinc-900 focus:ring-[3px] focus:ring-palembang-red/30"
+              className="mt-2 h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-palembang-red focus:bg-white focus:ring-[3px] focus:ring-palembang-red/30 transition-shadow"
             />
             {state.fieldErrors?.email?.[0] && (
-              <span className="mt-1.5 block text-[11px] font-medium text-red-300">
+              <span className="mt-1.5 block text-[11px] font-medium text-red-500">
                 {state.fieldErrors.email[0]}
               </span>
             )}
@@ -103,7 +103,7 @@ export function ForgotPasswordPage() {
           {state.message && (
             <p
               role="alert"
-              className="rounded-md border border-red-400/20 bg-red-400/10 px-3 py-2.5 text-xs leading-5 text-red-200"
+              className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-5 text-red-700"
             >
               {state.message}
             </p>
@@ -125,7 +125,7 @@ export function ForgotPasswordPage() {
       )}
 
       {state.status !== "sent" && (
-        <p className="mt-8 text-center text-xs text-white/50">
+        <p className="mt-8 text-center text-xs text-zinc-500">
           Sudah ingat?{" "}
           <Link
             href="/login"

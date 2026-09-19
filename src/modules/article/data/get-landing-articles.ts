@@ -48,7 +48,7 @@ export async function getLandingArticles(): Promise<LandingArticlesBySection> {
       mapPublicArticleCard(pin.article),
     )
     const pinnedIds = new Set(pinnedArticles.map((a) => a.id))
-    const capacity = Math.max(1, section.maxItems || 4)
+    const capacity = Math.max(6, section.maxItems || 6)
     const needed = capacity - pinnedArticles.length
 
     if (needed > 0) {
@@ -62,15 +62,7 @@ export async function getLandingArticles(): Promise<LandingArticlesBySection> {
             ? { id: { notIn: Array.from(pinnedIds) } }
             : {}),
         },
-        select: {
-          ...publicArticleCardSelect,
-          _count: {
-            select: {
-              likes: true,
-              comments: { where: { deletedAt: null } },
-            },
-          },
-        },
+        select: publicArticleCardSelect,
       })
 
       const prioritized = sortArticlesByFairPriority(candidateArticles).slice(

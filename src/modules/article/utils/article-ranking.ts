@@ -1,11 +1,9 @@
 /**
  * Benah Fair Priority (BFP) Article Ranking Algorithm
  *
- * Menggabungkan 4 metrik sesuai kebutuhan portal Benah Palembang:
+ * Menggabungkan metrik sesuai kebutuhan portal Benah Palembang:
  * 1. Views: Diukur dengan skala logaritmik (diminishing return) agar tidak dimanipulasi clickbait/bot.
- * 2. Likes: Bobot apresiasi aktif (x3).
- * 3. Comments: Bobot partisipasi komunitas & diskusi berkualitas tinggi (x5).
- * 4. Recency (Baru saja diposting): Diberikan "Freshness Launch Boost" eksponensial dalam 48 jam pertama
+ * 2. Recency (Baru saja diposting): Diberikan "Freshness Launch Boost" eksponensial dalam 48 jam pertama
  *    serta "Half-life Decay" (waktu paruh 7 hari) agar artikel baru selalu berkesempatan tampil di atas
  *    dan artikel lama yang populer memberikan ruang secara adil seiring waktu.
  */
@@ -16,20 +14,12 @@ export interface ArticleRankingInputs {
   publishedAt: Date | string | null
   createdAt?: Date | string | null
   isFeatured?: boolean
-  _count?: {
-    likes?: number
-    comments?: number
-  }
-  likesCount?: number
-  commentsCount?: number
 }
 
 // Konfigurasi Parameter Bobot Algoritma
 export const RANKING_CONFIG = {
   // Bobot interaksi
   VIEW_LOG_MULTIPLIER: 3, // 3 * ln(1 + views)
-  LIKE_WEIGHT: 3, // 3 poin per like
-  COMMENT_WEIGHT: 5, // 5 poin per komentar
 
   // Waktu paruh penyusutan skor interaksi: 7 hari = 168 jam
   HALF_LIFE_HOURS: 168,
@@ -47,20 +37,8 @@ export function calculateArticlePriorityScore(
   now: Date = new Date(),
 ): number {
   const views = Math.max(0, Number(article.views) || 0)
-  const likes = Math.max(
-    0,
-    Number(article.likesCount ?? article._count?.likes) || 0,
-  )
-  const comments = Math.max(
-    0,
-    Number(article.commentsCount ?? article._count?.comments) || 0,
-  )
-
   // 1. Engagement Base Score
-  const viewScore = RANKING_CONFIG.VIEW_LOG_MULTIPLIER * Math.log(1 + views)
-  const likeScore = likes * RANKING_CONFIG.LIKE_WEIGHT
-  const commentScore = comments * RANKING_CONFIG.COMMENT_WEIGHT
-  const baseEngagement = viewScore + likeScore + commentScore
+  const baseEngagement = RANKING_CONFIG.VIEW_LOG_MULTIPLIER * Math.log(1 + views)
 
   // 2. Hitung selisih waktu dalam jam
   const publishedDate = article.publishedAt

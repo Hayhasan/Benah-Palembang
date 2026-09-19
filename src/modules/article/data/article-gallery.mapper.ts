@@ -21,11 +21,7 @@ export const articleGallerySelect = {
   status: true,
   updatedAt: true,
   views: true,
-  _count: {
-    select: {
-      likes: true,
-    },
-  },
+
 } satisfies Prisma.ArticleSelect
 
 type ArticleGalleryRecord = Prisma.ArticleGetPayload<{
@@ -50,7 +46,6 @@ export function mapArticleGalleryItem(
     statusLabel: ownedArticleStatusLabel(article.status),
     updatedAtLabel: dateFormatter.format(article.updatedAt),
     views: article.views,
-    likes: article._count.likes,
   }
 }
 

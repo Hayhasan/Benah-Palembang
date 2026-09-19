@@ -35,17 +35,12 @@ export function mapContentStatusLabel(
 
 export interface ArticleModerationRecord extends Article {
   author: Pick<User, "id" | "name" | "avatarUrl">
-  _count?: {
-    likes?: number
-    comments?: number
-  }
+
 }
 
 export interface EventModerationRecord extends Event {
   owner: Pick<User, "id" | "name" | "avatarUrl">
-  _count?: {
-    likes?: number
-  }
+
 }
 
 function formatCompactNumber(num: number): string {
@@ -82,8 +77,6 @@ export function mapArticleToManagedContent(
     dateLabel: formatManagedDate(displayDate),
     stats: {
       views: formatCompactNumber(article.views),
-      likes: (article._count?.likes ?? 0).toString(),
-      comments: article._count?.comments ?? 0,
     },
   }
 }
@@ -114,7 +107,6 @@ export function mapEventToManagedContent(
     dateLabel: formatManagedDate(displayDate),
     stats: {
       views: formatCompactNumber(event.views),
-      likes: (event._count?.likes ?? 0).toString(),
     },
   }
 }

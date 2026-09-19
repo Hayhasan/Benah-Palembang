@@ -43,14 +43,7 @@ export const ownedArticleListSelect = {
       articleCategorySlug: true,
     },
   },
-  _count: {
-    select: {
-      likes: true,
-      comments: {
-        where: { deletedAt: null },
-      },
-    },
-  },
+
 } satisfies Prisma.ArticleSelect
 
 export const ownedArticleEditorSelect = {
@@ -58,7 +51,9 @@ export const ownedArticleEditorSelect = {
   title: true,
   excerpt: true,
   content: true,
+  label: true,
   coverImageUrl: true,
+  additionalBannerUrls: true,
   websiteArticleSectionId: true,
   readingTime: true,
   views: true,
@@ -66,6 +61,15 @@ export const ownedArticleEditorSelect = {
   moderationNote: true,
   publishedAt: true,
   updatedAt: true,
+  photographer: true,
+  additionalPhotographers: true,
+  venueName: true,
+  venueAddress: true,
+  venuePriceLevel: true,
+  venueOpenDays: true,
+  venueOpenHours: true,
+  venueFeatures: true,
+  venueContact: true,
   websiteArticleSection: {
     select: {
       categoryHeroTitle: true,
@@ -84,14 +88,7 @@ export const ownedArticleEditorSelect = {
     orderBy: { position: "asc" },
     select: { label: true },
   },
-  _count: {
-    select: {
-      likes: true,
-      comments: {
-        where: { deletedAt: null },
-      },
-    },
-  },
+
 } satisfies Prisma.ArticleSelect
 
 type OwnedArticleListRecord = Prisma.ArticleGetPayload<{
@@ -135,8 +132,6 @@ export function mapOwnedArticleListItem(
     statusLabel: ownedArticleStatusLabel(article.status),
     moderationNote: article.moderationNote,
     views: article.views,
-    likes: article._count.likes,
-    comments: article._count.comments,
   }
 }
 
@@ -148,7 +143,9 @@ export function mapOwnedArticleEditor(
     title: article.title,
     excerpt: article.excerpt,
     content: article.content,
+    label: article.label,
     coverImageUrl: article.coverImageUrl,
+    additionalBannerUrls: article.additionalBannerUrls,
     websiteArticleSectionId: article.websiteArticleSectionId,
     categoryLabel: article.websiteArticleSection.categoryHeroTitle,
     categorySlug: article.websiteArticleSection.articleCategorySlug,
@@ -169,8 +166,17 @@ export function mapOwnedArticleEditor(
     publishedAtLabel: article.publishedAt
       ? publishedAtFormatter.format(article.publishedAt)
       : "Draf belum dipublikasikan",
+    updatedAt: article.updatedAt.toISOString(),
+    updatedAtLabel: `${listDateFormatter.format(article.updatedAt)} WIB`,
     views: article.views,
-    commentsCount: article._count.comments,
-    likesCount: article._count.likes,
+    photographer: article.photographer,
+    additionalPhotographers: article.additionalPhotographers,
+    venueName: article.venueName,
+    venueAddress: article.venueAddress,
+    venuePriceLevel: article.venuePriceLevel,
+    venueOpenDays: article.venueOpenDays,
+    venueOpenHours: article.venueOpenHours,
+    venueFeatures: article.venueFeatures,
+    venueContact: article.venueContact,
   }
 }

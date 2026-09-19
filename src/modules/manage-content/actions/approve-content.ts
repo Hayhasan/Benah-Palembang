@@ -43,7 +43,7 @@ export async function approveContentAction(
           where: { id: article.id },
           data: {
             status: "PUBLISHED",
-            publishedAt: article.publishedAt ?? new Date(),
+            publishedAt: new Date(),
             moderationNote: note ?? null,
           },
         })
@@ -114,7 +114,7 @@ export async function approveContentAction(
           where: { id: event.id },
           data: {
             status: "PUBLISHED",
-            publishedAt: event.publishedAt ?? new Date(),
+            publishedAt: new Date(),
             moderationNote: note ?? null,
           },
         })

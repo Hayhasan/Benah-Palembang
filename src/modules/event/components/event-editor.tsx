@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  X,
   RotateCcw,
   Building,
   Calendar,
@@ -13,10 +14,20 @@ import {
   MessageCircle,
   Save,
   Send,
+  ChevronDown,
+  Camera
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
+
+function formatWhatsappInput(value: string) {
+  if (!value) return ""
+  let clean = value.replace(/\D/g, "")
+  if (clean.startsWith("0")) clean = "62" + clean.substring(1)
+  if (!clean.startsWith("62")) clean = "62" + clean
+  return `https://wa.me/${clean}`
+}
 
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
@@ -24,9 +35,13 @@ import { TagInput } from "@/components/dashboard/TagInput"
 import { TiptapEditor } from "@/components/dashboard/TiptapEditor"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 import { useUnsavedChanges } from "@/context/UnsavedChangesContext"
+import { useDashboardSidebar } from "@/context/DashboardSidebarContext"
 
 import { archiveEventAction } from "../actions/archive-event"
+import { ArticleEditorHeroCarousel } from "../../article/components/article-editor-hero-carousel"
 import { isResubmittableEventStatus } from "../constants/event-status"
 import { republishEventAction } from "../actions/republish-event"
 import { saveEventAction } from "../actions/save-event"
@@ -55,6 +70,7 @@ interface EventEditorProps {
 
 export function EventEditor({ initialEvent }: EventEditorProps) {
   const router = useRouter()
+  const { collapsed } = useDashboardSidebar()
   const { registerSaveHandler, setIsDirty } = useUnsavedChanges()
   const [isPending, startTransition] = useTransition()
   const [eventId, setEventId] = useState(initialEvent?.id)
@@ -65,8 +81,11 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
   )
   const [content, setContent] = useState(initialEvent?.content ?? "")
   const [bannerUrl, setBannerUrl] = useState(initialEvent?.bannerUrl ?? "")
-  const [category, setCategory] = useState(
-    initialEvent?.category ?? "Festival",
+  const [additionalBannerUrls, setAdditionalBannerUrls] = useState<string[]>(initialEvent?.additionalBannerUrls ?? [])
+  const initialCategory = initialEvent?.category ?? "Festival"
+  const [category, setCategory] = useState(initialCategory)
+  const [isCustomCategory, setIsCustomCategory] = useState(
+    !EVENT_CATEGORIES.includes(initialCategory)
   )
   const [startsOn, setStartsOn] = useState(initialEvent?.startsOn ?? "")
   const [startsTime, setStartsTime] = useState(
@@ -74,6 +93,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
   )
   const [location, setLocation] = useState(initialEvent?.location ?? "")
   const [organizer, setOrganizer] = useState(initialEvent?.organizer ?? "")
+  const [photographer, setPhotographer] = useState(initialEvent?.photographer ?? "")
   const [registrationUrl, setRegistrationUrl] = useState(
     initialEvent?.registrationUrl ?? "",
   )
@@ -83,6 +103,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
   const [tags, setTags] = useState(initialEvent?.tags ?? ["Palembang", "Event"])
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
   const [republishDialogOpen, setRepublishDialogOpen] = useState(false)
+  const [bannerDialogOpen, setBannerDialogOpen] = useState(false)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
   const [isUploadingContentImage, setIsUploadingContentImage] = useState(false)
 
@@ -96,23 +117,27 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
       description,
       content,
       bannerUrl,
+      additionalBannerUrls,
       category,
       startsOn,
       startsTime,
       location,
       organizer,
+      photographer,
       registrationUrl,
       whatsappUrl,
       tags,
     }),
     [
       bannerUrl,
+      additionalBannerUrls,
       category,
       content,
       description,
       eventId,
       location,
       organizer,
+      photographer,
       registrationUrl,
       startsOn,
       startsTime,
@@ -230,287 +255,331 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
   const isBusy = isPending || isUploadingBanner || isUploadingContentImage
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="sticky top-0 z-10 flex flex-col gap-4 border-b bg-background/85 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-3xl font-bold tracking-tight">
-              {initialEvent ? "Edit Event" : "Buat Event Baru"}
-            </h2>
-            {initialEvent ? (
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-                {initialEvent.statusLabel}
-              </span>
-            ) : null}
-          </div>
-          <p className="text-muted-foreground">
-            Simpan Event sebagai draf atau ajukan untuk ditampilkan di Agenda.
-          </p>
-        </div>
+    <div className="bg-white text-zinc-900 min-h-screen pb-32">
+      {/* 1. HEROES CAROUSEL AT THE VERY TOP */}
+      <ArticleEditorHeroCarousel
+        photos={[bannerUrl, ...additionalBannerUrls.filter(Boolean)].filter(Boolean)}
+        title={title}
+        onTitleChange={(val) => {
+          setTitle(val)
+          markDirty()
+        }}
+        excerpt={description}
+        onExcerptChange={(val) => {
+          setDescription(val)
+          markDirty()
+        }}
+        photographerName={photographer || undefined}
+        onOpenUploadModal={() => setBannerDialogOpen(true)}
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isBusy}
-            onClick={() => void handleSave()}
-            className="min-h-[40px] px-3.5 gap-2 active:scale-[0.98]"
-          >
-            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            {isPending ? "Menyimpan..." : initialEvent ? "Save Event" : "Simpan Draf"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isBusy}
-            onClick={() => void handlePreview()}
-            className="min-h-[40px] px-3.5 gap-2 active:scale-[0.98]"
-          >
-            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
-            Preview
-          </Button>
-          {canPost ? (
-            <Button
-              type="button"
-              disabled={isBusy}
-              onClick={() => void handlePost()}
-              className="min-h-[40px] px-3.5 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
-            >
-              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-              {isPending ? "Mengirim..." : "Post"}
-            </Button>
-          ) : null}
-          {canArchive ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isBusy}
-              onClick={() => setArchiveDialogOpen(true)}
-              className="min-h-[40px] px-3.5 gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-[0.98]"
-            >
-              {isPending && archiveDialogOpen ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Archive className="size-4" />
-              )}
-              {isPending && archiveDialogOpen ? "Mengarsipkan..." : "Archive"}
-            </Button>
-          ) : null}
-          {canRepublish ? (
-            <Button
-              type="button"
-              disabled={isBusy}
-              onClick={() => setRepublishDialogOpen(true)}
-              className="min-h-[40px] px-3.5 gap-2 bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]"
-            >
-              {isPending && republishDialogOpen ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <RotateCcw className="size-4" />
-              )}
-              {isPending && republishDialogOpen ? "Mempublikasikan..." : "Publikasikan"}
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      {/* Banner Upload Modal */}
+      <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
+        <DialogContent className="sm:max-w-5xl lg:max-w-6xl bg-white border-zinc-200 text-zinc-900 p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogHeader className="px-6 py-4 border-b border-zinc-200 shrink-0">
+            <DialogTitle className="text-zinc-900">Upload Banner Event</DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              Upload foto utama dan hingga 4 foto tambahan untuk event ini.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className={cn(
+              "mt-4",
+              bannerUrl ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" : "block"
+            )}>
+              {/* Main Banner */}
+              <div className={cn(
+                "relative group space-y-2",
+                bannerUrl ? "w-full aspect-[3/2]" : "w-full aspect-[4/3] sm:aspect-[21/9]"
+              )}>
+                <div className="absolute top-2 left-2 z-20 pointer-events-none rounded bg-black/60 px-2 py-1 text-xs font-bold text-white uppercase tracking-wider backdrop-blur-sm">
+                  Banner Utama (Wajib)
+                </div>
+                <div className="h-full w-full overflow-hidden rounded-xl bg-zinc-100 border border-zinc-200 shadow-sm">
+                  <ImageUpload
+                    value={bannerUrl}
+                    onChange={(value) => {
+                      setBannerUrl(value)
+                      markDirty()
+                    }}
+                    uploadScope="website-content"
+                    onUploadingChange={setIsUploadingBanner}
+                    aspect={bannerUrl ? 3 / 2 : 21 / 9}
+                    placeholder="Klik untuk upload banner utama..."
+                    className="h-full w-full opacity-90 hover:opacity-100 transition-opacity"
+                  />
+                </div>
+              </div>
 
-      {status === "REJECTED" || status === "TAKEN_DOWN" ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm dark:border-red-500/30 dark:bg-red-500/10">
-          <p className="font-semibold text-red-700 dark:text-red-300">
-            {status === "REJECTED"
-              ? "Event ini ditolak admin"
-              : "Event ini diturunkan admin"}
-          </p>
-          <p className="mt-1 text-red-700/90 dark:text-red-200/90">
-            {initialEvent?.moderationNote ||
-              "Admin tidak mencantumkan alasan. Silakan hubungi admin sebelum mengajukan ulang."}
-          </p>
-          {status === "REJECTED" ? (
-            <p className="mt-2 text-xs text-red-700/80 dark:text-red-200/80">
-              Perbaiki Event ini lalu tekan Post untuk mengajukannya kembali.
-            </p>
-          ) : null}
-        </div>
-      ) : null}
+              {/* Additional Banners */}
+              {bannerUrl && [0, 1, 2, 3].map((index) => {
+                const url = additionalBannerUrls[index] || ""
+                const isVisible = index === 0 || !!additionalBannerUrls[index - 1]
+                if (!isVisible) return null
 
-      <div className="grid min-w-0 max-w-full gap-6 lg:grid-cols-4">
-        <div className="min-w-0 max-w-full space-y-6 lg:col-span-3">
-          <div className="space-y-4 rounded-xl border bg-background p-5 shadow-sm">
-            <Field label="Judul Event">
-              <Input
-                value={title}
-                onChange={(event) => {
-                  setTitle(event.target.value)
-                  markDirty()
-                }}
-                placeholder="Nama acara..."
-                className="text-lg font-semibold min-h-[44px]"
-              />
-            </Field>
-            <Field label="Deskripsi Singkat">
-              <textarea
-                value={description}
-                onChange={(event) => {
-                  setDescription(event.target.value)
-                  markDirty()
-                }}
-                className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                placeholder="Ringkasan tentang Event..."
-              />
-            </Field>
-          </div>
-
-          <div className="space-y-4 rounded-xl border bg-background p-5 shadow-sm">
-            <h3 className="border-b pb-2 text-base font-semibold">
-              Informasi & Waktu Pelaksanaan
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Tanggal Event"
-                icon={<Calendar className="size-4 text-muted-foreground" />}
-              >
-                <Input
-                  type="date"
-                  value={startsOn}
-                  onChange={(event) => {
-                    setStartsOn(event.target.value)
-                    markDirty()
-                  }}
-                />
-              </Field>
-              <Field
-                label="Waktu Pelaksanaan"
-                icon={<Clock className="size-4 text-muted-foreground" />}
-              >
-                <Input
-                  type="time"
-                  value={startsTime}
-                  onChange={(event) => {
-                    setStartsTime(event.target.value)
-                    markDirty()
-                  }}
-                />
-              </Field>
+                return (
+                  <div key={`banner-${index}`} className="space-y-2 relative group aspect-[3/2]">
+                    {url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 z-30 size-7 bg-red-500/80 hover:bg-red-600 text-white rounded-full shadow-md backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          const newUrls = [...additionalBannerUrls]
+                          newUrls.splice(index, 1)
+                          setAdditionalBannerUrls(newUrls)
+                          markDirty()
+                        }}
+                      >
+                        <X className="size-3.5" />
+                      </Button>
+                    )}
+                    <div className="absolute top-2 left-2 z-20 pointer-events-none rounded bg-black/40 px-2 py-0.5 text-[10px] font-bold text-white/80 uppercase tracking-wider backdrop-blur-sm">
+                      Foto {index + 2}
+                    </div>
+                    <div className="h-full w-full overflow-hidden rounded-xl bg-zinc-100 border border-zinc-200 shadow-sm">
+                      <ImageUpload
+                        value={url}
+                        onChange={(value) => {
+                          const newUrls = [...additionalBannerUrls]
+                          if (value) {
+                            newUrls[index] = value
+                          } else {
+                            newUrls[index] = ""
+                          }
+                          setAdditionalBannerUrls(newUrls.filter(Boolean))
+                          markDirty()
+                        }}
+                        uploadScope="event"
+                        onUploadingChange={setIsUploadingBanner}
+                        aspect={3 / 2}
+                        placeholder="+"
+                        className="h-full w-full opacity-70 hover:opacity-100 transition-opacity"
+                      />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-            <Field
-              label="Lokasi Acara"
-              icon={<MapPin className="size-4 text-muted-foreground" />}
+          </div>
+          <DialogFooter className="px-6 py-4 border-t border-zinc-200 bg-zinc-50 shrink-0 flex justify-end">
+            <Button
+              type="button"
+              onClick={() => setBannerDialogOpen(false)}
+              className="bg-black text-white hover:bg-zinc-800 px-8"
             >
-              <Input
-                value={location}
-                onChange={(event) => {
-                  setLocation(event.target.value)
-                  markDirty()
-                }}
-                placeholder="Misal: Plaza Benteng Kuto Besak, Palembang"
-              />
-            </Field>
-            <Field
-              label="Penyelenggara / Organizer"
-              icon={<Building className="size-4 text-muted-foreground" />}
-            >
-              <Input
-                value={organizer}
-                onChange={(event) => {
-                  setOrganizer(event.target.value)
-                  markDirty()
-                }}
-                placeholder="Misal: Komunitas Seni Wong Kito"
-              />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Tautan Pendaftaran / Tiket (Opsional)"
-                icon={<Link2 className="size-4 text-muted-foreground" />}
-              >
-                <Input
-                  type="url"
-                  value={registrationUrl}
-                  onChange={(event) => {
-                    setRegistrationUrl(event.target.value)
-                    markDirty()
-                  }}
-                  placeholder="https://..."
-                />
-              </Field>
-              <Field
-                label="Tautan WhatsApp Tombol Tanya"
-                icon={
-                  <MessageCircle className="size-4 text-muted-foreground" />
-                }
-              >
-                <Input
-                  type="url"
-                  required
-                  value={whatsappUrl}
-                  onChange={(event) => {
-                    setWhatsappUrl(event.target.value)
-                    markDirty()
-                  }}
-                  placeholder="https://wa.me/628xxxxxxxxxx"
-                />
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Wajib memakai kode negara 62 tanpa tanda plus, spasi, atau
-                  tanda hubung.
+              Terapkan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
+      {/* 3. MAIN CONTENT AND SIDEBAR */}
+      <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="flex flex-col lg:flex-row gap-12 xl:gap-20">
+          
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0 max-w-[720px]">
+            {status === "REJECTED" || status === "TAKEN_DOWN" ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm mb-8">
+                <p className="font-semibold text-red-700">
+                  {status === "REJECTED"
+                    ? "Event ini ditolak admin"
+                    : "Event ini diturunkan admin"}
                 </p>
+                <p className="mt-1 text-red-700/90">
+                  {initialEvent?.moderationNote ||
+                    "Admin tidak mencantumkan alasan. Silakan hubungi admin sebelum mengajukan ulang."}
+                </p>
+              </div>
+            ) : null}
+
+
+            <div className="prose prose-zinc prose-lg max-w-none prose-headings:font-sans prose-headings:font-bold prose-headings:tracking-tight prose-h2:text-3xl prose-h3:text-2xl prose-p:font-serif prose-p:leading-relaxed prose-p:text-zinc-800 prose-a:text-black hover:prose-a:text-zinc-600 prose-a:underline-offset-4 prose-img:rounded-xl">
+              <TiptapEditor
+                content={content}
+                imageUploadScope="event"
+                onUploadingChange={setIsUploadingContentImage}
+                onChange={(value) => {
+                  setContent(value)
+                  markDirty()
+                }}
+              />
+            </div>
+            
+            <div className="mt-10 pt-10 border-t border-zinc-200">
+               <Field label="Tags">
+                <TagInput
+                  tags={tags}
+                  setTags={(value) => {
+                    setTags(value)
+                    markDirty()
+                  }}
+                />
               </Field>
             </div>
           </div>
 
-          <Field label="Detail & Rangkaian Acara">
-            <TiptapEditor
-              content={content}
-              imageUploadScope="event"
-              onUploadingChange={setIsUploadingContentImage}
-              onChange={(value) => {
-                setContent(value)
-                markDirty()
-              }}
-            />
-          </Field>
-        </div>
+          {/* Sticky Sidebar */}
+          <aside className="w-full lg:w-[320px] xl:w-[360px] shrink-0 space-y-8">
+            <div className="sticky top-24 space-y-8">
+              
+              {/* Publishing Actions Panel removed, moved to sticky footer */}
 
-        <div className="space-y-6 lg:col-span-1">
-          <div className="space-y-5 overflow-hidden rounded-xl border bg-background p-5 shadow-sm">
-            <Field label="Banner Event">
-              <ImageUpload
-                value={bannerUrl}
-                onChange={(value) => {
-                  setBannerUrl(value)
-                  markDirty()
-                }}
-                uploadScope="event"
-                onUploadingChange={setIsUploadingBanner}
-                aspect={16 / 9}
-                placeholder="Upload poster/banner..."
-              />
-            </Field>
-            <Field label="Kategori Acara">
-              <select
-                value={category}
-                onChange={(event) => {
-                  setCategory(event.target.value)
-                  markDirty()
-                }}
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              >
-                {EVENT_CATEGORIES.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Tags">
-              <TagInput
-                tags={tags}
-                setTags={(value) => {
-                  setTags(value)
-                  markDirty()
-                }}
-              />
-            </Field>
-          </div>
+              {/* Kategori Event */}
+              <div className="w-full text-zinc-900">
+                <div>
+                  <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.14em] uppercase text-black">
+                    KATEGORI EVENT
+                  </span>
+                  <div className="mt-1.5 mb-3.5 border-b border-dotted border-zinc-300 w-full" />
+                </div>
+                <div className="relative inline-flex items-center w-full">
+                  <select
+                    value={isCustomCategory ? "Lainnya" : category}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === "Lainnya") {
+                        setIsCustomCategory(true)
+                        setCategory("")
+                      } else {
+                        setIsCustomCategory(false)
+                        setCategory(val)
+                      }
+                      markDirty()
+                    }}
+                    className="w-full appearance-none rounded-[3px] bg-black text-white border border-black pl-4 pr-10 py-2.5 text-xs font-bold uppercase tracking-[0.14em] hover:bg-zinc-800 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-zinc-400"
+                  >
+                    {EVENT_CATEGORIES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                    <option value="Lainnya">LAINNYA</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 size-4 text-white pointer-events-none" />
+                </div>
+                {isCustomCategory && (
+                  <div className="mt-3">
+                    <Input
+                      value={category}
+                      onChange={(e) => {
+                        setCategory(e.target.value)
+                        markDirty()
+                      }}
+                      placeholder="Ketik kategori event..."
+                      className="h-10 text-sm border-zinc-200 focus-visible:ring-zinc-950"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Event Details Panel */}
+              <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-6">
+                <h3 className="font-sans text-base font-bold text-zinc-900 border-b border-zinc-100 pb-3">
+                  Detail Informasi Event
+                </h3>
+                
+                <Field label="Tanggal Event" icon={<Calendar className="size-4 text-zinc-400" />}>
+                  <Input
+                    type="date"
+                    value={startsOn}
+                    onChange={(e) => {
+                      setStartsOn(e.target.value)
+                      markDirty()
+                    }}
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+
+                <Field label="Waktu Pelaksanaan" icon={<Clock className="size-4 text-zinc-400" />}>
+                  <Input
+                    type="time"
+                    value={startsTime}
+                    onChange={(e) => {
+                      setStartsTime(e.target.value)
+                      markDirty()
+                    }}
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+
+                <Field label="Lokasi Acara" icon={<MapPin className="size-4 text-zinc-400" />}>
+                  <Input
+                    value={location}
+                    onChange={(e) => {
+                      setLocation(e.target.value)
+                      markDirty()
+                    }}
+                    placeholder="Misal: Plaza BKB"
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+
+                <Field label="Penyelenggara / Organizer" icon={<Building className="size-4 text-zinc-400" />}>
+                  <Input
+                    value={organizer}
+                    onChange={(e) => {
+                      setOrganizer(e.target.value)
+                      markDirty()
+                    }}
+                    placeholder="Nama penyelenggara"
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+
+                <Field label="Fotografer (Opsional)" icon={<Camera className="size-4 text-zinc-400" />}>
+                  <Input
+                    value={photographer}
+                    onChange={(e) => {
+                      setPhotographer(e.target.value)
+                      markDirty()
+                    }}
+                    placeholder="Nama fotografer acara"
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+                
+                <Field label="Tautan Pendaftaran (Opsional)" icon={<Link2 className="size-4 text-zinc-400" />}>
+                  <Input
+                    type="url"
+                    value={registrationUrl}
+                    onChange={(e) => {
+                      setRegistrationUrl(e.target.value)
+                      markDirty()
+                    }}
+                    placeholder="https://..."
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+                
+                <Field label="Tautan WhatsApp" icon={<MessageCircle className="size-4 text-zinc-400" />}>
+                  <Input
+                    type="url"
+                    value={whatsappUrl}
+                    onChange={(e) => {
+                      setWhatsappUrl(e.target.value)
+                      markDirty()
+                    }}
+                    onBlur={(e) => {
+                      const formatted = formatWhatsappInput(e.target.value)
+                      if (formatted !== e.target.value) {
+                        setWhatsappUrl(formatted)
+                        markDirty()
+                      }
+                    }}
+                    placeholder="https://wa.me/..."
+                    className="h-9 border-zinc-200 focus-visible:ring-zinc-950"
+                  />
+                </Field>
+
+              </div>
+            </div>
+          </aside>
+
         </div>
       </div>
 
@@ -518,7 +587,7 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
         title="Konfirmasi Archive Event"
-        description={`Event "${title || "ini"}" akan diturunkan dari halaman publik dan tersimpan sebagai Arsip. Event tetap tampil pada daftar Kelola Event dan dapat dipublikasikan ulang tanpa review.`}
+        description={"Event ini akan diturunkan dari halaman publik dan tersimpan sebagai Arsip."}
         confirmText="Ya, Archive Event"
         variant="default"
         isLoading={isPending}
@@ -529,15 +598,96 @@ export function EventEditor({ initialEvent }: EventEditorProps) {
         open={republishDialogOpen}
         onOpenChange={setRepublishDialogOpen}
         title="Konfirmasi Publikasi Ulang"
-        description={`Event "${title || "ini"}" akan kembali tampil pada halaman publik. Event ini sudah pernah disetujui sehingga tidak perlu review ulang.`}
+        description={"Event ini akan kembali tampil pada halaman publik."}
         confirmText="Ya, Publikasikan"
         variant="default"
         isLoading={isPending}
         onConfirm={handleRepublish}
       />
+
+      {/* Sticky Footer */}
+      <div
+        className={cn(
+          "fixed bottom-0 right-0 z-40 bg-white border-t border-zinc-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300",
+          collapsed ? "left-0 lg:left-16" : "left-0 lg:left-64"
+        )}
+      >
+        <div className="max-w-[1240px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block">
+              <span className="font-sans text-[11px] font-bold tracking-[0.14em] uppercase text-zinc-500">
+                Status Event
+              </span>
+              <p className="text-sm font-bold mt-0.5 text-black">{initialEvent?.statusLabel || "Draft Baru"}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
+            {canArchive && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isBusy}
+                onClick={() => setArchiveDialogOpen(true)}
+                className="flex-1 sm:flex-none h-11 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-[3px] font-bold tracking-widest text-[10px] uppercase"
+              >
+                {isPending && archiveDialogOpen ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Archive className="size-3.5 mr-1.5" />}
+                ARSIPKAN
+              </Button>
+            )}
+
+            {canRepublish && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isBusy}
+                onClick={() => setRepublishDialogOpen(true)}
+                className="flex-1 sm:flex-none h-11 px-4 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-[3px] font-bold tracking-widest text-[10px] uppercase"
+              >
+                {isPending && republishDialogOpen ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <RotateCcw className="size-3.5 mr-1.5" />}
+                PUBLIKASI ULANG
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isBusy}
+              onClick={() => void handlePreview()}
+              className="flex-1 sm:flex-none h-11 px-6 border-zinc-300 text-zinc-600 hover:bg-zinc-100 rounded-[3px] font-bold tracking-widest text-[10px] uppercase transition-colors"
+            >
+              {isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Eye className="size-3.5 mr-1.5" />}
+              PREVIEW
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isBusy}
+              onClick={() => void handleSave()}
+              className="flex-1 sm:flex-none h-11 px-6 border-black text-black hover:bg-black hover:text-white rounded-[3px] font-bold tracking-widest text-[10px] uppercase transition-colors"
+            >
+              {isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Save className="size-3.5 mr-1.5" />}
+              {initialEvent ? "SIMPAN" : "DRAF"}
+            </Button>
+
+            {canPost && (
+              <Button
+                type="button"
+                disabled={isBusy}
+                onClick={() => void handlePost()}
+                className="flex-1 sm:flex-none w-full sm:w-auto h-11 px-8 bg-black text-white hover:bg-zinc-800 rounded-[3px] font-bold tracking-widest text-[10px] uppercase"
+              >
+                {isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />}
+                POST SEKARANG
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
+
 
 function Field({
   children,

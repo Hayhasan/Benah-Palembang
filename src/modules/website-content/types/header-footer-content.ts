@@ -28,13 +28,16 @@ export interface HeaderFooterContentData {
   logo: {
     imageUrl: string
     imageAlt: string
-    linkUrl: string
   }
   footer: {
-    backgroundText: string
+    logo: {
+      imageUrl: string
+      imageAlt: string
+    }
+    title: string
     description: string
+    creatorText: string
     copyrightText: string
-    exploreLinks: WebsiteFooterLinkData[]
     connectLinks: WebsiteFooterConnectLinkData[]
   }
 }

@@ -6,12 +6,22 @@ import { useState, type ReactNode } from "react"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 import type { FooterConnectPlatform } from "../types/header-footer-content"
 import type {
   HeaderFooterContentEditorData,
   WebsiteFooterConnectLinkEditorData,
-  WebsiteFooterLinkEditorData,
 } from "../types/header-footer-content-editor"
 import {
   FOOTER_CONNECT_PLATFORMS,
@@ -23,12 +33,14 @@ function SectionCard({
   title,
   desc,
   children,
+  defaultExpanded = false,
 }: {
   title: string
   desc?: string
   children: ReactNode
+  defaultExpanded?: boolean
 }) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
   return (
     <div className="overflow-visible rounded-xl border bg-background shadow-sm">
@@ -64,10 +76,10 @@ function SectionCard({
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
+    <label className="space-y-2 block">
+      <span className="text-sm font-medium block">{label}</span>
       {children}
-    </div>
+    </label>
   )
 }
 
@@ -90,20 +102,7 @@ export function ManageHeaderFooterSettings({
     ) => HeaderFooterContentEditorData,
   ) => void
 }) {
-  const updateExploreLink = (
-    clientKeyValue: string,
-    values: Partial<WebsiteFooterLinkEditorData>,
-  ) => {
-    onChange((current) => ({
-      ...current,
-      footer: {
-        ...current.footer,
-        exploreLinks: current.footer.exploreLinks.map((link) =>
-          link.clientKey === clientKeyValue ? { ...link, ...values } : link,
-        ),
-      },
-    }))
-  }
+
 
   const updateConnectLink = (
     clientKeyValue: string,
@@ -125,57 +124,51 @@ export function ManageHeaderFooterSettings({
       <SectionCard
         title="Logo & Header"
         desc="Konfigurasi logo, redirect header, background text footer, dan deskripsi website."
+        defaultExpanded
       >
-        <Field label="Logo Website (Upload)">
-          <ImageUpload
-            value={data.logo.imageUrl}
-            onChange={(imageUrl) =>
-              onChange((current) => ({
-                ...current,
-                logo: { ...current.logo, imageUrl },
-              }))
-            }
-            placeholder="Pilih logo (PNG/SVG)..."
-            aspect={210 / 44}
-          />
-        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="URL Logo (Redirect Link)">
-            <Input
-              value={data.logo.linkUrl}
-              onChange={(event) =>
+          <Field label="Logo Website (Upload)">
+            <ImageUpload
+              value={data.logo.imageUrl}
+              onChange={(imageUrl) =>
                 onChange((current) => ({
                   ...current,
-                  logo: { ...current.logo, linkUrl: event.target.value },
+                  logo: { ...current.logo, imageUrl },
                 }))
               }
+              placeholder="Pilih logo (PNG/SVG)..."
+              aspect={210 / 44}
             />
           </Field>
-          <Field label="Alt Logo">
-            <Input
-              value={data.logo.imageAlt}
-              onChange={(event) =>
+          <Field label="Logo Website Footer (Upload)">
+            <ImageUpload
+              value={data.footer.logo?.imageUrl || ""}
+              onChange={(imageUrl) =>
                 onChange((current) => ({
                   ...current,
-                  logo: { ...current.logo, imageAlt: event.target.value },
+                  footer: {
+                    ...current.footer,
+                    logo: { ...current.footer.logo, imageUrl },
+                  },
                 }))
               }
+              placeholder="Pilih logo footer (PNG/SVG)..."
+              aspect={210 / 44}
             />
           </Field>
         </div>
-        <Field label="Background Text (Footer)">
+        <Field label="Title / Editorial Statement">
           <Input
-            value={data.footer.backgroundText}
+            value={data.footer.title}
             onChange={(event) =>
               onChange((current) => ({
                 ...current,
                 footer: {
                   ...current.footer,
-                  backgroundText: event.target.value,
+                  title: event.target.value,
                 },
               }))
             }
-            placeholder="PALEMBANG"
           />
         </Field>
         <Field label="Deskripsi Website / Tagline Footer">
@@ -192,86 +185,37 @@ export function ManageHeaderFooterSettings({
             }
           />
         </Field>
+        <Field label="Creator Text">
+          <Input
+            value={data.footer.creatorText}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                footer: {
+                  ...current.footer,
+                  creatorText: event.target.value,
+                },
+              }))
+            }
+          />
+        </Field>
+        <Field label="Copyright Text">
+          <Input
+            value={data.footer.copyrightText}
+            onChange={(event) =>
+              onChange((current) => ({
+                ...current,
+                footer: {
+                  ...current.footer,
+                  copyrightText: event.target.value,
+                },
+              }))
+            }
+          />
+        </Field>
       </SectionCard>
 
-      <SectionCard
-        title="Footer — Explore"
-        desc="Link navigasi pada kolom Explore footer."
-      >
-        <div className="space-y-3">
-            {data.footer.exploreLinks.map((link) => (
-              <div key={link.clientKey} className="flex items-center gap-2">
-                <Input
-                  className="flex-1"
-                  value={link.label}
-                  onChange={(event) =>
-                    updateExploreLink(link.clientKey, {
-                      label: event.target.value,
-                    })
-                  }
-                  placeholder="Nama"
-                />
-                <Input
-                  className="flex-[2]"
-                  value={link.linkUrl}
-                  onChange={(event) =>
-                    updateExploreLink(link.clientKey, {
-                      linkUrl: event.target.value,
-                    })
-                  }
-                  placeholder="URL"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                  onClick={() =>
-                    onChange((current) => ({
-                      ...current,
-                      footer: {
-                        ...current.footer,
-                        exploreLinks: normalizePositions(
-                          current.footer.exploreLinks.filter(
-                            (item) => item.clientKey !== link.clientKey,
-                          ),
-                        ),
-                      },
-                    }))
-                  }
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={() =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    exploreLinks: [
-                      ...current.footer.exploreLinks,
-                      {
-                        id: null,
-                        clientKey: clientKey("footer-explore"),
-                        label: "",
-                        linkUrl: "/",
-                        position: current.footer.exploreLinks.length + 1,
-                        isVisible: true,
-                      },
-                    ],
-                  },
-                }))
-              }
-            >
-              <Plus className="mr-2 size-4" /> Tambah Link Explore
-            </Button>
-        </div>
-      </SectionCard>
+
 
       <SectionCard
         title="Footer — Connect"
@@ -317,33 +261,52 @@ export function ManageHeaderFooterSettings({
                 }
                 placeholder={footerConnectPlaceholder(link.platform)}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                onClick={() =>
-                  onChange((current) => ({
-                    ...current,
-                    footer: {
-                      ...current.footer,
-                      connectLinks: normalizePositions(
-                        current.footer.connectLinks.filter(
-                          (item) => item.clientKey !== link.clientKey,
-                        ),
-                      ),
-                    },
-                  }))
-                }
-              >
-                <Trash2 className="size-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus Link ini?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tindakan ini tidak dapat dibatalkan. Link akan dihapus dari footer.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        onChange((current) => ({
+                          ...current,
+                          footer: {
+                            ...current.footer,
+                            connectLinks: normalizePositions(
+                              current.footer.connectLinks.filter(
+                                (item) => item.clientKey !== link.clientKey,
+                              ),
+                            ),
+                          },
+                        }))
+                      }
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Ya, hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           ))}
           <Button
             type="button"
-            variant="outline"
-            className="w-full border-dashed"
+            className="w-full"
             onClick={() =>
               onChange((current) => ({
                 ...current,
@@ -369,25 +332,7 @@ export function ManageHeaderFooterSettings({
         </div>
       </SectionCard>
 
-      <SectionCard
-        title="Footer — Copyright"
-        desc="Satu teks hak cipta yang ditampilkan di bagian bawah footer."
-      >
-        <Field label="Copyright Text">
-          <Input
-            value={data.footer.copyrightText}
-            onChange={(event) =>
-              onChange((current) => ({
-                ...current,
-                footer: {
-                  ...current.footer,
-                  copyrightText: event.target.value,
-                },
-              }))
-            }
-          />
-        </Field>
-      </SectionCard>
+
     </div>
   )
 }

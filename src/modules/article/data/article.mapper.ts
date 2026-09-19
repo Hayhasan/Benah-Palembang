@@ -21,7 +21,9 @@ export const publicArticleCardSelect = {
   slug: true,
   title: true,
   excerpt: true,
+  label: true,
   coverImageUrl: true,
+  additionalBannerUrls: true,
   readingTime: true,
   isFeatured: true,
   views: true,
@@ -40,6 +42,15 @@ export const publicArticleDetailSelect = {
   authorId: true,
   websiteArticleSectionId: true,
   content: true,
+  photographer: true,
+  additionalPhotographers: true,
+  venueName: true,
+  venueAddress: true,
+  venuePriceLevel: true,
+  venueOpenDays: true,
+  venueOpenHours: true,
+  venueFeatures: true,
+  venueContact: true,
   author: {
     select: {
       name: true,
@@ -52,33 +63,6 @@ export const publicArticleDetailSelect = {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
     select: { label: true },
-  },
-  comments: {
-    where: { deletedAt: null },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      userId: true,
-      content: true,
-      createdAt: true,
-      user: {
-        select: {
-          name: true,
-          avatarUrl: true,
-        },
-      },
-    },
-  },
-  likes: {
-    select: {
-      userId: true,
-    },
-  },
-  _count: {
-    select: {
-      likes: true,
-      comments: { where: { deletedAt: null } },
-    },
   },
 } satisfies Prisma.ArticleSelect
 
@@ -129,7 +113,9 @@ export function mapPublicArticleCard(
     slug: article.slug,
     title: article.title,
     excerpt: article.excerpt,
+    label: article.label,
     coverImageUrl: article.coverImageUrl,
+    additionalBannerUrls: article.additionalBannerUrls,
     category: article.websiteArticleSection.categoryHeroTitle,
     categorySlug: article.websiteArticleSection.articleCategorySlug,
     sectionKey: article.websiteArticleSection.sectionKey,
@@ -145,10 +131,6 @@ export function mapPublicArticleDetail(
   article: PublicArticleDetailRecord,
   currentUserId?: string | null,
 ): PublicArticleDetailData {
-  const hasLiked = Boolean(
-    currentUserId && article.likes.some((like) => like.userId === currentUserId),
-  )
-
   return {
     ...mapPublicArticleCard(article),
     authorId: article.authorId,
@@ -163,17 +145,14 @@ export function mapPublicArticleDetail(
         "Penulis dan kontributor yang berbagi cerita tentang Palembang.",
       roleLabel: "Penulis & Kontributor",
     },
-    comments: article.comments.map((comment) => ({
-      id: comment.id,
-      userId: comment.userId,
-      userName: comment.user.name,
-      userAvatarUrl: comment.user.avatarUrl || DEFAULT_AVATAR,
-      content: comment.content,
-      createdAt: comment.createdAt.toISOString(),
-      createdAtLabel: formatRelativeTime(comment.createdAt),
-      isArticleAuthor: comment.userId === article.authorId,
-    })),
-    likesCount: article._count.likes,
-    hasLiked,
+    photographer: article.photographer,
+    additionalPhotographers: article.additionalPhotographers,
+    venueName: article.venueName,
+    venueAddress: article.venueAddress,
+    venuePriceLevel: article.venuePriceLevel,
+    venueOpenDays: article.venueOpenDays,
+    venueOpenHours: article.venueOpenHours,
+    venueFeatures: article.venueFeatures,
+    venueContact: article.venueContact,
   }
 }

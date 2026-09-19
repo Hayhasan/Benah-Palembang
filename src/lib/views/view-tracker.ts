@@ -59,12 +59,22 @@ export async function recordArticleView(
     })
 
     if (result === "OK") {
-      await prisma.article.update({
-        where: { id: articleId },
-        data: {
-          views: { increment: 1 },
-        },
-      })
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      await prisma.$transaction([
+        prisma.article.update({
+          where: { id: articleId },
+          data: {
+            views: { increment: 1 },
+          },
+        }),
+        prisma.articleDailyView.upsert({
+          where: { articleId_date: { articleId, date: today } },
+          update: { count: { increment: 1 } },
+          create: { articleId, date: today, count: 1 },
+        }),
+      ])
       return true
     }
 
@@ -90,12 +100,22 @@ export async function recordEventView(
     })
 
     if (result === "OK") {
-      await prisma.event.update({
-        where: { id: eventId },
-        data: {
-          views: { increment: 1 },
-        },
-      })
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      await prisma.$transaction([
+        prisma.event.update({
+          where: { id: eventId },
+          data: {
+            views: { increment: 1 },
+          },
+        }),
+        prisma.eventDailyView.upsert({
+          where: { eventId_date: { eventId, date: today } },
+          update: { count: { increment: 1 } },
+          create: { eventId, date: today, count: 1 },
+        }),
+      ])
       return true
     }
 

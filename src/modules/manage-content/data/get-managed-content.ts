@@ -103,14 +103,6 @@ export async function getManagedContent(
               author: {
                 select: { id: true, name: true, avatarUrl: true },
               },
-              _count: {
-                select: {
-                  likes: true,
-                  comments: {
-                    where: { deletedAt: null },
-                  },
-                },
-              },
             },
           })
         ).map(mapArticleToManagedContent)
@@ -123,11 +115,6 @@ export async function getManagedContent(
             include: {
               owner: {
                 select: { id: true, name: true, avatarUrl: true },
-              },
-              _count: {
-                select: {
-                  likes: true,
-                },
               },
             },
           })

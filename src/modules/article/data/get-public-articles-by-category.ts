@@ -27,15 +27,7 @@ export async function getPublicArticlesByCategory(
         websiteContent: { key: "home", deletedAt: null },
       },
     },
-    select: {
-      ...publicArticleCardSelect,
-      _count: {
-        select: {
-          likes: true,
-          comments: { where: { deletedAt: null } },
-        },
-      },
-    },
+    select: publicArticleCardSelect,
   })
 
   const prioritizedArticles = sortArticlesByFairPriority(articles)

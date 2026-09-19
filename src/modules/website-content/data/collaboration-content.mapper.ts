@@ -12,10 +12,18 @@ import type {
 
 export const collaborationPageSelect = {
   key: true,
-  heroImageUrl: true,
-  heroImageAlt: true,
-  heroTitle: true,
-  heroDescription: true,
+  heroSlides: {
+    where: { deletedAt: null, isVisible: true },
+    orderBy: { position: "asc" },
+    select: {
+      imageUrl: true,
+      imageAlt: true,
+      title: true,
+      description: true,
+      position: true,
+      isVisible: true,
+    },
+  },
   contactEmail: true,
   contactPhone: true,
   emailUrl: true,
@@ -80,12 +88,7 @@ export function mapCollaborationContentToPage(
 ): CollaborationPageData {
   return {
     key: "collaboration",
-    hero: {
-      imageUrl: content.heroImageUrl,
-      imageAlt: content.heroImageAlt,
-      title: content.heroTitle,
-      description: content.heroDescription,
-    },
+    heroSlides: content.heroSlides,
     contact: {
       email: content.contactEmail,
       phone: content.contactPhone,

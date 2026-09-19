@@ -1,9 +1,11 @@
 "use client"
 
-import { Mail, MessageCircle, Play, Search, X } from "lucide-react"
+import { ChevronDown, Mail, MessageCircle, Play, Search, X } from "lucide-react"
 import { useState } from "react"
 
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
+import { LandingHero } from "@/modules/website-content/components/landing-hero"
+import { CollaborationCta } from "@/modules/website-content/components/collaboration-cta"
 
 import { getCollaborationContentFallbackPreview } from "../data/collaboration-content-preview"
 import type {
@@ -19,18 +21,6 @@ const platformLabels: Record<CollaborationPlatform, string> = {
   tiktok: "TikTok",
   facebook: "Facebook",
   x: "X",
-}
-
-function platformBadgeClass(platform: CollaborationPlatform) {
-  if (platform === "youtube") return "bg-red-600 text-white"
-  if (platform === "instagram") {
-    return "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white"
-  }
-  if (platform === "tiktok") {
-    return "border border-white/20 bg-black text-white"
-  }
-  if (platform === "facebook") return "bg-blue-600 text-white"
-  return "bg-foreground text-background"
 }
 
 function aspectRatioClass(aspectRatio: CollaborationContentAspectRatio) {
@@ -49,7 +39,7 @@ function fallbackBackgroundClass(platform: CollaborationPlatform) {
   return "from-zinc-700 via-black to-zinc-950"
 }
 
-function CollaborationContentCard({
+export function CollaborationContentCard({
   item,
 }: {
   item: CollaborationPartnerContentData
@@ -64,14 +54,13 @@ function CollaborationContentCard({
       href={item.contentUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block break-inside-avoid"
+      className="group block break-inside-avoid overflow-hidden"
       title={`Buka konten: ${preview.title}`}
     >
       <div
-        className={`relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br ${fallbackBackgroundClass(item.platform)} ${aspectRatioClass(preview.aspectRatio)}`}
+        className={`relative overflow-hidden border border-zinc-200 bg-gradient-to-br ${fallbackBackgroundClass(item.platform)} ${aspectRatioClass(preview.aspectRatio)}`}
       >
         {showThumbnail ? (
-          // Provider thumbnails are derived at render time and are not stored.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={preview.thumbnailUrl ?? ""}
@@ -83,25 +72,21 @@ function CollaborationContentCard({
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.3),transparent_40%)]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-70 transition-opacity group-hover:opacity-90" />
-        <div className="absolute left-3 top-3">
-          <span
-            className={`rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider shadow-sm ${platformBadgeClass(item.platform)}`}
-          >
-            {platformLabels[item.platform]}
-          </span>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 p-4">
-          <h3 className="line-clamp-3 text-sm font-bold leading-tight text-white">
+
+        {/* Hover overlay gradient scrim */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+        {/* Title: only visible on hover */}
+        <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10">
+          <h3 className="line-clamp-2 text-sm sm:text-base font-bold leading-snug text-white drop-shadow-sm">
             {preview.title}
           </h3>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">
-            {platformLabels[item.platform]}
-          </p>
         </div>
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-          <span className="flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/20 text-white shadow-xl backdrop-blur-md">
-            <Play className="size-5 fill-current" />
+
+        {/* Center Play Icon: visible on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10">
+          <span className="flex size-10 items-center justify-center rounded-full bg-white/30 text-white shadow-lg backdrop-blur-xs">
+            <Play className="size-4 fill-current ml-0.5" />
           </span>
         </div>
       </div>
@@ -109,43 +94,11 @@ function CollaborationContentCard({
   )
 }
 
-function HeroTitle({ title }: { title: string }) {
-  const highlightedWord = "Palembang"
-  const wordIndex = title.toLowerCase().indexOf(highlightedWord.toLowerCase())
-
-  if (wordIndex === -1) return title
-
-  const before = title.slice(0, wordIndex).trim()
-  const highlighted = title.slice(
-    wordIndex,
-    wordIndex + highlightedWord.length,
-  )
-  const after = title.slice(wordIndex + highlightedWord.length).trim()
-
-  return (
-    <>
-      {before ? (
-        <>
-          {before}
-          <br />
-        </>
-      ) : null}
-      <span className="text-palembang-red">{highlighted}</span>
-      {after ? (
-        <>
-          <br />
-          {after}
-        </>
-      ) : null}
-    </>
-  )
-}
-
 export function CollaborationPage({ data }: { data: CollaborationPageData }) {
   const [query, setQuery] = useState("")
-  const [showAllContent, setShowAllContent] = useState(false)
-  const doubledLogos = [...data.partnerLogos, ...data.partnerLogos]
+  const [displayCount, setDisplayCount] = useState(6)
   const normalizedQuery = query.trim().toLowerCase()
+
   const filteredContents = data.partnerContents.filter((item) => {
     if (!normalizedQuery) return true
 
@@ -155,165 +108,135 @@ export function CollaborationPage({ data }: { data: CollaborationPageData }) {
       .toLowerCase()
       .includes(normalizedQuery)
   })
-  const initialCount = 12
+
   const visibleContents =
-    showAllContent || normalizedQuery
+    normalizedQuery
       ? filteredContents
-      : filteredContents.slice(0, initialCount)
+      : filteredContents.slice(0, displayCount)
   const hasMoreContent =
-    !showAllContent && !normalizedQuery && filteredContents.length > initialCount
+    !normalizedQuery && filteredContents.length > displayCount
+
+  const heroSlides = data.heroSlides.map((slide) => ({
+    imageUrl: slide.imageUrl,
+    imageAlt: slide.imageAlt || slide.title,
+    eyebrow: "COLLABORATION & PARTNERSHIP",
+    title: slide.title,
+    description: slide.description,
+    buttonLabel: "HUBUNGI KAMI",
+    buttonUrl: `mailto:${data.contact.email}`,
+    position: slide.position,
+    isVisible: slide.isVisible,
+  }))
 
   return (
-    <>
-      <main>
-        <section className="relative overflow-hidden bg-palembang-charcoal px-6 pb-12 pt-32 text-white sm:px-10 sm:pb-14 sm:pt-36 lg:px-16">
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-40">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={data.hero.imageUrl}
-              alt={data.hero.imageAlt}
-              className="size-full object-cover object-right"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-palembang-charcoal via-palembang-charcoal/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
-          </div>
+    <div className="bg-white text-zinc-900">
+      {/* 1. HEROES: 3-Panel Hero Carousel */}
+      <LandingHero slides={heroSlides} />
 
-          <div className="relative z-10 mx-auto max-w-[1240px]">
-            <h1 className="reveal-on-scroll max-w-4xl font-display text-5xl font-black leading-[0.9] tracking-[-0.065em] sm:text-7xl lg:text-8xl">
-              <HeroTitle title={data.hero.title} />
-            </h1>
-            <p className="reveal-on-scroll reveal-delay-150 mt-4 max-w-lg text-sm leading-6 text-white/80 sm:text-base">
-              {data.hero.description}
-            </p>
-            <div className="reveal-on-scroll reveal-delay-200 mt-8 flex flex-col gap-3.5">
-              <div className="flex items-center gap-3 text-palembang-red">
-                <Mail className="size-4.5" />
-                <a
-                  href={data.contact.emailUrl}
-                  className="text-sm text-white underline underline-offset-4 transition-colors hover:text-palembang-red"
-                >
-                  {data.contact.email}
-                </a>
-              </div>
-              <div className="flex items-center gap-3 text-palembang-red">
-                <MessageCircle className="size-4.5" />
-                <a
-                  href={data.contact.whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-white underline underline-offset-4 transition-colors hover:text-palembang-red"
-                >
-                  {data.contact.phone}
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* 2. DAFTAR KOLABORASI */}
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-16">
+        {/* Page Title with thin divider */}
+        <div>
+          <h1 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-black">
+            Kolaborasi & Kemitraan
+          </h1>
+          <p className="mt-1 font-serif text-sm text-black/70">
+            {heroSlides[0]?.description}
+          </p>
+          <div className="mt-4 border-b border-zinc-200" />
+        </div>
 
-        {doubledLogos.length > 0 ? (
-          <section className="reveal-on-scroll overflow-hidden bg-background py-16 text-foreground sm:py-20">
-            <div className="reveal-on-scroll mx-auto mb-12 max-w-[1240px] px-6 text-center sm:px-10 lg:px-16">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
-                Trusted By
-              </p>
-              <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-                Our Partners
-              </h2>
-              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
-                Brand, komunitas, dan organisasi yang telah berkolaborasi
-                bersama Benah Palembang.
-              </p>
-            </div>
-            <div className="relative w-full overflow-hidden py-2">
-              <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-background via-background/80 to-transparent backdrop-blur-[2px] sm:w-24 lg:w-32" />
-              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-background via-background/80 to-transparent backdrop-blur-[2px] sm:w-24 lg:w-32" />
-              <div className="flex w-max animate-marquee items-center gap-12 sm:gap-16">
-                {doubledLogos.map((logo, index) => (
+        {/* Partner Logos */}
+        {data.partnerLogos.length > 0 && (
+          <section aria-label="Partner Logos" className="border-b border-zinc-200 pb-12 overflow-hidden relative">
+            {/* Create a looping effect by repeating the logos. 
+                The CSS animate-marquee moves the container left by 50% of its total width.
+                We duplicate it a large number of times to ensure it covers the screen even if there are few logos. */}
+            <div className="flex w-max animate-marquee items-center gap-12 sm:gap-16 py-4">
+              {Array.from({ length: 12 })
+                .flatMap(() => data.partnerLogos)
+                .map((logo, index) => (
                   <div
-                    key={`${logo.name}-${logo.position}-${index}`}
-                    className="group flex-shrink-0 px-4"
+                    key={`logo-${logo.name}-${index}`}
+                    className="flex shrink-0 items-center justify-center p-2 opacity-60 hover:opacity-100 transition-opacity"
+                    title={logo.name}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={logo.imageUrl}
                       alt={logo.name}
-                      className="h-10 w-auto object-contain opacity-50 grayscale transition-all duration-500 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0 dark:brightness-0 dark:invert dark:group-hover:brightness-100 dark:group-hover:invert-0 sm:h-12"
+                      className="h-8 sm:h-10 max-h-10 w-auto object-contain grayscale hover:grayscale-0 transition-all"
                     />
                   </div>
                 ))}
-              </div>
             </div>
           </section>
-        ) : null}
+        )}
 
-        <section className="reveal-on-scroll bg-background px-6 py-16 text-foreground sm:px-10 sm:py-24 lg:px-16">
-          <div className="mx-auto max-w-[1240px]">
-            <div className="reveal-on-scroll flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">
-                  Partner Content
-                </p>
-                <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-                  Konten Kolaborasi
-                </h2>
-                <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
-                  Temukan konten dan cerita kolaborasi kami di berbagai
-                  platform.
-                </p>
-              </div>
-              <div className="flex w-full max-w-md items-center gap-3 border-b border-border pb-3">
-                <Search className="size-4 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Cari platform atau URL..."
-                  aria-label="Cari konten kolaborasi"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                />
-                {query ? (
-                  <button
-                    type="button"
-                    onClick={() => setQuery("")}
-                    className="text-muted-foreground hover:text-foreground"
-                    aria-label="Hapus pencarian"
-                  >
-                    <X className="size-4" />
-                  </button>
-                ) : null}
-              </div>
+        {/* Partner Content Section */}
+        <section aria-label="Partner Content">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-black">
+                Karya & Publikasi Bersama
+              </h2>
             </div>
 
-            {visibleContents.length > 0 ? (
-              <div className="reveal-stagger mt-12 columns-2 gap-4 space-y-4 sm:columns-3 lg:columns-4">
-                {visibleContents.map((item) => (
-                  <CollaborationContentCard
-                    key={`${item.position}-${item.contentUrl}`}
-                    item={item}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="reveal-on-scroll mt-12 rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-                Tidak ada konten kolaborasi yang cocok.
-              </div>
-            )}
-
-            {hasMoreContent ? (
-              <div className="reveal-on-scroll mt-10 flex justify-center">
+            <div className="flex items-center gap-2 border-b border-zinc-300 pb-1.5 sm:w-72">
+              <Search className="size-3.5 text-black" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari konten atau platform..."
+                className="w-full bg-transparent text-xs text-black outline-none placeholder:text-zinc-400"
+              />
+              {query && (
                 <button
                   type="button"
-                  onClick={() => setShowAllContent(true)}
-                  className="rounded-full border border-border bg-card px-8 py-3 text-sm font-semibold transition-all hover:scale-105 hover:border-palembang-red hover:text-palembang-red"
+                  onClick={() => setQuery("")}
+                  className="text-black hover:text-zinc-600"
                 >
-                  Tampilkan Semua Konten
+                  <X className="size-3.5" />
                 </button>
-              </div>
-            ) : null}
+              )}
+            </div>
           </div>
+
+          {visibleContents.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {visibleContents.map((item) => (
+                <CollaborationContentCard
+                  key={`${item.position}-${item.contentUrl}`}
+                  item={item}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="border border-dashed border-zinc-200 p-12 text-center text-xs text-black/70 font-serif">
+              Tidak ada konten kolaborasi yang cocok dengan pencarian.
+            </div>
+          )}
+
+          {hasMoreContent && (
+            <div className="mt-10 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setDisplayCount((prev) => prev + 6)}
+                className="flex items-center gap-2 rounded-none border border-black bg-white px-8 py-3 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+              >
+                More Articles
+                <ChevronDown className="size-3.5" />
+              </button>
+            </div>
+          )}
         </section>
+
+        {/* Contact Callout */}
+        <CollaborationCta contact={data.contact} />
       </main>
 
+      {/* 3. FOOTER */}
       <Footer />
-    </>
+    </div>
   )
 }

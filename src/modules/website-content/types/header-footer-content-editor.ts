@@ -19,9 +19,8 @@ export interface HeaderFooterContentEditorData
   extends Omit<HeaderFooterContentData, "footer"> {
   footer: Omit<
     HeaderFooterContentData["footer"],
-    "exploreLinks" | "connectLinks"
+    "connectLinks"
   > & {
-    exploreLinks: WebsiteFooterLinkEditorData[]
     connectLinks: WebsiteFooterConnectLinkEditorData[]
   }
 }

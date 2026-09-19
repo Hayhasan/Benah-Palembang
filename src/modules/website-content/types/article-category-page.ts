@@ -9,10 +9,16 @@ export interface ArticleCategoryPageData {
   sectionKey: string
   slug: string
   category: WebsiteArticleCategory
-  hero: {
+  heroSlides: {
+    id?: number | null
+    clientKey?: string
     imageUrl: string
     imageAlt: string
+    label: string
     title: string
     description: string
-  }
+    photographerName?: string | null
+    position?: number
+    isVisible?: boolean
+  }[]
 }

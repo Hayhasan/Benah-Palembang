@@ -17,7 +17,7 @@ export default async function AuthLayout({
   return (
     <AuthSessionProvider initialUser={user}>
       <HeaderFooterContentProvider data={headerFooterContent}>
-        <Header />
+        <Header overlay={false} />
         {children}
       </HeaderFooterContentProvider>
     </AuthSessionProvider>

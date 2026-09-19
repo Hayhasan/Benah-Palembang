@@ -8,8 +8,6 @@ export type ManagedContentStatus =
 
 export interface ManagedContentStatistics {
   views: string
-  likes: string
-  comments?: number
 }
 
 export interface ManagedContentListItem {

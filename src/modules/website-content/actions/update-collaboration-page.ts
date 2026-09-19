@@ -17,14 +17,24 @@ import type {
 
 function rootData(data: CollaborationPageEditorData) {
   return {
-    heroImageUrl: data.hero.imageUrl,
-    heroImageAlt: data.hero.imageAlt,
-    heroTitle: data.hero.title,
-    heroDescription: data.hero.description,
     contactEmail: data.contact.email,
     contactPhone: data.contact.phone,
     emailUrl: data.contact.emailUrl,
     whatsappUrl: data.contact.whatsappUrl,
+  }
+}
+
+function heroSlideData(
+  slide: CollaborationPageEditorData["heroSlides"][number],
+  position: number,
+) {
+  return {
+    imageUrl: slide.imageUrl,
+    imageAlt: slide.imageAlt,
+    title: slide.title,
+    description: slide.description,
+    position,
+    isVisible: slide.isVisible,
   }
 }
 
@@ -40,17 +50,7 @@ function partnerLogoData(
   }
 }
 
-function partnerContentData(
-  item: CollaborationPageEditorData["partnerContents"][number],
-  position: number,
-) {
-  return {
-    platform: collaborationPlatformToDatabase[item.platform],
-    contentUrl: item.contentUrl,
-    position,
-    isVisible: item.isVisible,
-  }
-}
+
 
 function assertIdsBelongToRoot(
   label: string,
@@ -75,14 +75,14 @@ async function createCollaborationPage(
     data: {
       key: data.key,
       ...rootData(data),
+      heroSlides: {
+        create: data.heroSlides.map((slide, index) =>
+          heroSlideData(slide, index + 1),
+        ),
+      },
       partnerLogos: {
         create: data.partnerLogos.map((logo, index) =>
           partnerLogoData(logo, index + 1),
-        ),
-      },
-      partnerContents: {
-        create: data.partnerContents.map((item, index) =>
-          partnerContentData(item, index + 1),
         ),
       },
     },
@@ -94,32 +94,41 @@ async function updateCollaborationPage(
   data: CollaborationPageEditorData,
   existing: {
     id: number
+    heroSlides: { id: number }[]
     partnerLogos: { id: number }[]
-    partnerContents: { id: number }[]
   },
 ) {
+  assertIdsBelongToRoot(
+    "Hero Slide",
+    data.heroSlides.map((slide) => slide.id),
+    existing.heroSlides.map((slide) => slide.id),
+  )
   assertIdsBelongToRoot(
     "Logo partner",
     data.partnerLogos.map((logo) => logo.id),
     existing.partnerLogos.map((logo) => logo.id),
   )
-  assertIdsBelongToRoot(
-    "Konten partner",
-    data.partnerContents.map((item) => item.id),
-    existing.partnerContents.map((item) => item.id),
-  )
 
+  const slideIds = data.heroSlides.flatMap((slide) =>
+    slide.id === null ? [] : [slide.id],
+  )
   const logoIds = data.partnerLogos.flatMap((logo) =>
     logo.id === null ? [] : [logo.id],
-  )
-  const contentIds = data.partnerContents.flatMap((item) =>
-    item.id === null ? [] : [item.id],
   )
   const now = new Date()
 
   await tx.websiteCollaborationContent.update({
     where: { id: existing.id },
     data: rootData(data),
+  })
+
+  await tx.websiteCollaborationHeroSlide.updateMany({
+    where: {
+      collaborationContentId: existing.id,
+      deletedAt: null,
+      id: { notIn: slideIds },
+    },
+    data: { deletedAt: now },
   })
 
   await tx.websiteCollaborationPartnerLogo.updateMany({
@@ -130,14 +139,20 @@ async function updateCollaborationPage(
     },
     data: { deletedAt: now },
   })
-  await tx.websiteCollaborationPartnerContent.updateMany({
-    where: {
-      collaborationContentId: existing.id,
-      deletedAt: null,
-      id: { notIn: contentIds },
-    },
-    data: { deletedAt: now },
-  })
+
+  for (const [index, slide] of data.heroSlides.entries()) {
+    const values = heroSlideData(slide, index + 1)
+    if (slide.id === null) {
+      await tx.websiteCollaborationHeroSlide.create({
+        data: { collaborationContentId: existing.id, ...values },
+      })
+    } else {
+      await tx.websiteCollaborationHeroSlide.update({
+        where: { id: slide.id },
+        data: values,
+      })
+    }
+  }
 
   for (const [index, logo] of data.partnerLogos.entries()) {
     const values = partnerLogoData(logo, index + 1)
@@ -148,20 +163,6 @@ async function updateCollaborationPage(
     } else {
       await tx.websiteCollaborationPartnerLogo.update({
         where: { id: logo.id },
-        data: values,
-      })
-    }
-  }
-
-  for (const [index, item] of data.partnerContents.entries()) {
-    const values = partnerContentData(item, index + 1)
-    if (item.id === null) {
-      await tx.websiteCollaborationPartnerContent.create({
-        data: { collaborationContentId: existing.id, ...values },
-      })
-    } else {
-      await tx.websiteCollaborationPartnerContent.update({
-        where: { id: item.id },
         data: values,
       })
     }
@@ -189,11 +190,11 @@ export async function updateCollaborationPageAction(
         where: { key: "collaboration", deletedAt: null },
         select: {
           id: true,
-          partnerLogos: {
+          heroSlides: {
             where: { deletedAt: null },
             select: { id: true },
           },
-          partnerContents: {
+          partnerLogos: {
             where: { deletedAt: null },
             select: { id: true },
           },
@@ -214,7 +215,7 @@ export async function updateCollaborationPageAction(
           action: "UPDATE",
           module: "WEBSITE",
           description: "Memperbarui konten halaman Kolaborasi publik",
-          afterState: { section: "collaboration", title: parsed.data.hero.title },
+          afterState: { section: "collaboration", title: parsed.data.heroSlides[0]?.title },
         },
         tx,
       )

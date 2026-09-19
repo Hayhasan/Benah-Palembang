@@ -1,342 +1,299 @@
 "use client"
 
 import {
-  ArrowRight,
+  Calendar,
   Check,
-  Clock3,
   Copy,
   Eye,
-  Heart,
   Share2,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
-import { SectionHeading } from "@/features/public/components/SectionHeading"
-import { useSession } from "@/modules/auth/hooks/use-session"
+import { PublicArticleCard } from "@/modules/article/components/public-article-card"
+import type { PublicArticleDetailData, PublicArticlePageData } from "../types/public-article"
+import { PublicArticleVenueSidebar } from "./public-article-venue-sidebar"
+import { PublicArticleHeroCarousel } from "./public-article-hero-carousel"
 
-import { toggleArticleLikeAction } from "../actions/toggle-article-like"
-import type { PublicArticlePageData } from "../types/public-article"
-import { ArticleComments } from "./article-comments"
-import { PublicArticleCard } from "./public-article-card"
+const SUPPLEMENTARY_CATEGORY_PHOTOS: Record<string, string[]> = {
+  "cerita-warga": [
+    "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/38885810/pexels-photo-38885810.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/32844866/pexels-photo-32844866.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+  ],
+  "gaya-hidup": [
+    "https://images.pexels.com/photos/37234075/pexels-photo-37234075.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/38885810/pexels-photo-38885810.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+  ],
+  "ruang-kota": [
+    "https://images.pexels.com/photos/38956265/pexels-photo-38956265.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/32844866/pexels-photo-32844866.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+  ],
+  "industri-kreatif": [
+    "https://images.pexels.com/photos/32844866/pexels-photo-32844866.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/37628562/pexels-photo-37628562.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/37234075/pexels-photo-37234075.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+  ],
+  "kebudayaan": [
+    "https://images.pexels.com/photos/37628562/pexels-photo-37628562.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/38885810/pexels-photo-38885810.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+    "https://images.pexels.com/photos/14616555/pexels-photo-14616555.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&fit=crop",
+  ],
+}
+
+function resolveArticlePhotos(article: PublicArticleDetailData): string[] {
+  const photos: string[] = []
+  if (article.coverImageUrl) {
+    photos.push(article.coverImageUrl)
+  }
+
+  if (article.additionalBannerUrls && article.additionalBannerUrls.length > 0) {
+    for (const url of article.additionalBannerUrls) {
+      if (url && !photos.includes(url)) {
+        photos.push(url)
+      }
+    }
+  }
+
+  // Extract any additional images from the content HTML
+  const imgRegex = /<img\s+[^>]*src=["']([^"']+)["']/gi
+  let match: RegExpExecArray | null
+  while ((match = imgRegex.exec(article.content)) !== null) {
+    if (match[1] && !photos.includes(match[1])) {
+      photos.push(match[1])
+    }
+  }
+
+  // If fewer than 3 photos, enrich with category photos so heroes carousel peeking works seamlessly
+  if (photos.length < 3) {
+    const fallbackList =
+      SUPPLEMENTARY_CATEGORY_PHOTOS[article.categorySlug] ||
+      SUPPLEMENTARY_CATEGORY_PHOTOS["cerita-warga"]
+    for (const url of fallbackList) {
+      if (!photos.includes(url)) {
+        photos.push(url)
+      }
+      if (photos.length >= 3) break
+    }
+  }
+
+  return photos
+}
 
 export function PublicArticleDetail({
   data,
 }: {
   data: PublicArticlePageData
 }) {
-  const { article, relatedArticles } = data
-  const router = useRouter()
-  const { user, status } = useSession()
-  const isAuthenticated = status === "authenticated" && Boolean(user)
-
-  const [likeState, setLikeState] = useState({
-    hasLiked: article.hasLiked,
-    count: article.likesCount,
-  })
+  const { article, relatedArticles = [] } = data
   const [copied, setCopied] = useState(false)
-  const [, startTransition] = useTransition()
+  const photographerName =
+    article.photographer?.trim() ||
+    article.author?.name ||
+    "Tim Redaksi Benah Palembang"
 
-  const isLiked = isAuthenticated && likeState.hasLiked
-  const likesCount = Math.max(0, likeState.count)
+  const photos = useMemo(() => {
+    return resolveArticlePhotos(article)
+  }, [article])
 
   async function copyLink() {
-    await navigator.clipboard?.writeText(window.location.href)
-    setCopied(true)
-    toast.success("Tautan artikel berhasil disalin!")
-    window.setTimeout(() => setCopied(false), 1_800)
+    if (typeof window !== "undefined") {
+      await navigator.clipboard?.writeText(window.location.href)
+      setCopied(true)
+      toast.success("Tautan artikel berhasil disalin!")
+      window.setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   function shareArticle() {
-    void navigator.share?.({
-      title: article.title,
-      url: window.location.href,
-    })
-  }
-
-  function handleToggleLike() {
-    if (!isAuthenticated) {
-      toast.info("Silakan masuk terlebih dahulu untuk menyukai artikel ini.", {
-        action: {
-          label: "Masuk",
-          onClick: () =>
-            router.push(
-              `/login?redirect=${encodeURIComponent(`/artikel/${article.slug}`)}`,
-            ),
-        },
-      })
-      return
-    }
-
-    const previousState = likeState
-    const nextLiked = !isLiked
-    setLikeState({
-      hasLiked: nextLiked,
-      count: Math.max(0, likesCount + (nextLiked ? 1 : -1)),
-    })
-
-    startTransition(async () => {
-      const result = await toggleArticleLikeAction({ articleId: article.id })
-      if (!result.success) {
-        toast.error(result.message)
-        setLikeState(previousState)
-        return
+    if (typeof window !== "undefined") {
+      if (navigator.share) {
+        void navigator.share({
+          title: article.title,
+          url: window.location.href,
+        }).catch(() => {})
+      } else {
+        void copyLink()
       }
-      setLikeState({
-        hasLiked: result.hasLiked ?? nextLiked,
-        count: result.likesCount ?? previousState.count,
-      })
-    })
+    }
   }
 
   return (
-    <>
-      <main>
-        <article>
-          <header className="relative overflow-hidden bg-palembang-charcoal px-6 pb-20 pt-40 text-white sm:px-10 lg:px-16">
-            <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-45">
-              <Image
-                fill
-                priority
-                src={article.coverImageUrl}
-                alt={article.title}
-                sizes="(min-width: 1024px) 50vw, (min-width: 640px) 67vw, 100vw"
-                className="object-cover object-right"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-palembang-charcoal via-palembang-charcoal/60 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-b from-palembang-charcoal/40 via-transparent to-palembang-charcoal" />
+    <div className="bg-white text-zinc-900">
+      {/* 1. HEROES CAROUSEL AT THE VERY TOP (Fit to Screen Tanpa Padding / Full-width edge-to-edge) */}
+      <section aria-label="Featured Photos Carousel" className="w-full">
+        <PublicArticleHeroCarousel
+          photos={photos}
+          title={article.title}
+          description={article.excerpt}
+          photographerName={photographerName}
+          label={article.label}
+        />
+      </section>
+
+      {/* 2. ARTICLE HEADER: Category, Author Meta */}
+      <header className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4 text-xs text-black">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Category Pill */}
+            <Link
+              href={`/${article.categorySlug}`}
+              className="inline-block rounded-[3px] bg-black text-white border border-black px-3.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-[0.14em] hover:bg-zinc-800 transition-colors"
+            >
+              {article.category}
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-4 text-zinc-500">
+            <div className="flex items-center gap-1.5">
+              <Eye className="size-3.5" />
+              <span>{article.views.toLocaleString("id-ID")} views</span>
             </div>
-            <div className="relative z-10 mx-auto max-w-[1040px]">
-              <Link
-                href={`/${article.categorySlug}`}
-                className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red"
-              >
-                {article.category}
-              </Link>
-              <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-4xl font-black leading-[1] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
-                {article.title}
-              </h1>
-              <p className="reveal-on-scroll reveal-delay-150 mt-8 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
-                {article.excerpt}
-              </p>
-              <div className="reveal-on-scroll reveal-delay-200 mt-10 flex flex-wrap items-center justify-between gap-6 border-y border-white/15 py-5">
-                <Link
-                  href={`/penulis/${article.author.username}`}
-                  className="flex items-center gap-3 rounded-xl transition-opacity hover:opacity-80"
-                >
-                  {/* Avatar profile may come from an external URL outside the cover image allowlist. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={article.author.avatarUrl}
-                    alt={article.author.name}
-                    className="size-11 rounded-full object-cover"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {article.author.name}
-                    </p>
-                    <p className="text-xs text-white/60">
-                      {article.author.roleLabel} · {article.publishedAtLabel}
-                    </p>
-                  </div>
-                </Link>
-                <div className="flex flex-wrap items-center gap-5 text-xs text-white/70">
-                  <span className="flex items-center gap-2">
-                    <Clock3 className="size-4" />
-                    {article.readingTime} min read
+            {article.publishedAtLabel && (
+              <>
+                <span className="text-zinc-300">•</span>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="size-3.5" />
+                  <span>{article.publishedAtLabel}</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* 3. CONTENT AREA: ARTICLE BODY (LEFT) & SPOT INFO + BAGIKAN ARTIKEL (RIGHT) + OTHER ARTICLES */}
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-16 sm:pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-10 xl:gap-16 items-start">
+          {/* Main Article Column */}
+          <article className="min-w-0">
+            <div
+              className="article-body prose prose-zinc max-w-none prose-headings:font-sans prose-headings:font-bold prose-p:font-serif prose-p:text-[15px] sm:prose-p:text-base prose-p:leading-[1.8] prose-p:text-zinc-800"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+
+            {/* Tags */}
+            {article.tags.length > 0 && (
+              <div className="mt-10 flex flex-wrap gap-2 border-t border-zinc-100 pt-6">
+                {article.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-[3px] bg-black px-3 py-1 text-[11px] font-medium text-white"
+                  >
+                    #{tag}
                   </span>
-                  <span className="flex items-center gap-2">
-                    <Heart className={`size-4 ${isLiked ? "fill-palembang-red text-palembang-red" : ""}`} />
-                    {likesCount.toLocaleString("id-ID")} likes
+                ))}
+              </div>
+            )}
+          </article>
+
+          {/* Right Sidebar: Venue / Spot Information Element + BAGIKAN ARTIKEL */}
+          <aside className="w-full lg:sticky lg:top-24 pt-2 space-y-8 flex flex-col items-center lg:items-start text-center lg:text-left">
+            {/* 1. Venue / Spot Information */}
+            <PublicArticleVenueSidebar article={article} />
+
+            {/* Author Profile */}
+            <div className="w-full max-w-[280px] sm:max-w-[300px] text-zinc-900">
+              <div>
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.14em] uppercase text-black">
+                  DITULIS OLEH
+                </span>
+                <div className="mt-1.5 mb-3.5 border-b border-dotted border-zinc-300 w-full" />
+              </div>
+              <div className="flex items-center justify-center lg:justify-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={article.author.avatarUrl}
+                  alt={article.author.name}
+                  className="size-10 rounded-full object-cover ring-1 ring-zinc-200"
+                />
+                <div className="flex flex-col justify-center">
+                  <span className="font-bold text-sm text-black leading-snug">
+                    {article.author.name}
                   </span>
-                  <span className="flex items-center gap-2">
-                    <Eye className="size-4" />
-                    {article.views.toLocaleString("id-ID")} views
-                  </span>
+                  <time dateTime={article.publishedAt} className="text-xs text-zinc-500 mt-0.5">
+                    {article.publishedAtLabel}
+                  </time>
                 </div>
               </div>
             </div>
-          </header>
 
-          <div className="mx-auto grid max-w-[1040px] gap-12 px-6 py-16 sm:px-10 lg:grid-cols-[60px_1fr] lg:py-20">
-            <aside className="hidden lg:block">
-              <div className="reveal-fade reveal-delay-200 sticky top-28 flex flex-col items-center gap-3">
+            {/* 2. BAGIKAN ARTIKEL (Hanya button Share dan Salin Link) */}
+            <div
+              aria-label="Bagikan Artikel"
+              className="w-full max-w-[280px] sm:max-w-[300px] text-zinc-900"
+            >
+              <div>
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.14em] uppercase text-black">
+                  BAGIKAN ARTIKEL
+                </span>
+                <div className="mt-1.5 mb-2.5 border-b border-dotted border-zinc-300 w-full" />
+              </div>
+
+              <p className="font-serif text-xs sm:text-[13px] text-black/80 leading-relaxed mb-3.5">
+                Bagikan cerita ini kepada teman dan komunitas Anda.
+              </p>
+
+              {/* Hanya Button Share dan Salin Link */}
+              <div className="flex items-center justify-center lg:justify-start gap-2">
+                {/* Button Share */}
                 <button
                   type="button"
-                  aria-label="Sukai artikel"
-                  onClick={handleToggleLike}
-                  className={`rounded-full border p-3 transition-colors ${isLiked ? "border-palembang-red bg-palembang-red text-white" : "border-border hover:border-palembang-red hover:text-palembang-red"}`}
-                >
-                  <Heart className={`size-4 ${isLiked ? "fill-current" : ""}`} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Bagikan artikel"
                   onClick={shareArticle}
-                  className="rounded-full border border-border p-3 transition-colors hover:border-palembang-red hover:text-palembang-red"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-[3px] border border-black bg-white px-3 py-2 text-xs font-semibold text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
                 >
-                  <Share2 className="size-4" />
+                  <Share2 className="size-3.5" />
+                  <span>Share</span>
                 </button>
+
+                {/* Button Salin Link */}
                 <button
                   type="button"
-                  aria-label="Salin tautan"
                   onClick={() => void copyLink()}
-                  className="rounded-full border border-border p-3 transition-colors hover:border-palembang-red hover:text-palembang-red"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-[3px] border border-black bg-white px-3 py-2 text-xs font-semibold text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
                 >
                   {copied ? (
-                    <Check className="size-4" />
+                    <>
+                      <Check className="size-3.5 text-emerald-600" />
+                      <span>Disalin!</span>
+                    </>
                   ) : (
-                    <Copy className="size-4" />
+                    <>
+                      <Copy className="size-3.5" />
+                      <span>Salin Link</span>
+                    </>
                   )}
                 </button>
               </div>
-            </aside>
-
-            <div className="reveal-on-scroll">
-              <div
-                className="article-body"
-                dangerouslySetInnerHTML={{ __html: article.content }}
-              />
-
-              {article.tags.length > 0 ? (
-                <div className="mt-10 flex flex-wrap gap-2">
-                  {article.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-muted px-3 py-1.5 text-xs opacity-75"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <Link
-                href={`/penulis/${article.author.username}`}
-                className="reveal-on-scroll mt-12 flex items-center gap-4 rounded-2xl border border-border bg-muted/30 p-5 transition-colors hover:border-palembang-red/40 hover:bg-muted/60"
-                aria-label={`Lihat profil penulis ${article.author.name}`}
-              >
-                <div className="flex items-center gap-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={article.author.avatarUrl}
-                    alt={article.author.name}
-                    className="size-14 shrink-0 rounded-full object-cover ring-2 ring-palembang-red/30"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-palembang-red">
-                      Ditulis Oleh
-                    </p>
-                    <h2 className="font-display text-base font-bold">
-                      {article.author.name}
-                    </h2>
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                      {article.author.bio}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              <div className="reveal-on-scroll mt-12 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-card/80 p-5 shadow-xs sm:flex-row">
-                <div className="flex w-full items-center gap-3 sm:w-auto">
-                  <Button
-                    type="button"
-                    onClick={handleToggleLike}
-                    className={`h-11 w-full gap-2 rounded-xl px-5 text-xs font-semibold transition-all sm:w-auto sm:text-sm ${
-                      isLiked
-                        ? "bg-palembang-red text-white shadow-sm hover:bg-palembang-red/90"
-                        : "border border-border bg-muted/80 text-foreground hover:border-palembang-red hover:bg-palembang-red hover:text-white"
-                    }`}
-                  >
-                    <Heart className={`size-4.5 ${isLiked ? "fill-current" : ""}`} />
-                    <span>{isLiked ? "Disukai" : "Sukai Artikel Ini"}</span>
-                    <span
-                      className={`ml-1.5 rounded-full px-2 py-0.5 text-xs font-bold ${
-                        isLiked
-                          ? "bg-white/20 text-white"
-                          : "bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {likesCount.toLocaleString("id-ID")}
-                    </span>
-                  </Button>
-                  <p className="hidden text-xs text-muted-foreground md:block">
-                    {isLiked
-                      ? "Terima kasih telah mengapresiasi artikel ini!"
-                      : "Suka artikel ini? Berikan apresiasimu."}
-                  </p>
-                </div>
-
-                <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void copyLink()}
-                    className="h-11 flex-1 gap-2 rounded-xl border-border px-4 text-xs font-medium hover:border-palembang-red hover:text-palembang-red sm:flex-initial"
-                  >
-                    {copied ? (
-                      <Check className="size-4 text-emerald-600" />
-                    ) : (
-                      <Copy className="size-4" />
-                    )}
-                    <span>{copied ? "Disalin!" : "Salin Tautan"}</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={shareArticle}
-                    className="h-11 flex-1 gap-2 rounded-xl border-border px-4 text-xs font-medium hover:border-palembang-red hover:text-palembang-red sm:flex-initial"
-                  >
-                    <Share2 className="size-4" />
-                    <span>Bagikan</span>
-                  </Button>
-                </div>
-              </div>
-
-              <ArticleComments
-                articleId={article.id}
-                articleSlug={article.slug}
-                comments={article.comments}
-              />
             </div>
-          </div>
-        </article>
-      </main>
+          </aside>
+        </div>
 
-      {relatedArticles.length > 0 ? (
-        <section className="reveal-on-scroll bg-background px-6 py-20 text-foreground sm:px-10 lg:px-16 lg:py-28">
-          <div className="mx-auto max-w-[1240px]">
-            <div className="reveal-on-scroll flex items-end justify-between gap-6">
-              <SectionHeading
-                eyebrow="Lanjutkan membaca"
-                title="More Stories"
-              />
-              <Link
-                href={`/${article.categorySlug}`}
-                className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground sm:flex"
-              >
-                View all stories <ArrowRight className="size-4 text-palembang-red" />
-              </Link>
+        {/* 4. OTHER ARTICLES (CERITA LAINNYA) */}
+        {relatedArticles.length > 0 && (
+          <section aria-label="Other Articles" className="mt-16 sm:mt-24 border-t border-zinc-200 pt-10 sm:pt-14">
+            <div>
+              <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-bold text-black tracking-tight leading-tight">
+                Other Articles
+              </h2>
+              <div className="mt-3 mb-8 sm:mb-12 border-b border-dotted border-zinc-300 w-full" />
             </div>
-            <div className="reveal-stagger mt-12 grid gap-8 sm:grid-cols-2">
-              {relatedArticles.map((relatedArticle) => (
-                <PublicArticleCard
-                  key={relatedArticle.id}
-                  article={relatedArticle}
-                />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+              {relatedArticles.map((item) => (
+                <PublicArticleCard key={item.id} article={item} />
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
+          </section>
+        )}
+      </main>
+
+      {/* 5. FOOTER */}
       <Footer />
-    </>
+    </div>
   )
 }

@@ -2,23 +2,24 @@
 
 import {
   CalendarDays,
-  ChevronDown,
   Clock3,
   MapPin,
   Ticket,
+  ChevronDown,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"
+import { LandingHero } from "@/modules/website-content/components/landing-hero"
 import type { AgendaPageData } from "@/modules/website-content/types/agenda-page"
 
 import type { PublicEventListItem } from "../types/public-event"
 
 type EventFilter = "this-month" | "upcoming" | "past"
 
-const INITIAL_EVENT_COUNT = 4
+const INITIAL_EVENT_COUNT = 6
 const EVENT_TIME_ZONE = "Asia/Jakarta"
 
 const datePartFormatter = new Intl.DateTimeFormat("en-US", {
@@ -26,20 +27,6 @@ const datePartFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: EVENT_TIME_ZONE,
   year: "numeric",
 })
-
-function AgendaHeroTitle({ title }: { title: string }) {
-  const breakIndex = title.lastIndexOf(",")
-
-  if (breakIndex === -1) return title
-
-  return (
-    <>
-      {title.slice(0, breakIndex + 1)}
-      <br />
-      {title.slice(breakIndex + 1).trimStart()}
-    </>
-  )
-}
 
 function getMonthKey(date: Date) {
   const parts = datePartFormatter.formatToParts(date)
@@ -86,49 +73,64 @@ export function PublicEventList({
   events: PublicEventListItem[]
 }) {
   const [filter, setFilter] = useState<EventFilter>("this-month")
-  const [showAll, setShowAll] = useState(false)
+  const [displayCount, setDisplayCount] = useState(INITIAL_EVENT_COUNT)
   const filteredEvents = filterEvents(events, filter, new Date())
-  const visibleEvents = showAll
-    ? filteredEvents
-    : filteredEvents.slice(0, INITIAL_EVENT_COUNT)
-  const hasMore = !showAll && filteredEvents.length > INITIAL_EVENT_COUNT
+  const visibleEvents = filteredEvents.slice(0, displayCount)
+  const hasMore = filteredEvents.length > displayCount
 
   function selectFilter(nextFilter: EventFilter) {
     setFilter(nextFilter)
-    setShowAll(false)
+    setDisplayCount(INITIAL_EVENT_COUNT)
   }
 
-  return (
-    <>
-      <div className="relative overflow-hidden bg-palembang-red px-6 pb-24 pt-40 text-white sm:px-10 lg:px-16">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-full overflow-hidden opacity-30 sm:w-2/3 lg:w-1/2 lg:opacity-40">
-          <Image
-            src={content.hero.imageUrl}
-            alt={content.hero.imageAlt}
-            fill
-            priority
-            sizes="(min-width: 1024px) 50vw, (min-width: 640px) 67vw, 100vw"
-            className="object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-palembang-red via-palembang-red/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-palembang-red/40 via-transparent to-palembang-red" />
-        </div>
-        <div className="relative z-10 mx-auto max-w-[1240px]">
-          <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-white/80">
-            {content.hero.eyebrow}
-          </p>
-          <h1 className="reveal-on-scroll reveal-delay-100 mt-6 max-w-4xl font-display text-6xl font-black leading-[0.9] tracking-[-0.065em] sm:text-8xl">
-            <AgendaHeroTitle title={content.hero.title} />
-          </h1>
-          <p className="reveal-on-scroll reveal-delay-150 mt-8 max-w-lg text-base leading-7 text-white/85">
-            {content.hero.description}
-          </p>
-        </div>
-      </div>
+  // Generate hero slides from events or agenda content
+  const heroSlides =
+    events.length > 0
+      ? events.slice(0, 3).map((ev, idx) => ({
+          imageUrl: ev.bannerUrl,
+          imageAlt: ev.title,
+          eyebrow: "AGENDA PALEMBANG",
+          title: ev.title,
+          description: ev.description,
+          buttonLabel: "LIHAT DETAIL ACARA",
+          buttonUrl: `/agenda/${ev.id}`,
+          position: idx + 1,
+          isVisible: true,
+        }))
+      : [
+          {
+            imageUrl: content.hero.imageUrl,
+            imageAlt: content.hero.imageAlt || content.hero.title,
+            eyebrow: content.hero.eyebrow || "AGENDA KOTA",
+            title: content.hero.title,
+            description: content.hero.description,
+            buttonLabel: "JELAJAHI AGENDA",
+            buttonUrl: "/agenda",
+            position: 1,
+            isVisible: true,
+          },
+        ]
 
-      <main className="px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
-        <div className="mx-auto max-w-[1240px]">
-          <div className="reveal-on-scroll mb-12 flex gap-4 overflow-x-auto border-b border-border pb-px">
+  return (
+    <div className="bg-white text-zinc-900">
+      {/* 1. HEROES: 3-Panel Carousel */}
+      <LandingHero slides={heroSlides} />
+
+      {/* 2. DAFTAR AGENDA */}
+      <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+        {/* Page Title with thin divider */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-zinc-200 mb-8">
+          <div>
+            <h1 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-black">
+              Agenda Palembang
+            </h1>
+            <p className="mt-1 font-serif text-sm text-black/70">
+              Jadwal acara, festival, pameran, dan kegiatan kreatif terkini di kota.
+            </p>
+          </div>
+
+          {/* Filter Tabs: This Month, Upcoming, Past Event */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
             {[
               ["this-month", "This Month"],
               ["upcoming", "Upcoming"],
@@ -138,100 +140,97 @@ export function PublicEventList({
                 key={value}
                 type="button"
                 onClick={() => selectFilter(value as EventFilter)}
-                className={`whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
+                className={`whitespace-nowrap rounded-[3px] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-all border ${
                   filter === value
-                    ? "border-palembang-red text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "bg-black text-white border-black shadow-xs"
+                    : "bg-[#e5e3de] text-black border-zinc-300 hover:bg-[#d8d6d0]"
                 }`}
               >
                 {label}
               </button>
             ))}
           </div>
-
-          {visibleEvents.length > 0 ? (
-            <div className="relative">
-              <div className="reveal-stagger grid gap-8">
-                {visibleEvents.map((event) => (
-                  <Link
-                    key={event.id}
-                    href={`/agenda/${event.id}`}
-                    className="group grid gap-6 border-b border-border pb-8 md:grid-cols-[240px_1fr_220px] md:gap-10"
-                  >
-                    <div className="img-zoom relative aspect-[4/3] overflow-hidden rounded-2xl">
-                      <Image
-                        src={event.bannerUrl}
-                        alt={event.title}
-                        fill
-                        sizes="(min-width: 768px) 240px, 100vw"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-palembang-red">
-                        {event.category}
-                      </p>
-                      <h2 className="mt-3 max-w-xl font-display text-3xl font-bold leading-tight tracking-[-0.04em] transition-colors group-hover:text-palembang-red">
-                        {event.title}
-                      </h2>
-                      <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
-                        {event.description}
-                      </p>
-                      <p className="mt-5 text-xs font-semibold text-muted-foreground">
-                        {event.organizer}
-                      </p>
-                    </div>
-                    <div className="flex flex-col justify-between text-sm">
-                      <div className="space-y-2 text-muted-foreground">
-                        <p className="flex items-start gap-2">
-                          <CalendarDays className="mt-0.5 size-4 shrink-0 text-palembang-red" />
-                          {event.dateLabel}
-                        </p>
-                        <p className="flex items-start gap-2">
-                          <Clock3 className="mt-0.5 size-4 shrink-0 text-palembang-red" />
-                          {event.timeLabel}
-                        </p>
-                        <p className="flex items-start gap-2">
-                          <MapPin className="mt-0.5 size-4 shrink-0 text-palembang-red" />
-                          {event.location}
-                        </p>
-                      </div>
-                      <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground transition-all group-hover:border-palembang-red group-hover:text-palembang-red">
-                        <Ticket className="size-4" />
-                        Detail acara
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-              {hasMore ? (
-                <div className="reveal-on-scroll absolute inset-x-0 -bottom-8 flex h-64 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-6 backdrop-blur-[2px]">
-                  <button
-                    type="button"
-                    onClick={() => setShowAll(true)}
-                    className="group flex items-center gap-3 rounded-full border border-border bg-background/95 px-7 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-foreground shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-palembang-red hover:text-palembang-red"
-                  >
-                    Tampilkan Seluruh Agenda ({filteredEvents.length} Acara)
-                    <ChevronDown className="size-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <div className="reveal-on-scroll rounded-[1.5rem] border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-              <CalendarDays className="mx-auto size-8 text-palembang-red" />
-              <h2 className="mt-5 font-display text-2xl font-bold">
-                Belum ada agenda pada periode ini
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-                Pilih filter waktu lainnya untuk melihat agenda Benah Palembang.
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Event Cards 3-Column Grid */}
+        {visibleEvents.length > 0 ? (
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+              {visibleEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/agenda/${event.id}`}
+                  className="group flex flex-col overflow-hidden"
+                >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100">
+                    <Image
+                      src={event.bannerUrl}
+                      alt={event.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="size-full object-cover transition-transform duration-500 group-hover:scale-103"
+                    />
+                  </div>
+                    <div className="flex flex-1 flex-col pt-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/70">
+                      {event.category}
+                    </p>
+                    <h3 className="mt-1 font-sans text-base sm:text-lg font-bold leading-snug tracking-tight text-black group-hover:underline line-clamp-2 min-h-[44px] sm:min-h-[48px]">
+                      {event.title}
+                    </h3>
+
+                    {/* Dotted Divider */}
+                    <div className="my-2 border-b border-dotted border-zinc-300" />
+
+                    <div className="mt-auto flex flex-col space-y-1 text-xs text-black/80">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="size-3.5 text-black shrink-0" />
+                        <span>{event.dateLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock3 className="size-3.5 text-black shrink-0" />
+                        <span>{event.timeLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="size-3.5 text-black shrink-0" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {hasMore && (
+              <div className="mt-14 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setDisplayCount((prev) => prev + 6)}
+                  className="flex items-center gap-2 rounded-none border border-black bg-white px-8 py-3 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                >
+                  More Articles
+                  <ChevronDown className="size-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="min-h-[30vh] flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+              <Ticket className="size-6" />
+            </div>
+            <h2 className="font-sans text-xl font-bold text-zinc-800">
+              Belum ada agenda pada periode ini
+            </h2>
+            <p className="mt-2 font-serif text-sm text-zinc-500">
+              Pilih filter waktu lainnya untuk melihat jadwal agenda Benah Palembang.
+            </p>
+          </div>
+        )}
       </main>
+
+      {/* 3. FOOTER */}
       <Footer />
-    </>
+    </div>
   )
 }

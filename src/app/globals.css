@@ -55,30 +55,31 @@
   --color-palembang-sage: var(--palembang-sage);
   --color-palembang-peach: var(--palembang-peach);
   --font-display: var(--font-playfair);
+  --font-serif: var(--font-playfair);
   --font-sans: var(--font-inter);
 }
 
 :root {
   --radius: 0.5rem;
-  --background: #f8efea;
-  --foreground: #22201d;
+  --background: #ffffff;
+  --foreground: #000000;
   --card: #ffffff;
-  --card-foreground: #22201d;
+  --card-foreground: #000000;
   --popover: #ffffff;
-  --popover-foreground: #22201d;
-  --primary: #9e2a2b;
+  --popover-foreground: #000000;
+  --primary: #000000;
   --primary-foreground: #ffffff;
-  --secondary: #6d8261;
+  --secondary: #27272a;
   --secondary-foreground: #ffffff;
-  --muted: #ece0d8;
-  --muted-foreground: #6b6660;
-  --accent: #e5d4cb;
-  --accent-foreground: #22201d;
+  --muted: #f4f4f5;
+  --muted-foreground: #3f3f46;
+  --accent: #f4f4f5;
+  --accent-foreground: #000000;
   --destructive: #b91c1c;
   --destructive-foreground: #ffffff;
-  --border: #dfcec4;
-  --input: #dfcec4;
-  --ring: #6d8261;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #000000;
   --chart-1: #6d8261;
   --chart-2: #9e2a2b;
   --chart-3: #c88a2e;
@@ -93,8 +94,8 @@
   --sidebar-border: #dfcec4;
   --sidebar-ring: #6d8261;
   /* Benah Palembang Brand Colors */
-  --palembang-red: #a32223;
-  --palembang-red-dark: #841819;
+  --palembang-red: #000000;
+  --palembang-red-dark: #111111;
   --palembang-gold: #c88a2e;
   --palembang-charcoal: #23201d;
   --palembang-off-white: #f8efea;
@@ -132,8 +133,8 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
-  --palembang-red: oklch(0.47 0.22 25);
-  --palembang-red-dark: oklch(0.36 0.20 25);
+  --palembang-red: oklch(0 0 0);
+  --palembang-red-dark: oklch(0 0 0);
   --palembang-gold: oklch(0.72 0.14 75);
   --palembang-charcoal: oklch(0.15 0 0);
   --palembang-off-white: oklch(0.98 0.005 80);
@@ -367,13 +368,33 @@
   .article-body img {
     max-width: 100%;
     height: auto;
-    border-radius: 0.75rem;
+    border-radius: 0.25rem;
+    margin: 1.5rem auto;
   }
 
   .article-body table {
     width: 100%;
     max-width: 100%;
     border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+
+  .article-body th,
+  .article-body td {
+    border: 1px solid #e4e4e7;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+
+  .article-body th {
+    background-color: #f4f4f5;
+    font-weight: 600;
+  }
+
+  .article-body hr {
+    border: 0;
+    border-top: 1px dotted #d4d4d8;
+    margin: 2rem 0;
   }
 
   .article-body pre {
@@ -382,7 +403,12 @@
   }
 
   .article-body iframe {
-    max-width: 100%;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border-radius: 0.25rem;
+    margin: 1.5rem 0;
+    border: 0;
   }
 
   @media (max-width: 640px) {
@@ -450,7 +476,7 @@
   100% { transform: translateX(-50%); }
 }
 .animate-marquee {
-  animation: marquee 30s linear infinite;
+  animation: marquee 60s linear infinite;
 }
 .animate-marquee:hover {
   animation-play-state: paused;
@@ -564,4 +590,15 @@ select:-webkit-autofill {
   width: 0 !important;
 }
 
-
+/* Tiptap Table Selected Cell Background */
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+.ProseMirror .selectedCell {
+  position: relative;
+}

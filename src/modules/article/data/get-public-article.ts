@@ -14,7 +14,7 @@ import {
   publicArticleDetailSelect,
 } from "./article.mapper"
 
-const RELATED_ARTICLE_LIMIT = 2
+const RELATED_ARTICLE_LIMIT = 3
 
 function pickRandomArticles<T>(articles: T[], limit: number): T[] {
   const shuffled = [...articles]

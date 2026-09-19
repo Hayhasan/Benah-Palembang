@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Eye,
   FileText,
-  Heart,
   MapPin,
   MessageCircle,
   Share2,
@@ -72,7 +71,7 @@ export function PublicProfilePage({ profile }: { profile: PublicProfileData }) {
             <div className="absolute inset-0 bg-gradient-to-t from-palembang-charcoal via-palembang-charcoal/40 to-transparent" />
           </div>
 
-          <div className="mx-auto max-w-[1240px] px-6 sm:px-10 lg:px-16">
+          <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
             <div className="relative -mt-24 sm:-mt-28">
               <button
                 type="button"
@@ -140,7 +139,7 @@ export function PublicProfilePage({ profile }: { profile: PublicProfileData }) {
                   </div>
                 </div>
 
-                <div className="reveal-stagger mt-8 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/5 py-4 text-center">
+                <div className="reveal-stagger mt-8 grid grid-cols-2 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/5 py-4 text-center">
                   <div>
                     <p className="font-display text-lg font-bold sm:text-2xl">{profile.articleCount}</p>
                     <p className="text-[10px] uppercase tracking-wider text-white/50 sm:text-xs">Artikel</p>
@@ -149,17 +148,13 @@ export function PublicProfilePage({ profile }: { profile: PublicProfileData }) {
                     <p className="font-display text-lg font-bold sm:text-2xl">{profile.totalViews.toLocaleString("id-ID")}</p>
                     <p className="text-[10px] uppercase tracking-wider text-white/50 sm:text-xs">Total Views</p>
                   </div>
-                  <div>
-                    <p className="font-display text-lg font-bold sm:text-2xl">{profile.totalLikes.toLocaleString("id-ID")}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-white/50 sm:text-xs">Total Suka</p>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <section className="reveal-on-scroll mx-auto max-w-[1240px] px-6 pt-16 sm:px-10 lg:px-16">
+        <section className="reveal-on-scroll mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pt-16">
           <div className="reveal-on-scroll mb-10 flex items-end justify-between border-b border-white/10 pb-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">Koleksi Karya</p>
@@ -189,7 +184,6 @@ export function PublicProfilePage({ profile }: { profile: PublicProfileData }) {
                         <span>{article.publishedAtLabel}</span>
                         <div className="flex items-center gap-3">
                           <span className="flex items-center gap-1"><Eye className="size-3 text-palembang-red" />{article.views.toLocaleString("id-ID")}</span>
-                          <span className="flex items-center gap-1"><Heart className="size-3 text-palembang-red" />{article.likes.toLocaleString("id-ID")}</span>
                         </div>
                       </div>
                     </div>
@@ -216,7 +210,7 @@ export function PublicProfilePage({ profile }: { profile: PublicProfileData }) {
         </section>
 
         {profile.events.length > 0 ? (
-          <section className="reveal-on-scroll mx-auto max-w-[1240px] px-6 pt-20 sm:px-10 lg:px-16">
+          <section className="reveal-on-scroll mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 pt-20">
             <p className="reveal-on-scroll text-[10px] font-bold uppercase tracking-[0.24em] text-palembang-red">Penyelenggara Resmi</p>
             <h2 className="reveal-on-scroll reveal-delay-100 mt-1 font-display text-2xl font-bold tracking-[-0.03em] sm:text-3xl">Agenda & Acara Terkait ({profile.events.length})</h2>
             <div className="reveal-stagger mt-8 grid gap-6 sm:grid-cols-2">

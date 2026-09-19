@@ -11,7 +11,6 @@ export interface OwnedEventListItem {
   statusLabel: string
   moderationNote: string | null
   views: number
-  likes: number
 }
 
 export interface OwnedEventList {
@@ -29,6 +28,7 @@ export interface OwnedEventEditorData {
   description: string
   content: string
   bannerUrl: string
+  additionalBannerUrls: string[]
   category: string
   startsAt: string
   startsOn: string
@@ -37,6 +37,7 @@ export interface OwnedEventEditorData {
   timeLabel: string
   location: string
   organizer: string
+  photographer: string | null
   registrationUrl: string
   whatsappUrl: string
   status: ContentStatus
@@ -44,7 +45,8 @@ export interface OwnedEventEditorData {
   moderationNote: string | null
   tags: string[]
   views: number
-  likesCount: number
+  publishedAt?: string | null
+  publishedAtLabel?: string | null
 }
 
 export type EventSaveIntent = "SAVE" | "POST"

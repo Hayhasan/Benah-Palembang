@@ -4,6 +4,7 @@ export interface PublicEventListItem {
   title: string
   description: string
   bannerUrl: string
+  additionalBannerUrls: string[]
   category: string
   startsAt: string
   endsAt: string | null
@@ -11,7 +12,10 @@ export interface PublicEventListItem {
   timeLabel: string
   location: string
   organizer: string
+  photographer: string | null
   views: number
+  publishedAt: string | null
+  publishedAtLabel: string | null
 }
 
 export interface PublicEventDetail extends PublicEventListItem {
@@ -19,8 +23,6 @@ export interface PublicEventDetail extends PublicEventListItem {
   registrationUrl: string | null
   whatsappUrl: string
   tags: string[]
-  likesCount: number
-  hasLiked: boolean
 }
 
 export interface PublicEventDetailData {

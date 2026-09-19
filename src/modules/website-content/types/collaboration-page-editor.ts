@@ -1,4 +1,5 @@
 import type {
+  CollaborationHeroSlideData,
   CollaborationPageData,
   CollaborationPartnerContentData,
   CollaborationPartnerLogoData,
@@ -15,10 +16,13 @@ export type CollaborationPartnerLogoEditorData =
 export type CollaborationPartnerContentEditorData =
   CollaborationPartnerContentData & CollaborationEditorRecord
 
+export type CollaborationHeroSlideEditorData =
+  CollaborationHeroSlideData & CollaborationEditorRecord
+
 export interface CollaborationPageEditorData
-  extends Omit<CollaborationPageData, "partnerLogos" | "partnerContents"> {
+  extends Omit<CollaborationPageData, "heroSlides" | "partnerLogos" | "partnerContents"> {
+  heroSlides: CollaborationHeroSlideEditorData[]
   partnerLogos: CollaborationPartnerLogoEditorData[]
-  partnerContents: CollaborationPartnerContentEditorData[]
 }
 
 export type UpdateCollaborationPageResult =

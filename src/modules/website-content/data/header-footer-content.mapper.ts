@@ -49,22 +49,14 @@ export function footerConnectPlatformFromDatabase(
 export const headerFooterContentSelect = {
   key: true,
   logoImageUrl: true,
-  logoImageAlt: true,
-  logoLinkUrl: true,
-  footerBackgroundText: true,
+  footerLogoImageUrl: true,
+  footerLogoImageAlt: true,
+  footerTitle: true,
   footerDescription: true,
+  footerCreatorText: true,
   copyrightText: true,
-  footerExploreLinks: {
-    where: { deletedAt: null, isVisible: true },
-    orderBy: { position: "asc" },
-    select: {
-      label: true,
-      linkUrl: true,
-      position: true,
-      isVisible: true,
-    },
-  },
   footerConnectLinks: {
+
     where: { deletedAt: null, isVisible: true },
     orderBy: { position: "asc" },
     select: {
@@ -88,14 +80,17 @@ export function mapHeaderFooterContent(
     key: "header-footer",
     logo: {
       imageUrl: content.logoImageUrl,
-      imageAlt: content.logoImageAlt,
-      linkUrl: content.logoLinkUrl,
+      imageAlt: "",
     },
     footer: {
-      backgroundText: content.footerBackgroundText,
+      logo: {
+        imageUrl: content.footerLogoImageUrl || "",
+        imageAlt: content.footerLogoImageAlt || "",
+      },
+      title: content.footerTitle || "",
       description: content.footerDescription,
+      creatorText: content.footerCreatorText,
       copyrightText: content.copyrightText,
-      exploreLinks: content.footerExploreLinks,
       connectLinks: content.footerConnectLinks.map((link) => ({
         ...link,
         platform: footerConnectPlatformFromDatabase(link.platform),
