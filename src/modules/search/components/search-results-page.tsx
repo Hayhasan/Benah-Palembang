@@ -157,7 +157,7 @@ export function SearchResultsPage({
                         <div className="my-2 border-b border-dotted border-zinc-200" />
                         <div className="flex items-center justify-between text-[11px] text-zinc-500">
                           <span>{article.publishedAtLabel}</span>
-                          <span>{article.readingTime} min read</span>
+                          <span>{article.views.toLocaleString("id-ID")} views</span>
                         </div>
                       </div>
                     </Link>

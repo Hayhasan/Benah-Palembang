@@ -1,6 +1,6 @@
-import type { HeaderFooterContentData } from "../types/header-footer-content"
+import { headerFooterContentEditorSchema } from './src/modules/website-content/schemas/header-footer-content.schema';
 
-export const DEFAULT_HEADER_FOOTER_CONTENT = {
+const data = {
   key: "header-footer",
   logo: {
     imageUrl: "/logo.png",
@@ -25,24 +25,16 @@ export const DEFAULT_HEADER_FOOTER_CONTENT = {
     textColor: "#ffffff",
     connectLinks: [
       {
+        id: null,
+        clientKey: "default-footer-connect-1",
         platform: "instagram",
         linkUrl: "https://instagram.com/benahpalembang",
         position: 1,
         isVisible: true,
       },
-      {
-        platform: "whatsapp",
-        linkUrl: "https://wa.me/628551241878",
-        position: 2,
-        isVisible: true,
-      },
-      {
-        platform: "mail",
-        linkUrl: "mailto:halo@benahpalembang.id",
-        position: 3,
-        isVisible: true,
-      },
     ],
   },
-} satisfies HeaderFooterContentData
+}
 
+const result = headerFooterContentEditorSchema.safeParse(data);
+console.log(result.success ? "SUCCESS" : result.error.issues);

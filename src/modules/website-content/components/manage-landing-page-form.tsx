@@ -15,7 +15,7 @@ import type {
   LandingArticlePinOption,
   LandingPageEditorData,
 } from "../types/landing-page-editor"
-import { ManageHeaderFooterSettings } from "./manage-header-footer-settings"
+import { ManageHeaderSettings, ManageFooterSettings } from "./manage-header-footer-settings"
 import { ManageHomeSettings } from "./manage-home-settings"
 import { ManageCategoryHeroTab } from "./manage-category-hero-tab"
 import { ManageCollaborationSettings } from "./manage-collaboration-settings"
@@ -51,7 +51,8 @@ const tabs = [
   "Home",
   "Kategori",
   "Kolaborasi",
-  "Header & Footer",
+  "Header",
+  "Footer",
 ]
 
 export function ManageLandingPageForm({
@@ -127,7 +128,7 @@ export function ManageLandingPageForm({
           } else {
             toast.error(result.message)
           }
-        } else if (activeTab === "Header & Footer" && headerFooterData) {
+        } else if ((activeTab === "Header" || activeTab === "Footer") && headerFooterData) {
           const result = await updateHeaderFooterContentAction(headerFooterData)
           if (result.success) {
             toast.success(result.message)
@@ -164,7 +165,8 @@ export function ManageLandingPageForm({
 
   const canSave =
     (activeTab === "Home" && !!homeData) ||
-    (activeTab === "Header & Footer" && !!headerFooterData) ||
+    (activeTab === "Header" && !!headerFooterData) ||
+    (activeTab === "Footer" && !!headerFooterData) ||
     (activeTab === "Kolaborasi" && !!collaborationData) ||
     (activeTab === "Kategori" && !!categoryPagesData)
 
@@ -219,8 +221,15 @@ export function ManageLandingPageForm({
           <ManageHomeSettings data={homeData} onChange={handleHomeChange} />
         ) : null}
 
-        {activeTab === "Header & Footer" && headerFooterData ? (
-          <ManageHeaderFooterSettings
+        {activeTab === "Header" && headerFooterData ? (
+          <ManageHeaderSettings
+            data={headerFooterData}
+            onChange={handleHeaderFooterChange}
+          />
+        ) : null}
+
+        {activeTab === "Footer" && headerFooterData ? (
+          <ManageFooterSettings
             data={headerFooterData}
             onChange={handleHeaderFooterChange}
           />

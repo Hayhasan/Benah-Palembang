@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { getIndonesianHoliday } from "@/lib/indonesian-holidays"
 
 function Calendar({
   className,
@@ -183,6 +184,7 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
+  children,
   ...props
 }: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames()
@@ -192,12 +194,40 @@ function CalendarDayButton({
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  const hasEvent = Boolean(modifiers.hasEvent)
+  const isHoliday = Boolean(modifiers.isHoliday)
+  const isSunday = Boolean(modifiers.isSunday)
+  const isObservance = Boolean(modifiers.isObservance)
+  const isTanggalMerah = isHoliday || isSunday
+
+  // Generate accessible & informative tooltip
+  let tooltipText = props.title
+  if (!tooltipText) {
+    const holiday = getIndonesianHoliday(day.date)
+    const isSun = day.date.getDay() === 0
+    const parts: string[] = []
+    if (holiday) {
+      parts.push(`${holiday.name} (${holiday.description})`)
+    } else if (isSun) {
+      parts.push("Hari Minggu")
+    }
+    if (hasEvent) {
+      parts.push("Agenda Terjadwal")
+    }
+    if (parts.length > 0) {
+      tooltipText = parts.join(" • ")
+    }
+  }
+
   return (
     <Button
       ref={ref}
       variant="ghost"
       size="icon"
+      title={tooltipText}
       data-day={day.date.toLocaleDateString()}
+      data-has-event={hasEvent ? "true" : undefined}
+      data-tanggal-merah={isTanggalMerah ? "true" : undefined}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
@@ -208,12 +238,51 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70",
+        "flex aspect-square size-auto w-full min-w-(--cell-size) flex-col items-center justify-center gap-0.5 leading-none font-normal relative group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70",
+        // Tanggal Merah (Minggu / Libur Nasional)
+        !hasEvent &&
+          isTanggalMerah &&
+          "!text-red-600 font-semibold hover:!bg-red-50 hover:!text-red-700",
+        // Hari Besar (Bukan libur)
+        !hasEvent &&
+          !isTanggalMerah &&
+          isObservance &&
+          "!text-zinc-900 font-medium hover:!bg-zinc-100",
+        // Selected state when not hasEvent
+        modifiers.selected &&
+          !hasEvent &&
+          isTanggalMerah &&
+          "!bg-red-600 !text-white hover:!bg-red-700 font-bold",
+        // Agenda Event: Black circle
+        hasEvent &&
+          "!rounded-full !bg-black !text-white font-bold hover:!bg-zinc-800 transition-colors",
+        hasEvent &&
+          modifiers.selected &&
+          "!ring-2 !ring-offset-2 !ring-black !bg-black !text-white",
         defaultClassNames.day,
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {/* Indicator dots */}
+      {isHoliday && (
+        <span
+          className={cn(
+            "absolute bottom-0.5 size-1 rounded-full pointer-events-none",
+            hasEvent ? "bg-red-400" : "bg-red-600"
+          )}
+        />
+      )}
+      {!isHoliday && isObservance && (
+        <span
+          className={cn(
+            "absolute bottom-0.5 size-1 rounded-full pointer-events-none",
+            hasEvent ? "bg-blue-300" : "bg-blue-600"
+          )}
+        />
+      )}
+    </Button>
   )
 }
 

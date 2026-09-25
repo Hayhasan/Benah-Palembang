@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   CalendarDays,
+  ChevronDown,
   ExternalLink,
   LayoutDashboard,
   Loader2,
@@ -29,18 +30,23 @@ interface HeaderProps {
   overlay?: boolean
 }
 
+const articleSubItems = [
+  { name: "Cerita Warga", href: "/cerita-warga" },
+  { name: "Gaya Hidup", href: "/gaya-hidup" },
+  { name: "Ruang Kota", href: "/ruang-kota" },
+  { name: "Industri Kreatif", href: "/industri-kreatif" },
+  { name: "Kebudayaan", href: "/kebudayaan" },
+]
+
+const allCategoryItems = [
+  ...articleSubItems,
+  { name: "Agenda", href: "/agenda" },
+  { name: "Kolaborasi", href: "/kolaborasi" },
+]
+
 export const Header = ({ overlay = false }: HeaderProps) => {
-  const { logo, footer } = useHeaderFooterContent()
-  
-  const navItems = [
-    { name: "Cerita Warga", href: "/cerita-warga" },
-    { name: "Gaya Hidup", href: "/gaya-hidup" },
-    { name: "Ruang Kota", href: "/ruang-kota" },
-    { name: "Industri Kreatif", href: "/industri-kreatif" },
-    { name: "Kebudayaan", href: "/kebudayaan" },
-    { name: "Agenda", href: "/agenda" },
-    { name: "Kolaborasi", href: "/kolaborasi" },
-  ]
+  const { logo, headerColors } = useHeaderFooterContent()
+
   const { user, logout, isLoggingOut } = useSession()
   const pathname = usePathname()
   const router = useRouter()
@@ -52,16 +58,37 @@ export const Header = ({ overlay = false }: HeaderProps) => {
   const [searchTab, setSearchTab] = useState<SearchTab>("all")
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [artikelDropdownOpen, setArtikelDropdownOpen] = useState(false)
+  const [mobileArtikelOpen, setMobileArtikelOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const artikelDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setMobileMenuOpen(false)
       setSearchOpen(false)
       setProfileOpen(false)
+      setArtikelDropdownOpen(false)
+      setMobileArtikelOpen(false)
     }, 0)
     return () => clearTimeout(timer)
   }, [pathname])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        artikelDropdownRef.current &&
+        !artikelDropdownRef.current.contains(event.target as Node)
+      ) {
+        setArtikelDropdownOpen(false)
+      }
+    }
+    if (artikelDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [artikelDropdownOpen])
 
   useEffect(() => {
     if (searchOpen) {
@@ -119,12 +146,21 @@ export const Header = ({ overlay = false }: HeaderProps) => {
     return pathname === href || pathname.startsWith(`${href}/`)
   }
 
+  const isArtikelActive = articleSubItems.some((item) => isNavActive(item.href))
+
+  // Dynamic color styles
+  const headerStyle: React.CSSProperties = {
+    backgroundColor: headerColors.bgColor,
+    borderColor: headerColors.bgColor === "#ffffff" ? undefined : "transparent",
+  }
+
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full bg-white border-b border-zinc-200 transition-all duration-200 shadow-xs pointer-events-auto",
+        "sticky top-0 z-50 w-full border-b transition-all duration-200 shadow-xs pointer-events-auto",
         overlay ? "-mb-[98px]" : ""
       )}
+      style={headerStyle}
     >
       <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
         {/* Top Row: Mobile Hamburger, Centered Logo, Search & Profile */}
@@ -134,7 +170,8 @@ export const Header = ({ overlay = false }: HeaderProps) => {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 text-zinc-700 hover:text-zinc-900 lg:hidden rounded transition-colors"
+              className="p-1.5 hover:opacity-70 lg:hidden rounded transition-colors"
+              style={{ color: headerColors.textColor }}
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -156,7 +193,13 @@ export const Header = ({ overlay = false }: HeaderProps) => {
                   className="h-7 sm:h-8.5 w-auto object-contain scale-75 origin-center"
                 />
               ) : (
-                <div className="flex size-8.5 items-center justify-center rounded-full border-[2.5px] border-black font-extrabold text-sm sm:text-base tracking-tighter text-black scale-75 origin-center">
+                <div
+                  className="flex size-8.5 items-center justify-center rounded-full border-[2.5px] font-extrabold text-sm sm:text-base tracking-tighter scale-75 origin-center"
+                  style={{
+                    borderColor: headerColors.textColor,
+                    color: headerColors.textColor,
+                  }}
+                >
                   M
                 </div>
               )}
@@ -168,7 +211,8 @@ export const Header = ({ overlay = false }: HeaderProps) => {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex size-8 items-center justify-center rounded-full text-zinc-800 transition-colors hover:bg-zinc-100"
+              className="flex size-8 items-center justify-center rounded-full transition-colors hover:opacity-70"
+              style={{ color: headerColors.buttonColor }}
               aria-label="Cari artikel"
             >
               <Search className="size-4.5" />
@@ -179,7 +223,8 @@ export const Header = ({ overlay = false }: HeaderProps) => {
                 <button
                   type="button"
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex size-7.5 items-center justify-center overflow-hidden rounded-full ring-1 ring-zinc-300 transition hover:ring-zinc-600"
+                  className="flex size-7.5 items-center justify-center overflow-hidden rounded-full ring-1 transition hover:ring-2"
+                  style={{ ["--tw-ring-color" as string]: headerColors.textColor }}
                   aria-label="Akun"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -225,49 +270,224 @@ export const Header = ({ overlay = false }: HeaderProps) => {
         {/* Navigation Row: Desktop Categories */}
         <nav
           aria-label="Kategori navigasi"
-          className="hidden lg:flex items-center justify-center gap-6 sm:gap-8 pb-3 pt-1 border-t border-zinc-100 overflow-x-auto no-scrollbar"
+          className="hidden lg:flex items-center justify-center gap-8 sm:gap-12 lg:gap-36 pb-1.5 pt-0.5 border-t"
+          style={{ borderColor: `${headerColors.textColor}10` }}
         >
-          {navItems.map((item) => {
-            const active = isNavActive(item.href)
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.14em] transition-colors py-1 relative",
-                  active
-                    ? "text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black"
-                    : "text-zinc-600 hover:text-black"
-                )}
-              >
-                {item.name}
-              </Link>
-            )
-          })}
-        </nav>
+          {/* Home */}
+          <Link
+            href="/"
+            className={cn(
+              "whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.14em] transition-colors py-1.5 relative",
+              isNavActive("/") && pathname === "/"
+                ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px]"
+                : "hover:opacity-80"
+            )}
+            style={{
+              color: headerColors.textColor,
+              ...(isNavActive("/") && pathname === "/"
+                ? { ["--tw-after-bg" as string]: headerColors.textColor }
+                : {}),
+            }}
+          >
+            Home
+          </Link>
 
-        {/* Mobile Drawer Dropdown */}
-        {mobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 border-b border-zinc-200 bg-white p-4 shadow-xl lg:hidden z-50">
-            <div className="flex flex-col space-y-2">
-              {navItems.map((item) => {
+          {/* Artikel Dropdown */}
+          <div className="relative group" ref={artikelDropdownRef}>
+            <Link
+              href="/artikel"
+              className={cn(
+                "whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.14em] transition-colors py-1.5 relative flex items-center gap-1 cursor-pointer",
+                isArtikelActive
+                  ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px]"
+                  : "hover:opacity-80"
+              )}
+              style={{
+                color: headerColors.textColor,
+                ...(isArtikelActive
+                  ? { ["--tw-after-bg" as string]: headerColors.textColor }
+                  : {}),
+              }}
+            >
+              Artikel
+              <ChevronDown className="size-3 transition-transform duration-200 group-hover:rotate-180" />
+            </Link>
+
+            <div
+              className="absolute left-1/2 -translate-x-1/2 top-full w-52 rounded-lg border shadow-xl z-50 py-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0 before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+              style={{
+                backgroundColor: headerColors.bgColor,
+                borderColor: `${headerColors.textColor}20`,
+              }}
+            >
+              {articleSubItems.map((item) => {
                 const active = isNavActive(item.href)
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "px-3 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors",
-                      active
-                        ? "bg-zinc-900 text-white"
-                        : "text-zinc-700 hover:bg-zinc-100"
+                      "block px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
+                      active ? "opacity-100" : "opacity-70 hover:opacity-100"
                     )}
+                    style={{
+                      color: headerColors.textColor,
+                      backgroundColor: active
+                        ? `${headerColors.textColor}10`
+                        : "transparent",
+                    }}
                   >
                     {item.name}
                   </Link>
                 )
               })}
+            </div>
+          </div>
+
+          {/* Agenda */}
+          <Link
+            href="/agenda"
+            className={cn(
+              "whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.14em] transition-colors py-1.5 relative",
+              isNavActive("/agenda")
+                ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px]"
+                : "hover:opacity-80"
+            )}
+            style={{
+              color: headerColors.textColor,
+              ...(isNavActive("/agenda")
+                ? {}
+                : {}),
+            }}
+          >
+            Agenda
+          </Link>
+
+          {/* Kolaborasi */}
+          <Link
+            href="/kolaborasi"
+            className={cn(
+              "whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.14em] transition-colors py-1.5 relative",
+              isNavActive("/kolaborasi")
+                ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px]"
+                : "hover:opacity-80"
+            )}
+            style={{
+              color: headerColors.textColor,
+            }}
+          >
+            Kolaborasi
+          </Link>
+        </nav>
+
+        {/* Mobile Drawer Dropdown */}
+        {mobileMenuOpen && (
+          <div
+            className="absolute top-full left-0 right-0 border-b p-4 shadow-xl lg:hidden z-50"
+            style={{
+              backgroundColor: headerColors.bgColor,
+              borderColor: `${headerColors.textColor}20`,
+            }}
+          >
+            <div className="flex flex-col space-y-1">
+              {/* Home */}
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "px-3 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors",
+                  pathname === "/"
+                    ? "opacity-100"
+                    : "opacity-70 hover:opacity-100"
+                )}
+                style={{
+                  color: pathname === "/" ? headerColors.bgColor : headerColors.textColor,
+                  backgroundColor: pathname === "/" ? headerColors.textColor : "transparent",
+                }}
+              >
+                Home
+              </Link>
+
+              {/* Artikel (expandable) */}
+              <button
+                type="button"
+                onClick={() => setMobileArtikelOpen(!mobileArtikelOpen)}
+                className={cn(
+                  "px-3 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors flex items-center justify-between w-full",
+                  isArtikelActive ? "opacity-100" : "opacity-70 hover:opacity-100"
+                )}
+                style={{
+                  color: headerColors.textColor,
+                  backgroundColor: isArtikelActive
+                    ? `${headerColors.textColor}10`
+                    : "transparent",
+                }}
+              >
+                <span>Artikel</span>
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 transition-transform duration-200",
+                    mobileArtikelOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {mobileArtikelOpen && (
+                <div className="ml-4 flex flex-col space-y-1">
+                  {articleSubItems.map((item) => {
+                    const active = isNavActive(item.href)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "px-3 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors",
+                          active ? "opacity-100" : "opacity-60 hover:opacity-100"
+                        )}
+                        style={{
+                          color: active ? headerColors.bgColor : headerColors.textColor,
+                          backgroundColor: active ? headerColors.textColor : "transparent",
+                        }}
+                      >
+                        {item.name}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Agenda */}
+              <Link
+                href="/agenda"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "px-3 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                )}
+                style={{
+                  color: isNavActive("/agenda") ? headerColors.bgColor : headerColors.textColor,
+                  backgroundColor: isNavActive("/agenda") ? headerColors.textColor : "transparent",
+                  opacity: isNavActive("/agenda") ? 1 : 0.7,
+                }}
+              >
+                Agenda
+              </Link>
+
+              {/* Kolaborasi */}
+              <Link
+                href="/kolaborasi"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "px-3 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                )}
+                style={{
+                  color: isNavActive("/kolaborasi") ? headerColors.bgColor : headerColors.textColor,
+                  backgroundColor: isNavActive("/kolaborasi") ? headerColors.textColor : "transparent",
+                  opacity: isNavActive("/kolaborasi") ? 1 : 0.7,
+                }}
+              >
+                Kolaborasi
+              </Link>
             </div>
           </div>
         )}
@@ -349,7 +569,7 @@ export const Header = ({ overlay = false }: HeaderProps) => {
                     Kategori Populer
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {navItems.map((item) => (
+                    {allCategoryItems.map((item) => (
                       <Link
                         key={item.name}
                         href={item.href}
@@ -408,7 +628,7 @@ export const Header = ({ overlay = false }: HeaderProps) => {
                               <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-400">
                                 <span>{art.publishedAtLabel}</span>
                                 <span>•</span>
-                                <span>{art.readingTime} min read</span>
+                                <span>{art.views.toLocaleString("id-ID")} views</span>
                               </div>
                             </div>
                           </Link>

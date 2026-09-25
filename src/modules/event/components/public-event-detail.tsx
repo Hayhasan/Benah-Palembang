@@ -6,7 +6,6 @@ import {
   Check,
   Clock3,
   Copy,
-  Eye,
   MapPin,
   MessageCircle,
   Share2,
@@ -15,8 +14,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { PublicFooter as Footer } from "@/features/public/components/PublicFooter"

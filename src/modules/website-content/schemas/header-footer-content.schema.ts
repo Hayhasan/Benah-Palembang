@@ -36,6 +36,11 @@ const editorRecordSchema = {
   clientKey: z.string().min(1).max(100),
 }
 
+const hexColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{3,8}$/, "Format warna harus hex yang valid (contoh: #ffffff).")
+
 const footerLinkSchema = z.object({
   ...editorRecordSchema,
   label: requiredText("Nama link", 160),
@@ -69,17 +74,22 @@ export const headerFooterContentEditorSchema = z
       imageUrl: imageUrlSchema,
       imageAlt: z.string(), // Keep it valid in schema if needed, we pass empty string now
     }),
+    headerColors: z.object({
+      bgColor: hexColorSchema,
+      textColor: hexColorSchema,
+      buttonColor: hexColorSchema,
+    }),
     footer: z.object({
       logo: z.object({
         imageUrl: z.union([imageUrlSchema, z.literal("")]),
         imageAlt: z.union([requiredText("Alt logo footer", 255), z.literal("")]),
       }),
       title: z.union([requiredText("Title footer", 255), z.literal("")]),
-      backgroundText: z.string(), // Pass empty string now
       description: requiredText("Deskripsi footer", 5000),
       creatorText: requiredText("Creator Text footer", 5000),
       copyrightText: requiredText("Copyright", 255),
-      exploreLinks: z.array(z.any()).optional(), // Keep valid just in case
+      bgColor: hexColorSchema,
+      textColor: hexColorSchema,
       connectLinks: z.array(footerConnectLinkSchema).max(30),
     }),
   })

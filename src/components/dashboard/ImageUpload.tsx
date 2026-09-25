@@ -36,6 +36,7 @@ interface ImageUploadProps {
   variant?: "default" | "profile-banner" | "profile-avatar"
   alt?: string
   onUploadingChange?: (isUploading: boolean) => void
+  aspectOptions?: { label: string; value: "natural" | number }[]
 }
 
 export const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -98,6 +99,7 @@ export function ImageUpload({
   variant = "default",
   alt = "Preview",
   onUploadingChange,
+  aspectOptions,
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -110,6 +112,10 @@ export function ImageUpload({
   const [isUploading, setIsUploading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [localPreviewUrl, setLocalPreviewUrl] = useState("")
+  const [naturalAspect, setNaturalAspect] = useState<number>(1)
+  const [selectedAspect, setSelectedAspect] = useState<"natural" | number>(
+    aspectOptions?.[0]?.value ?? (aspect || 16 / 9)
+  )
 
   useEffect(() => {
     setIsMounted(true)
@@ -125,7 +131,12 @@ export function ImageUpload({
     setCrop({ x: 0, y: 0 })
     setZoom(1)
     setCompletedCrop(null)
-  }, [rawImageUrl])
+    if (aspectOptions && aspectOptions.length > 0) {
+      setSelectedAspect(aspectOptions[0].value)
+    } else {
+      setSelectedAspect(aspect || 16 / 9)
+    }
+  }, [rawImageUrl, aspect, aspectOptions])
 
   const closeCropModal = useCallback(() => {
     if (isUploading) return
@@ -431,7 +442,7 @@ export function ImageUpload({
                 image={rawImageUrl}
                 crop={crop}
                 zoom={zoom}
-                aspect={aspect || 16 / 9}
+                aspect={selectedAspect === "natural" ? naturalAspect : selectedAspect}
                 minZoom={0.2}
                 restrictPosition={false}
                 onCropChange={setCrop}
@@ -439,8 +450,30 @@ export function ImageUpload({
                   setCompletedCrop(croppedAreaPixels)
                 }
                 onZoomChange={setZoom}
+                onMediaLoaded={(mediaSize) => {
+                  setNaturalAspect(mediaSize.naturalWidth / mediaSize.naturalHeight)
+                }}
               />
             </div>
+            {aspectOptions && aspectOptions.length > 0 && (
+              <div className="mt-4 flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground shrink-0">Ukuran Crop:</span>
+                <div className="flex gap-2">
+                  {aspectOptions.map((opt) => (
+                    <Button
+                      key={opt.label}
+                      type="button"
+                      variant={selectedAspect === opt.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedAspect(opt.value)}
+                      className="h-8"
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-4 flex items-center gap-4">
               <span className="text-sm font-medium text-muted-foreground shrink-0">Zoom:</span>
               <input

@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Script from "next/script"
+
 import { Inter, Playfair_Display } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import {
@@ -95,9 +95,9 @@ export default function RootLayout({
       className={`${inter.variable} ${playfairDisplay.variable}`}
     >
       <head>
-        <Script
+        <script
           id="theme-init"
-          strategy="beforeInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("theme");var isDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;var r=(t==="light"||t==="dark")?t:(isDark?"dark":"light");document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r}catch(e){var f=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.classList.add(f);document.documentElement.style.colorScheme=f}})();`,
           }}

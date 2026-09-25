@@ -29,6 +29,11 @@ export interface HeaderFooterContentData {
     imageUrl: string
     imageAlt: string
   }
+  headerColors: {
+    bgColor: string
+    textColor: string
+    buttonColor: string
+  }
   footer: {
     logo: {
       imageUrl: string
@@ -38,6 +43,8 @@ export interface HeaderFooterContentData {
     description: string
     creatorText: string
     copyrightText: string
+    bgColor: string
+    textColor: string
     connectLinks: WebsiteFooterConnectLinkData[]
   }
 }

@@ -83,6 +83,59 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+function ColorPickerField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  const fieldId = `color-${label.replace(/\s+/g, "-").toLowerCase()}`
+
+  return (
+    <div className="space-y-1.5">
+      <span className="text-sm font-medium block">{label}</span>
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="sr-only peer"
+            id={fieldId}
+          />
+          <label
+            htmlFor={fieldId}
+            className="flex size-10 cursor-pointer items-center justify-center rounded-lg border-2 border-border shadow-sm transition-all hover:scale-105 hover:shadow-md peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2"
+            style={{ backgroundColor: value }}
+          >
+            <span className="sr-only">Pilih warna</span>
+          </label>
+        </div>
+        <Input
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value
+            if (/^#[0-9a-fA-F]{0,8}$/.test(v) || v === "#") {
+              onChange(v)
+            }
+          }}
+          placeholder="#000000"
+          className="w-32 font-mono text-sm uppercase"
+          maxLength={9}
+        />
+        <div
+          className="size-6 rounded-full border border-border shadow-inner"
+          style={{ backgroundColor: value }}
+          title={`Preview: ${value}`}
+        />
+      </div>
+    </div>
+  )
+}
+
 function clientKey(prefix: string) {
   return `${prefix}-${crypto.randomUUID()}`
 }
@@ -91,7 +144,7 @@ function normalizePositions<T extends { position: number }>(items: T[]) {
   return items.map((item, index) => ({ ...item, position: index + 1 }))
 }
 
-export function ManageHeaderFooterSettings({
+export function ManageHeaderSettings({
   data,
   onChange,
 }: {
@@ -102,8 +155,114 @@ export function ManageHeaderFooterSettings({
     ) => HeaderFooterContentEditorData,
   ) => void
 }) {
+  return (
+    <div className="space-y-8">
+      <SectionCard
+        title="Logo Header"
+        desc="Konfigurasi logo website pada bagian header utama."
+        defaultExpanded
+      >
+        <Field label="Logo Website (Upload)">
+          <ImageUpload
+            value={data.logo.imageUrl}
+            onChange={(imageUrl) =>
+              onChange((current) => ({
+                ...current,
+                logo: { ...current.logo, imageUrl },
+              }))
+            }
+            placeholder="Pilih logo (PNG/SVG)..."
+            aspect={210 / 44}
+          />
+        </Field>
+      </SectionCard>
 
+      <SectionCard
+        title="Warna Header"
+        desc="Atur warna background, teks, dan tombol pada header website publik."
+        defaultExpanded
+      >
+        <div className="grid gap-6 sm:grid-cols-3">
+          <ColorPickerField
+            label="Background"
+            value={data.headerColors.bgColor}
+            onChange={(bgColor) =>
+              onChange((current) => ({
+                ...current,
+                headerColors: { ...current.headerColors, bgColor },
+              }))
+            }
+          />
+          <ColorPickerField
+            label="Teks"
+            value={data.headerColors.textColor}
+            onChange={(textColor) =>
+              onChange((current) => ({
+                ...current,
+                headerColors: { ...current.headerColors, textColor },
+              }))
+            }
+          />
+          <ColorPickerField
+            label="Tombol"
+            value={data.headerColors.buttonColor}
+            onChange={(buttonColor) =>
+              onChange((current) => ({
+                ...current,
+                headerColors: { ...current.headerColors, buttonColor },
+              }))
+            }
+          />
+        </div>
+        <div className="mt-4 rounded-lg border p-4">
+          <p className="text-xs font-medium text-muted-foreground mb-3">Preview</p>
+          <div
+            className="flex items-center justify-between rounded-lg px-4 py-3 transition-colors"
+            style={{ backgroundColor: data.headerColors.bgColor }}
+          >
+            <span
+              className="text-sm font-bold"
+              style={{ color: data.headerColors.textColor }}
+            >
+              Logo Menu
+            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-xs font-medium"
+                style={{ color: data.headerColors.textColor }}
+              >
+                Navigasi
+              </span>
+              <div
+                className="size-6 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: data.headerColors.buttonColor }}
+              >
+                <span
+                  className="text-[10px]"
+                  style={{ color: data.headerColors.bgColor }}
+                >
+                  ●
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
 
+export function ManageFooterSettings({
+  data,
+  onChange,
+}: {
+  data: HeaderFooterContentEditorData
+  onChange: (
+    updater: (
+      current: HeaderFooterContentEditorData,
+    ) => HeaderFooterContentEditorData,
+  ) => void
+}) {
   const updateConnectLink = (
     clientKeyValue: string,
     values: Partial<WebsiteFooterConnectLinkEditorData>,
@@ -122,41 +281,30 @@ export function ManageHeaderFooterSettings({
   return (
     <div className="space-y-8">
       <SectionCard
-        title="Logo & Header"
-        desc="Konfigurasi logo, redirect header, background text footer, dan deskripsi website."
+        title="Logo & Teks Footer"
+        desc="Konfigurasi logo footer, deskripsi website, dan copyright text."
         defaultExpanded
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Logo Website (Upload)">
-            <ImageUpload
-              value={data.logo.imageUrl}
-              onChange={(imageUrl) =>
-                onChange((current) => ({
-                  ...current,
-                  logo: { ...current.logo, imageUrl },
-                }))
-              }
-              placeholder="Pilih logo (PNG/SVG)..."
-              aspect={210 / 44}
-            />
-          </Field>
-          <Field label="Logo Website Footer (Upload)">
-            <ImageUpload
-              value={data.footer.logo?.imageUrl || ""}
-              onChange={(imageUrl) =>
-                onChange((current) => ({
-                  ...current,
-                  footer: {
-                    ...current.footer,
-                    logo: { ...current.footer.logo, imageUrl },
-                  },
-                }))
-              }
-              placeholder="Pilih logo footer (PNG/SVG)..."
-              aspect={210 / 44}
-            />
-          </Field>
-        </div>
+        <Field label="Logo Website Footer (Upload)">
+          <ImageUpload
+            value={data.footer.logo?.imageUrl || ""}
+            onChange={(imageUrl) =>
+              onChange((current) => ({
+                ...current,
+                footer: {
+                  ...current.footer,
+                  logo: { ...current.footer.logo, imageUrl },
+                },
+              }))
+            }
+            placeholder="Pilih logo footer (PNG/SVG)..."
+            className="max-w-[200px]"
+            aspectOptions={[
+              { label: "Fit (Asli)", value: "natural" },
+              { label: "1:1 (Square)", value: 1 },
+            ]}
+          />
+        </Field>
         <Field label="Title / Editorial Statement">
           <Input
             value={data.footer.title}
@@ -215,7 +363,54 @@ export function ManageHeaderFooterSettings({
         </Field>
       </SectionCard>
 
-
+      <SectionCard
+        title="Warna Footer"
+        desc="Atur warna background dan teks pada footer website publik."
+        defaultExpanded
+      >
+        <div className="grid gap-6 sm:grid-cols-2">
+          <ColorPickerField
+            label="Background"
+            value={data.footer.bgColor}
+            onChange={(bgColor) =>
+              onChange((current) => ({
+                ...current,
+                footer: { ...current.footer, bgColor },
+              }))
+            }
+          />
+          <ColorPickerField
+            label="Teks"
+            value={data.footer.textColor}
+            onChange={(textColor) =>
+              onChange((current) => ({
+                ...current,
+                footer: { ...current.footer, textColor },
+              }))
+            }
+          />
+        </div>
+        <div className="mt-4 rounded-lg border p-4">
+          <p className="text-xs font-medium text-muted-foreground mb-3">Preview</p>
+          <div
+            className="rounded-lg px-4 py-4 transition-colors"
+            style={{ backgroundColor: data.footer.bgColor }}
+          >
+            <span
+              className="text-xs font-bold block"
+              style={{ color: data.footer.textColor }}
+            >
+              Footer Content Preview
+            </span>
+            <span
+              className="text-[10px] mt-1 block opacity-70"
+              style={{ color: data.footer.textColor }}
+            >
+              Deskripsi dan copyright akan tampil dengan warna ini.
+            </span>
+          </div>
+        </div>
+      </SectionCard>
 
       <SectionCard
         title="Footer — Connect"
@@ -274,7 +469,7 @@ export function ManageHeaderFooterSettings({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus Link ini?</AlertDialogTitle>
+                     <AlertDialogTitle>Hapus Link ini?</AlertDialogTitle>
                     <AlertDialogDescription>
                       Tindakan ini tidak dapat dibatalkan. Link akan dihapus dari footer.
                     </AlertDialogDescription>
@@ -331,8 +526,7 @@ export function ManageHeaderFooterSettings({
           </Button>
         </div>
       </SectionCard>
-
-
     </div>
   )
 }
+

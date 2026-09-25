@@ -1,6 +1,6 @@
 "use client"
 
-import { Info, Plus, Trash2, GripVertical } from "lucide-react"
+import { Plus, Trash2, GripVertical } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { toast } from "sonner"
 

@@ -49,12 +49,17 @@ export function footerConnectPlatformFromDatabase(
 export const headerFooterContentSelect = {
   key: true,
   logoImageUrl: true,
+  headerBgColor: true,
+  headerTextColor: true,
+  headerButtonColor: true,
   footerLogoImageUrl: true,
   footerLogoImageAlt: true,
   footerTitle: true,
   footerDescription: true,
   footerCreatorText: true,
   copyrightText: true,
+  footerBgColor: true,
+  footerTextColor: true,
   footerConnectLinks: {
 
     where: { deletedAt: null, isVisible: true },
@@ -82,6 +87,11 @@ export function mapHeaderFooterContent(
       imageUrl: content.logoImageUrl,
       imageAlt: "",
     },
+    headerColors: {
+      bgColor: content.headerBgColor,
+      textColor: content.headerTextColor,
+      buttonColor: content.headerButtonColor,
+    },
     footer: {
       logo: {
         imageUrl: content.footerLogoImageUrl || "",
@@ -91,6 +101,8 @@ export function mapHeaderFooterContent(
       description: content.footerDescription,
       creatorText: content.footerCreatorText,
       copyrightText: content.copyrightText,
+      bgColor: content.footerBgColor,
+      textColor: content.footerTextColor,
       connectLinks: content.footerConnectLinks.map((link) => ({
         ...link,
         platform: footerConnectPlatformFromDatabase(link.platform),

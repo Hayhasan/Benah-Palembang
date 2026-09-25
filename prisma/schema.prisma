@@ -339,6 +339,11 @@ model WebsiteHeaderFooterContent {
   footerDescription    String                     @db.Text
   footerCreatorText    String                     @default("The content for Benah Palembang was created by the people of Palembang for the people of Palembang.") @db.Text
   copyrightText        String                     @db.VarChar(255)
+  headerBgColor        String                     @default("#ffffff") @db.VarChar(9)
+  headerTextColor      String                     @default("#000000") @db.VarChar(9)
+  headerButtonColor    String                     @default("#000000") @db.VarChar(9)
+  footerBgColor        String                     @default("#000000") @db.VarChar(9)
+  footerTextColor      String                     @default("#ffffff") @db.VarChar(9)
   createdAt            DateTime                   @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime                   @updatedAt @db.Timestamptz(6)
   deletedAt            DateTime?                  @db.Timestamptz(6)

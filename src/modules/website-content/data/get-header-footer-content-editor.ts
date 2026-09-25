@@ -13,12 +13,17 @@ import { footerConnectPlatformFromDatabase } from "./header-footer-content.mappe
 export const headerFooterContentEditorSelect = {
   key: true,
   logoImageUrl: true,
+  headerBgColor: true,
+  headerTextColor: true,
+  headerButtonColor: true,
   footerLogoImageUrl: true,
   footerLogoImageAlt: true,
   footerTitle: true,
   footerDescription: true,
   footerCreatorText: true,
   copyrightText: true,
+  footerBgColor: true,
+  footerTextColor: true,
 
   footerConnectLinks: {
     where: { deletedAt: null },
@@ -47,6 +52,11 @@ export function mapHeaderFooterContentToEditor(
       imageUrl: content.logoImageUrl,
       imageAlt: "", // Kept in Editor type but not DB
     },
+    headerColors: {
+      bgColor: content.headerBgColor,
+      textColor: content.headerTextColor,
+      buttonColor: content.headerButtonColor,
+    },
     footer: {
       logo: {
         imageUrl: content.footerLogoImageUrl || "",
@@ -56,6 +66,8 @@ export function mapHeaderFooterContentToEditor(
       description: content.footerDescription,
       creatorText: content.footerCreatorText,
       copyrightText: content.copyrightText,
+      bgColor: content.footerBgColor,
+      textColor: content.footerTextColor,
       connectLinks: content.footerConnectLinks.map((link) => ({
         ...link,
         platform: footerConnectPlatformFromDatabase(link.platform),

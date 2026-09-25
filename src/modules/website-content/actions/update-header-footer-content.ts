@@ -18,13 +18,17 @@ import type {
 function rootData(data: HeaderFooterContentEditorData) {
   return {
     logoImageUrl: data.logo.imageUrl,
-    logoImageAlt: data.logo.imageAlt,
+    headerBgColor: data.headerColors.bgColor,
+    headerTextColor: data.headerColors.textColor,
+    headerButtonColor: data.headerColors.buttonColor,
     footerLogoImageUrl: data.footer.logo.imageUrl,
     footerLogoImageAlt: data.footer.logo.imageAlt,
     footerTitle: data.footer.title,
     footerDescription: data.footer.description,
     footerCreatorText: data.footer.creatorText,
     copyrightText: data.footer.copyrightText,
+    footerBgColor: data.footer.bgColor,
+    footerTextColor: data.footer.textColor,
   }
 }
 
