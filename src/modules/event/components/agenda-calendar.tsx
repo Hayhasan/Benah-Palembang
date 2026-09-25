@@ -14,10 +14,6 @@ import { useMemo, useState } from "react"
 
 import { id } from "date-fns/locale"
 import { Calendar } from "@/components/ui/calendar"
-import {
-  getIndonesianHoliday,
-  getMonthHolidays,
-} from "@/lib/indonesian-holidays"
 import { cn } from "@/lib/utils"
 
 import type { PublicEventListItem } from "../types/public-event"
@@ -147,14 +143,6 @@ export function AgendaCalendar({
     () => getWeekRange(now),
     [now]
   )
-
-  // Hari Libur & Hari Besar pada bulan yang sedang dilihat di kalender
-  const currentMonthHolidays = useMemo(() => {
-    return getMonthHolidays(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth()
-    )
-  }, [currentMonth])
 
   const handlePrevMonth = () => {
     setCurrentMonth(
@@ -401,15 +389,6 @@ export function AgendaCalendar({
                   onMonthChange={setCurrentMonth}
                   modifiers={{
                     hasEvent: hasEventMatcher,
-                    isHoliday: (date) => {
-                      const h = getIndonesianHoliday(date)
-                      return h?.isHoliday === true
-                    },
-                    isSunday: (date) => date.getDay() === 0,
-                    isObservance: (date) => {
-                      const h = getIndonesianHoliday(date)
-                      return Boolean(h && !h.isHoliday)
-                    },
                   }}
                   modifiersClassNames={{
                     hasEvent: "has-agenda-event",
@@ -439,87 +418,7 @@ export function AgendaCalendar({
                 </span>
                 Agenda
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-flex size-2 rounded-full bg-red-600" />
-                <span className="text-red-600 font-semibold">Libur / Minggu</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-flex size-2 rounded-full bg-blue-600" />
-                <span className="text-zinc-700">Hari Besar</span>
-              </span>
             </div>
-
-            {/* Daftar Hari Libur & Hari Besar Bulan Ini */}
-            {currentMonthHolidays.length > 0 && (
-              <div className="w-full p-3 bg-zinc-50/40">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                    Hari Libur & Besar Bulan Ini
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200/80 text-zinc-600 font-semibold">
-                    {currentMonthHolidays.length} Hari
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
-                  {currentMonthHolidays.map((item) => {
-                    const isSelected =
-                      selectedDate &&
-                      getDateKey(selectedDate) === item.dateKey
-
-                    return (
-                      <button
-                        key={`${item.dateKey}-${item.name}`}
-                        type="button"
-                        onClick={() => {
-                          const dateObj = new Date(
-                            currentMonth.getFullYear(),
-                            currentMonth.getMonth(),
-                            item.day,
-                            12,
-                            0,
-                            0
-                          )
-                          onSelectDate?.(dateObj)
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between gap-2 p-2 rounded text-left transition-all cursor-pointer border",
-                          isSelected
-                            ? "bg-zinc-100 border-zinc-400 shadow-xs"
-                            : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/80"
-                        )}
-                        title={`Klik untuk melihat tanggal ${item.day} ${MONTH_NAMES[currentMonth.getMonth()]}`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className={cn(
-                              "inline-flex shrink-0 items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded min-w-8 text-center",
-                              item.isHoliday
-                                ? "bg-red-100 text-red-700 font-bold"
-                                : "bg-blue-50 text-blue-700 font-semibold"
-                            )}
-                          >
-                            {item.day} {MONTH_NAMES[currentMonth.getMonth()].slice(0, 3)}
-                          </span>
-                          <span className="text-xs text-zinc-800 font-medium truncate">
-                            {item.name}
-                          </span>
-                        </div>
-                        <span
-                          className={cn(
-                            "shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
-                            item.isHoliday
-                              ? "bg-red-600 text-white"
-                              : "bg-blue-100 text-blue-700"
-                          )}
-                        >
-                          {item.isHoliday ? "Libur" : "Hari Besar"}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
