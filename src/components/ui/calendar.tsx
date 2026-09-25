@@ -194,12 +194,15 @@ function CalendarDayButton({
   }, [modifiers.focused])
 
   const hasEvent = Boolean(modifiers.hasEvent)
+  const isSunday = day.date.getDay() === 0
 
   // Generate accessible & informative tooltip
   let tooltipText = props.title
   if (!tooltipText) {
     if (hasEvent) {
       tooltipText = "Agenda Terjadwal"
+    } else if (isSunday) {
+      tooltipText = "Hari Minggu"
     }
   }
 
@@ -222,6 +225,15 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       className={cn(
         "flex aspect-square size-auto w-full min-w-(--cell-size) flex-col items-center justify-center gap-0.5 leading-none font-normal relative group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-white data-[selected-single=true]:text-foreground data-[selected-single=true]:border-2 data-[selected-single=true]:border-black data-[selected-single=true]:font-bold dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70",
+        // Hari Minggu (Sunday)
+        !hasEvent &&
+          isSunday &&
+          "!text-red-600 font-semibold hover:!bg-red-50 hover:!text-red-700",
+        // Selected state when not hasEvent but isSunday
+        modifiers.selected &&
+          !hasEvent &&
+          isSunday &&
+          "!bg-red-600 !text-white hover:!bg-red-700 font-bold",
         // Agenda Event: Black circle
         hasEvent &&
           "!rounded-full !bg-black !text-white font-bold hover:!bg-zinc-800 transition-colors",

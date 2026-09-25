@@ -180,57 +180,57 @@ function resolveEventPhotos(event: PublicEventDetail): string[] {
               </div>
 
               {/* Info Container */}
-              <div className="flex flex-col gap-4 items-center lg:items-start">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 w-full text-left">
                 {/* Tanggal */}
-                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
-                  <CalendarDays className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
-                  <div className="flex flex-col items-center lg:items-start">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays className="size-3.5 text-black shrink-0" />
                     <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
                       Tanggal
                     </span>
-                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5">
-                      {event.dateLabel}
-                    </span>
                   </div>
+                  <span className="font-serif text-xs sm:text-[13px] text-[#444] font-medium leading-snug">
+                    {event.dateLabel}
+                  </span>
                 </div>
 
                 {/* Waktu */}
-                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
-                  <Clock3 className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
-                  <div className="flex flex-col items-center lg:items-start">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Clock3 className="size-3.5 text-black shrink-0" />
                     <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
                       Waktu
                     </span>
-                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5">
-                      {event.timeLabel}
-                    </span>
                   </div>
+                  <span className="font-serif text-xs sm:text-[13px] text-[#444] font-medium leading-snug">
+                    {event.timeLabel}
+                  </span>
                 </div>
 
                 {/* Lokasi */}
-                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
-                  <MapPin className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
-                  <div className="flex flex-col items-center lg:items-start">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="size-3.5 text-black shrink-0" />
                     <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
                       Lokasi
                     </span>
-                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5 leading-[1.45]">
-                      {event.location}
-                    </span>
                   </div>
+                  <span className="font-serif text-xs sm:text-[13px] text-[#444] font-medium leading-snug">
+                    {event.location}
+                  </span>
                 </div>
 
                 {/* Penyelenggara */}
-                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-3">
-                  <Users className="size-4 text-black shrink-0 mt-0 lg:mt-0.5" />
-                  <div className="flex flex-col items-center lg:items-start">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="size-3.5 text-black shrink-0" />
                     <span className="font-serif text-[10px] tracking-[0.14em] uppercase text-[#737373]">
                       Penyelenggara
                     </span>
-                    <span className="font-serif text-[13.5px] text-[#444] font-medium mt-0.5 leading-[1.45]">
-                      {event.organizer}
-                    </span>
                   </div>
+                  <span className="font-serif text-xs sm:text-[13px] text-[#444] font-medium leading-snug break-words">
+                    {event.organizer}
+                  </span>
                 </div>
               </div>
 

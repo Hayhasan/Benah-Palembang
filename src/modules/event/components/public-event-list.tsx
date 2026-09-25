@@ -136,7 +136,7 @@ export function PublicEventList({
       <main className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-start">
           {/* LEFT COLUMN: List Preview Section with Left Square Thumbnails */}
-          <div className="lg:col-span-2">
+          <div className="order-2 lg:order-1 lg:col-span-2">
             {/* CASE 1: Single Event Preview (when agenda on list is clicked) */}
             {selectedEvent ? (
               <div className="flex flex-col animate-in fade-in duration-200">
@@ -165,11 +165,11 @@ export function PublicEventList({
                 </div>
 
                 {/* Box Preview with Square Thumbnail on Left */}
-                <div className="border border-zinc-200 bg-white p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row gap-5 sm:gap-6">
+                <div className="border border-zinc-200 bg-white p-3 sm:p-6 shadow-xs flex flex-row gap-3 sm:gap-6">
                   {/* Left: Square Thumbnail */}
                   <Link
                     href={`/agenda/${selectedEvent.id}`}
-                    className="relative size-full sm:size-48 md:size-56 aspect-square shrink-0 overflow-hidden bg-zinc-100 group"
+                    className="relative size-24 sm:size-48 md:size-56 aspect-square shrink-0 overflow-hidden bg-zinc-100 group"
                   >
                     <Image
                       src={selectedEvent.bannerUrl}
@@ -194,22 +194,22 @@ export function PublicEventList({
                       </h2>
 
                       {/* Metadata bar */}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 my-3 py-2.5 border-y border-zinc-100 text-xs text-black/80">
+                      <div className="flex flex-col sm:flex-row flex-wrap sm:items-center gap-y-1.5 sm:gap-x-4 my-2 sm:my-3 py-2 sm:py-2.5 border-y border-zinc-100 text-[11px] sm:text-xs text-black/80">
                         <div className="flex items-center gap-1.5">
-                          <CalendarDays className="size-3.5 text-black shrink-0" />
+                          <CalendarDays className="size-3 sm:size-3.5 text-black shrink-0" />
                           <span className="font-semibold">
                             {selectedEvent.dateLabel}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <Clock3 className="size-3.5 text-black shrink-0" />
+                          <Clock3 className="size-3 sm:size-3.5 text-black shrink-0" />
                           <span className="font-semibold">
                             {selectedEvent.timeLabel}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="size-3.5 text-black shrink-0" />
-                          <span className="font-semibold truncate max-w-[200px]">
+                          <MapPin className="size-3 sm:size-3.5 text-black shrink-0" />
+                          <span className="font-semibold truncate max-w-[160px] sm:max-w-[200px]">
                             {selectedEvent.location}
                           </span>
                         </div>
@@ -217,7 +217,7 @@ export function PublicEventList({
 
                       {/* Description */}
                       {selectedEvent.description && (
-                        <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
+                        <p className="hidden sm:block text-xs sm:text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
                           {selectedEvent.description}
                         </p>
                       )}
@@ -228,17 +228,17 @@ export function PublicEventList({
                       {selectedEvent.organizer && (
                         <div className="text-xs text-zinc-500">
                           Penyelenggara:{" "}
-                          <span className="font-bold text-black">
+                          <span className="font-bold text-black block sm:inline mt-1 sm:mt-0">
                             {selectedEvent.organizer}
                           </span>
                         </div>
                       )}
                       <Link
                         href={`/agenda/${selectedEvent.id}`}
-                        className="inline-flex items-center justify-center gap-2 bg-black text-white px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] hover:bg-zinc-800 transition-colors w-full sm:w-auto ml-auto cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 bg-black text-white px-3 sm:px-5 py-2 sm:py-2.5 text-[10px] sm:text-xs font-bold uppercase tracking-[0.12em] hover:bg-zinc-800 transition-colors w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto cursor-pointer"
                       >
                         <span>Lihat Detail Lengkap</span>
-                        <ArrowRight className="size-3.5" />
+                        <ArrowRight className="size-3 sm:size-3.5" />
                       </Link>
                     </div>
                   </div>
@@ -310,12 +310,12 @@ export function PublicEventList({
                       return (
                         <div
                           key={event.id}
-                          className="group flex flex-col sm:flex-row gap-4 sm:gap-5 p-4 sm:p-5 border border-zinc-200 bg-white shadow-xs hover:border-black transition-all"
+                          className="group flex flex-row gap-3 sm:gap-5 p-3 sm:p-5 border border-zinc-200 bg-white shadow-xs hover:border-black transition-all"
                         >
                           {/* Square Thumbnail on Left */}
                           <Link
                             href={`/agenda/${event.id}`}
-                            className="relative size-full sm:size-40 md:size-44 aspect-square shrink-0 overflow-hidden bg-zinc-100"
+                            className="relative size-24 sm:size-40 md:size-44 aspect-square shrink-0 overflow-hidden bg-zinc-100"
                           >
                             <Image
                               src={event.bannerUrl}
@@ -355,26 +355,26 @@ export function PublicEventList({
                               </h3>
 
                               {event.description && (
-                                <p className="mt-2 text-xs sm:text-sm text-zinc-600 line-clamp-2 leading-relaxed">
+                                <p className="mt-1.5 sm:mt-2 hidden sm:block text-xs sm:text-sm text-zinc-600 line-clamp-2 leading-relaxed">
                                   {event.description}
                                 </p>
                               )}
                             </div>
 
                             {/* Metadata & Detail Button */}
-                            <div className="mt-3.5 pt-3 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-600">
+                            <div className="mt-2 sm:mt-3.5 pt-2 sm:pt-3 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[10px] sm:text-xs">
+                              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-1 sm:gap-x-4 sm:gap-y-1.5 text-[10px] sm:text-[11px] text-zinc-600">
                                 <div className="flex items-center gap-1.5">
-                                  <CalendarDays className="size-3.5 text-black shrink-0" />
+                                  <CalendarDays className="size-3 sm:size-3.5 text-black shrink-0" />
                                   <span>{event.dateLabel}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                  <Clock3 className="size-3.5 text-black shrink-0" />
+                                  <Clock3 className="size-3 sm:size-3.5 text-black shrink-0" />
                                   <span>{event.timeLabel}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                  <MapPin className="size-3.5 text-black shrink-0" />
-                                  <span className="truncate max-w-[160px] sm:max-w-[200px]">
+                                  <MapPin className="size-3 sm:size-3.5 text-black shrink-0" />
+                                  <span className="truncate max-w-[140px] sm:max-w-[200px]">
                                     {event.location}
                                   </span>
                                 </div>
@@ -382,7 +382,7 @@ export function PublicEventList({
 
                               <Link
                                 href={`/agenda/${event.id}`}
-                                className="inline-flex items-center gap-1.5 bg-black text-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
+                                className="hidden sm:inline-flex items-center gap-1.5 bg-black text-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
                               >
                                 <span>Detail Acara</span>
                                 <ArrowRight className="size-3" />
@@ -463,12 +463,12 @@ export function PublicEventList({
                         return (
                           <div
                             key={event.id}
-                            className="group flex flex-col sm:flex-row gap-4 sm:gap-5 p-4 sm:p-5 border border-zinc-200 bg-white shadow-xs hover:border-black transition-all"
+                            className="group flex flex-row gap-3 sm:gap-5 p-3 sm:p-5 border border-zinc-200 bg-white shadow-xs hover:border-black transition-all"
                           >
                             {/* Square Thumbnail on Left */}
                             <Link
                               href={`/agenda/${event.id}`}
-                              className="relative size-full sm:size-40 md:size-44 aspect-square shrink-0 overflow-hidden bg-zinc-100"
+                              className="relative size-24 sm:size-40 md:size-44 aspect-square shrink-0 overflow-hidden bg-zinc-100"
                             >
                               <Image
                                 src={event.bannerUrl}
@@ -508,26 +508,26 @@ export function PublicEventList({
                                 </h3>
 
                                 {event.description && (
-                                  <p className="mt-2 text-xs sm:text-sm text-zinc-600 line-clamp-2 leading-relaxed">
+                                  <p className="mt-1.5 sm:mt-2 hidden sm:block text-xs sm:text-sm text-zinc-600 line-clamp-2 leading-relaxed">
                                     {event.description}
                                   </p>
                                 )}
                               </div>
 
                               {/* Metadata & Detail Button */}
-                              <div className="mt-3.5 pt-3 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-600">
+                              <div className="mt-2 sm:mt-3.5 pt-2 sm:pt-3 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[10px] sm:text-xs">
+                                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-1 sm:gap-x-4 sm:gap-y-1.5 text-[10px] sm:text-[11px] text-zinc-600">
                                   <div className="flex items-center gap-1.5">
-                                    <CalendarDays className="size-3.5 text-black shrink-0" />
+                                    <CalendarDays className="size-3 sm:size-3.5 text-black shrink-0" />
                                     <span>{event.dateLabel}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
-                                    <Clock3 className="size-3.5 text-black shrink-0" />
+                                    <Clock3 className="size-3 sm:size-3.5 text-black shrink-0" />
                                     <span>{event.timeLabel}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
-                                    <MapPin className="size-3.5 text-black shrink-0" />
-                                    <span className="truncate max-w-[160px] sm:max-w-[200px]">
+                                    <MapPin className="size-3 sm:size-3.5 text-black shrink-0" />
+                                    <span className="truncate max-w-[140px] sm:max-w-[200px]">
                                       {event.location}
                                     </span>
                                   </div>
@@ -535,7 +535,7 @@ export function PublicEventList({
 
                                 <Link
                                   href={`/agenda/${event.id}`}
-                                  className="inline-flex items-center gap-1.5 bg-black text-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
+                                  className="hidden sm:inline-flex items-center gap-1.5 bg-black text-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
                                 >
                                   <span>Detail Acara</span>
                                   <ArrowRight className="size-3" />
@@ -578,7 +578,7 @@ export function PublicEventList({
           </div>
 
           {/* RIGHT COLUMN: Calendar & List View */}
-          <div className="lg:col-span-1">
+          <div className="order-1 lg:order-2 lg:col-span-1">
             <AgendaCalendar
               events={events}
               selectedDate={selectedDate}
