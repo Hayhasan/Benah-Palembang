@@ -33,7 +33,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "group/calendar bg-background p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+        "group/calendar bg-transparent p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
@@ -89,6 +89,7 @@ function Calendar({
           defaultClassNames.caption_label
         ),
         table: "w-full border-collapse",
+        month_grid: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
           "flex-1 rounded-md text-[0.8rem] font-normal text-muted-foreground select-none",
@@ -116,10 +117,7 @@ function Calendar({
         ),
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn("rounded-r-md bg-accent", defaultClassNames.range_end),
-        today: cn(
-          "rounded-md data-[selected=true]:rounded-none",
-          defaultClassNames.today
-        ),
+        today: "rounded-full ring-1 ring-zinc-400 ring-offset-1 font-semibold",
         outside: cn(
           "text-muted-foreground aria-selected:text-muted-foreground",
           defaultClassNames.outside
@@ -215,6 +213,8 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
+        defaultClassNames.day,
+        className,
         // Base
         "flex aspect-square size-auto w-full min-w-(--cell-size) flex-col items-center justify-center gap-0.5 leading-none font-normal relative",
         "text-black hover:bg-zinc-100 hover:text-black transition-colors",
@@ -226,16 +226,14 @@ function CalendarDayButton({
         "data-[range-start=true]:rounded-md data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground",
         // Outside month: muted
         modifiers.outside && "text-zinc-400 hover:text-zinc-500",
-        // Today (no event): subtle ring outline only
-        modifiers.today && !hasEvent && "ring-1 ring-zinc-400 ring-offset-1 rounded-full font-semibold",
-        // Has event: black filled circle
+        // Today (no event, not selected): ring outline
+        modifiers.today && !hasEvent && !isSelectedSingle && "ring-1 ring-zinc-400 ring-offset-1 rounded-full font-semibold",
+        // Has event: black circle + white text
         hasEvent && "!rounded-full !bg-black !text-white font-bold hover:!bg-zinc-800",
-        // Selected + has event: black circle + white ring offset
-        hasEvent && isSelectedSingle && "!ring-2 !ring-offset-2 !ring-black",
-        // Selected + no event: white bg + black border
-        !hasEvent && isSelectedSingle && "!rounded-full !bg-white !text-black !border-2 !border-black font-bold hover:!bg-zinc-50",
-        defaultClassNames.day,
-        className
+        // Selected + has event: black circle + white text + ring offset
+        hasEvent && isSelectedSingle && "!rounded-full !bg-black !text-white font-bold !ring-2 !ring-offset-2 !ring-black",
+        // Selected + no event: black circle + white text
+        !hasEvent && isSelectedSingle && "!rounded-full !bg-black !text-white font-bold hover:!bg-zinc-800"
       )}
       {...props}
     >

@@ -77,18 +77,22 @@ function getWeekRange(now: Date): { start: Date; end: Date } {
 }
 
 export function getEventDateKeys(event: PublicEventListItem): string[] {
+  const startKey = getDateKey(new Date(event.startsAt))
+  const endKey = getDateKey(new Date(event.endsAt ?? event.startsAt))
+
   const keys: string[] = []
-  const start = new Date(event.startsAt)
-  const end = event.endsAt ? new Date(event.endsAt) : start
-  const current = new Date(start)
-  current.setHours(0, 0, 0, 0)
+  const [sY, sM, sD] = startKey.split("-").map(Number)
+  const [eY, eM, eD] = endKey.split("-").map(Number)
 
-  const endDay = new Date(end)
-  endDay.setHours(23, 59, 59, 999)
+  const current = new Date(Date.UTC(sY, sM - 1, sD))
+  const end = new Date(Date.UTC(eY, eM - 1, eD))
 
-  while (current <= endDay) {
-    keys.push(getDateKey(current))
-    current.setDate(current.getDate() + 1)
+  while (current <= end) {
+    const y = current.getUTCFullYear()
+    const m = String(current.getUTCMonth() + 1).padStart(2, "0")
+    const d = String(current.getUTCDate()).padStart(2, "0")
+    keys.push(`${y}-${m}-${d}`)
+    current.setUTCDate(current.getUTCDate() + 1)
   }
 
   return keys
@@ -377,7 +381,7 @@ export function AgendaCalendar({
               </div>
             ) : (
               /* Days Grid Component */
-              <div className="w-full flex justify-center items-center p-3">
+              <div className="w-full flex justify-center items-center p-3 bg-white">
                 <Calendar
                   mode="single"
                   locale={id}
@@ -393,17 +397,18 @@ export function AgendaCalendar({
                   modifiersClassNames={{
                     hasEvent: "has-agenda-event",
                   }}
-                  className="mx-auto flex justify-center items-center !p-0"
+                  className="mx-auto flex justify-center items-center !p-0 !bg-transparent text-black"
                   classNames={{
-                    root: "mx-auto w-fit flex justify-center",
-                    months: "mx-auto flex justify-center",
-                    month: "mx-auto flex flex-col items-center justify-center !gap-2",
-                    table: "mx-auto border-collapse",
+                    root: "mx-auto w-fit flex justify-center !bg-transparent",
+                    months: "mx-auto flex justify-center !bg-transparent",
+                    month: "mx-auto flex flex-col items-center justify-center !gap-2 !bg-transparent",
+                    table: "mx-auto border-collapse !bg-transparent",
+                    month_grid: "mx-auto border-collapse !bg-transparent",
                     nav: "hidden", // Using aligned custom header above
                     month_caption: "hidden", // Using aligned custom header above
                     weekdays: "flex justify-center",
                     weekday:
-                      "flex-1 text-[0.8rem] font-medium text-muted-foreground select-none",
+                      "flex-1 text-[0.8rem] font-medium text-zinc-500 select-none",
                     week: "flex justify-center mt-1.5",
                   }}
                 />
@@ -567,23 +572,47 @@ export function AgendaCalendar({
           background-color: #000 !important;
           color: #fff !important;
           border-radius: 9999px !important;
+          border: none !important;
           font-weight: 700 !important;
         }
         .has-agenda-event button:hover,
         td.has-agenda-event button:hover,
         button[data-has-event="true"]:hover {
           background-color: #27272a !important;
+          color: #fff !important;
+        }
+        button[data-selected-single="true"] {
+          background-color: #000 !important;
+          color: #fff !important;
+          border-radius: 9999px !important;
+          font-weight: 700 !important;
+        }
+        button[data-selected-single="true"]:hover {
+          background-color: #27272a !important;
+          color: #fff !important;
         }
         .has-agenda-event button[data-selected-single="true"],
         td.has-agenda-event button[data-selected-single="true"],
         button[data-has-event="true"][data-selected-single="true"] {
           box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000 !important;
         }
+        .rdp,
+        .rdp-root,
+        .rdp-months,
+        .rdp-month,
+        .rdp-month_grid,
+        .rdp-table,
+        .rdp-weeks,
+        .rdp-week,
+        .rdp-day {
+          background-color: transparent !important;
+        }
         .rdp-month {
           margin-left: auto !important;
           margin-right: auto !important;
         }
-        .rdp-table {
+        .rdp-table,
+        .rdp-month_grid {
           margin-left: auto !important;
           margin-right: auto !important;
         }
