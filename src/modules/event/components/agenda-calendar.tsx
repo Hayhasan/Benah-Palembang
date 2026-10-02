@@ -403,7 +403,7 @@ export function AgendaCalendar({
                     month_caption: "hidden", // Using aligned custom header above
                     weekdays: "flex justify-center",
                     weekday:
-                      "flex-1 text-[0.8rem] font-medium text-muted-foreground select-none first:text-red-600 first:font-bold",
+                      "flex-1 text-[0.8rem] font-medium text-muted-foreground select-none",
                     week: "flex justify-center mt-1.5",
                   }}
                 />
